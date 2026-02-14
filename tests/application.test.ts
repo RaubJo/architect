@@ -1,12 +1,79 @@
-import { afterEach, describe, expect, test } from "bun:test";
-import ReactDOM from "react-dom/client";
+import { afterEach, describe, expect, mock, test } from "bun:test";
 import ConfigRepository from "@/config/repository";
 import InversifyContainer from "@/container/adapters/inversify";
 import BuiltinContainer from "@/container/adapters/builtin";
 import { Application } from "@/foundation/application";
 import { applicationTestingHelpers } from "@/foundation/application_test.helpers";
-import ReactRenderer from "@/renderers/adapters/react";
 import ServiceProvider from "@/support/service-provider";
+
+const reactContextValues = new Map<object, unknown>();
+const reactModule = {
+  createContext<T>(defaultValue: T) {
+    const context = {
+      _default: defaultValue,
+      Provider: ({ value, children }: { value: unknown; children?: unknown }) => {
+        reactContextValues.set(context, value);
+        return children ?? null;
+      },
+    };
+    return context;
+  },
+  useContext<T>(context: { _default: T }) {
+    if (reactContextValues.has(context as object)) {
+      return reactContextValues.get(context as object) as T;
+    }
+    return context._default;
+  },
+  createElement(type: unknown, props?: Record<string, unknown>, ...children: unknown[]) {
+    if (typeof type === "function") {
+      return type({
+        ...(props ?? {}),
+        children:
+          children.length === 0 ? undefined
+          : children.length === 1 ? children[0]
+          : children,
+      });
+    }
+    return { type, props: { ...(props ?? {}), children } };
+  },
+};
+
+const reactDomState = {
+  rendered: 0,
+  unmounted: 0,
+  mountNode: undefined as unknown,
+};
+
+mock.module("react", () => reactModule);
+mock.module("react/jsx-runtime", () => ({
+  Fragment: Symbol.for("react.fragment"),
+  jsx: (type: unknown, props: Record<string, unknown>) =>
+    reactModule.createElement(type, props),
+  jsxs: (type: unknown, props: Record<string, unknown>) =>
+    reactModule.createElement(type, props),
+}));
+mock.module("react/jsx-dev-runtime", () => ({
+  Fragment: Symbol.for("react.fragment"),
+  jsxDEV: (
+    type: unknown,
+    props: Record<string, unknown>,
+  ) => reactModule.createElement(type, props),
+}));
+mock.module("react-dom/client", () => ({
+  default: {
+    createRoot: (node: unknown) => {
+      reactDomState.mountNode = node;
+      return {
+        render: () => {
+          reactDomState.rendered += 1;
+        },
+        unmount: () => {
+          reactDomState.unmounted += 1;
+        },
+      };
+    },
+  },
+}));
 
 describe("Application", () => {
   afterEach(() => {
@@ -374,7 +441,9 @@ describe("Application", () => {
     );
   });
 
-  test("react renderer throws if mount node is missing", () => {
+  test("react renderer throws if mount node is missing", async () => {
+    const { default: ReactRenderer } = await import("@/renderers/adapters/react");
+
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = {
       addEventListener: () => {},
@@ -390,10 +459,10 @@ describe("Application", () => {
     expect(() => app.run()).toThrow("Missing mount node #root.");
   });
 
-  test("react renderer mounts and unmounts when stopped", () => {
+  test("react renderer mounts and unmounts when stopped", async () => {
+    const { default: ReactRenderer } = await import("@/renderers/adapters/react");
+
     let beforeUnload: (() => void) | undefined;
-    let rendered = 0;
-    let unmounted = 0;
 
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = {
@@ -405,33 +474,21 @@ describe("Application", () => {
       getElementById: () => ({}),
     };
 
-    const originalCreateRoot = (ReactDOM as { createRoot: (node: unknown) => unknown }).createRoot;
-    (ReactDOM as { createRoot: (node: unknown) => { render: () => void; unmount: () => void } })
-      .createRoot = () => ({
-      render: () => {
-        rendered += 1;
-      },
-      unmount: () => {
-        unmounted += 1;
-      },
-    });
+    reactDomState.rendered = 0;
+    reactDomState.unmounted = 0;
+    reactDomState.mountNode = undefined;
 
-    try {
-      const running = Application.configure("./")
-        .withRoot(() => null)
-        .withRenderer(new ReactRenderer())
-        .run();
-      expect(rendered).toBe(1);
-      running.stop();
-      expect(unmounted).toBe(1);
-      // Stop twice should still be safe if beforeunload callback also runs.
-      beforeUnload?.();
-      expect(unmounted).toBe(2);
-    } finally {
-      (
-        ReactDOM as { createRoot: (node: unknown) => unknown }
-      ).createRoot = originalCreateRoot;
-    }
+    const running = Application.configure("./")
+      .withRoot(() => null)
+      .withRenderer(new ReactRenderer())
+      .run();
+    expect(reactDomState.rendered).toBe(1);
+    expect(reactDomState.mountNode).toBeTruthy();
+    running.stop();
+    expect(reactDomState.unmounted).toBe(1);
+    // Stop twice should still be safe if beforeunload callback also runs.
+    beforeUnload?.();
+    expect(reactDomState.unmounted).toBe(2);
   });
 
   test("uses fallback no-op renderer cleanup when custom renderer returns nothing", () => {
@@ -462,10 +519,3 @@ describe("Application", () => {
     );
   });
 });
-    (
-      globalThis as {
-        __iocContainerFactoryRegistry?: { inversify?: () => unknown };
-      }
-    ).__iocContainerFactoryRegistry = {
-      inversify: () => new InversifyContainer(),
-    };

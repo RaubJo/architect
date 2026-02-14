@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test";
 import type { ContainerIdentifier } from "@/container/contract";
 import InversifyContainer from "@/container/adapters/inversify";
-import SvelteRenderer from "@/renderers/adapters/svelte";
 
 const svelteState = {
   provided: null as { key: unknown; value: unknown } | null,
@@ -37,12 +36,21 @@ mock.module("svelte", () => ({
 let containerKey: symbol;
 let provideContainer: (container: InversifyContainer) => void;
 let useService: <T>(identifier: ContainerIdentifier<T>) => T;
+let SvelteRenderer: new () => {
+  render: (context: {
+    RootComponent: unknown;
+    container: InversifyContainer;
+    rootElementId: string;
+  }) => () => void;
+};
 
 beforeAll(async () => {
   const runtime = await import("@/runtimes/svelte");
+  const renderer = await import("@/renderers/adapters/svelte");
   containerKey = runtime.containerKey;
   provideContainer = runtime.provideContainer;
   useService = runtime.useService;
+  SvelteRenderer = renderer.default as typeof SvelteRenderer;
 });
 
 describe("Svelte runtime and renderer", () => {
@@ -120,6 +128,31 @@ describe("Svelte runtime and renderer", () => {
 
     class FakeComponent {
       destroy() {
+        destroyed += 1;
+      }
+    }
+
+    const renderer = new SvelteRenderer();
+    const cleanup = renderer.render({
+      RootComponent: FakeComponent,
+      container: new InversifyContainer(),
+      rootElementId: "root",
+    });
+
+    cleanup();
+    expect(destroyed).toBe(1);
+    svelteState.useLegacyApi = false;
+  });
+
+  test("supports legacy component $destroy cleanup", () => {
+    let destroyed = 0;
+    svelteState.useLegacyApi = true;
+    (globalThis as { document: { getElementById: (id: string) => object | null } }).document = {
+      getElementById: () => ({}),
+    };
+
+    class FakeComponent {
+      $destroy() {
         destroyed += 1;
       }
     }

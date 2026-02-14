@@ -166,6 +166,42 @@ describe("BuiltinContainer adapter", () => {
     );
   });
 
+  test("throws when constructor parameter cannot be resolved", () => {
+    class MissingTokenDependency {
+      constructor(public readonly value: unknown) {}
+    }
+
+    Reflect.defineMetadata("design:paramtypes", [undefined], MissingTokenDependency);
+
+    const container = new BuiltinContainer();
+    expect(() => container.make(MissingTokenDependency)).toThrow(
+      "Cannot resolve parameter #0 for [MissingTokenDependency].",
+    );
+  });
+
+  test("inject decorator is safe when reflect metadata apis are unavailable", () => {
+    const target = class {
+      constructor(public readonly value: unknown) {}
+    };
+
+    const reflectWithMetadata = Reflect as typeof Reflect & {
+      getMetadata?: (key: string, target: object) => unknown;
+      defineMetadata?: (key: string, value: unknown, target: object) => void;
+    };
+    const originalGetMetadata = reflectWithMetadata.getMetadata;
+    const originalDefineMetadata = reflectWithMetadata.defineMetadata;
+
+    reflectWithMetadata.getMetadata = undefined;
+    reflectWithMetadata.defineMetadata = undefined;
+
+    try {
+      expect(() => inject("safe.token")(target, undefined, 0)).not.toThrow();
+    } finally {
+      reflectWithMetadata.getMetadata = originalGetMetadata;
+      reflectWithMetadata.defineMetadata = originalDefineMetadata;
+    }
+  });
+
   test("supports bound, has, unbind, unbindAll, and flush", () => {
     const container = new BuiltinContainer();
     container.instance("a", 1);
