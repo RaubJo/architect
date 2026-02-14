@@ -1,0 +1,113 @@
+# @raubjo/architect-core
+
+Laravel-inspired IoC/container core for reactive frontend apps (React, Solid, Svelte, Vue).
+
+## Purpose
+- Centralize service wiring in providers.
+- Provide predictable app lifecycle: `register -> services -> boot -> startup -> render`.
+- Expose runtime helpers (`useService`) and renderer adapters per framework.
+
+## Tech + Runtime
+- Language: TypeScript (ESM, strict mode).
+- Package manager/runtime: Bun.
+- Module alias: `@/*` maps to `./src/*` (`tsconfig.json`).
+- Optional peers: `react`, `react-dom`, `solid-js`, `svelte`, `vue`, `inversify`.
+- Required peer: `reflect-metadata` (needed for constructor metadata injection workflows).
+
+## Public API Surface
+- Root export: `/Users/josephraub/Code/architect/src/index.ts`.
+- Framework entrypoints:
+  - `/Users/josephraub/Code/architect/src/react.ts`
+  - `/Users/josephraub/Code/architect/src/solid.ts`
+  - `/Users/josephraub/Code/architect/src/svelte.ts`
+  - `/Users/josephraub/Code/architect/src/vue.ts`
+- Export map is defined in `/Users/josephraub/Code/architect/package.json` under `exports`.
+
+## Core Architecture
+- `Application` orchestrator:
+  - File: `/Users/josephraub/Code/architect/src/foundation/application.ts`
+  - Responsibilities:
+    - Creates container.
+    - Registers built-ins in container (`config`, `storage`, `cache`).
+    - Runs providers/services/startup/render phases.
+    - Returns `{ container, stop }`.
+    - On `stop()`: unmount renderer, run cleanup callbacks in reverse order, clear facades, flush container.
+- Container runtime selection:
+  - File: `/Users/josephraub/Code/architect/src/container/runtime.ts`
+  - Modes: `auto`, `builtin`, `inversify`.
+  - `auto` checks package.json dependencies for `inversify`.
+  - Inversify adapter is supplied via `globalThis.__iocContainerFactoryRegistry.inversify`.
+- Builtin container:
+  - File: `/Users/josephraub/Code/architect/src/container/adapters/builtin.ts`
+  - Supports `bind/to/toDynamicValue/toConstantValue`, `singleton`, `transient`, `instance`, `make/get`.
+  - Constructor injection via `design:paramtypes`.
+  - Parameter override via `inject(...)` decorator metadata (`ioc:inject.tokens`).
+
+## Providers + Lifecycle
+- Provider base classes:
+  - `/Users/josephraub/Code/architect/src/support/service-provider.ts`
+  - `ServiceProvider` with `register(context)` and `boot(context)`.
+  - `DeferrableServiceProvider` defines `provides()`.
+- Lifecycle order in `Application.run()`:
+  1. Provider `register()`
+  2. `.withServices(...)`
+  3. Provider `boot()`
+  4. `.withStartup(...)`
+  5. Renderer mount (if configured)
+- Cleanup order is reverse of registration; renderer cleanup runs first during stop.
+
+## Config / Cache / Storage
+- Config repository:
+  - `/Users/josephraub/Code/architect/src/config/repository.ts`
+  - Dot-notation access, typed getters (`string`, `integer`, `float`, `boolean`, `array`), `set/push/prepend`.
+  - App config passed to `Application.configure({ config })` is cloned per app instance.
+- Storage manager:
+  - `/Users/josephraub/Code/architect/src/storage/manager.ts`
+  - Drivers: `memory`, `local`, `indexed` with environment-based fallback to memory.
+- Cache manager:
+  - `/Users/josephraub/Code/architect/src/cache/manager.ts`
+  - Store selection by config (`cache.default`, `cache.stores`), same driver/fallback pattern.
+- Facades:
+  - Base: `/Users/josephraub/Code/architect/src/support/facades/facade.ts`
+  - Resolve through static `Application.make(...)` and cache resolved instances.
+
+## Framework Runtime Integrations
+- Runtime helper files:
+  - React: `/Users/josephraub/Code/architect/src/runtimes/react.tsx`
+  - Solid: `/Users/josephraub/Code/architect/src/runtimes/solid.tsx`
+  - Svelte: `/Users/josephraub/Code/architect/src/runtimes/svelte.ts`
+  - Vue: `/Users/josephraub/Code/architect/src/runtimes/vue.ts`
+- Pattern:
+  - Container is provided via framework context/injection.
+  - `useService(identifier)` resolves services from active container.
+  - Throws when container is missing from framework context.
+- Renderer adapters:
+  - React: `/Users/josephraub/Code/architect/src/renderers/adapters/react.tsx`
+  - Solid: `/Users/josephraub/Code/architect/src/renderers/adapters/solid.tsx`
+  - Svelte: `/Users/josephraub/Code/architect/src/renderers/adapters/svelte.ts`
+  - Vue: `/Users/josephraub/Code/architect/src/renderers/adapters/vue.ts`
+
+## Testing + Quality
+- Test framework: Bun test runner.
+- Tests directory: `/Users/josephraub/Code/architect/tests`.
+- High-value test coverage includes:
+  - Application lifecycle and cleanup ordering.
+  - Builtin/Inversify container behaviors.
+  - Runtime helpers (React/Solid/Svelte/Vue).
+  - Config, cache, storage, facades.
+- Common scripts (`/Users/josephraub/Code/architect/package.json`):
+  - `bun test`
+  - `bun test --coverage`
+  - `prettier -w ./src/**/*`
+
+## Repository Map
+- Source: `/Users/josephraub/Code/architect/src`
+- Tests: `/Users/josephraub/Code/architect/tests`
+- Examples: `/Users/josephraub/Code/architect/examples`
+- Main docs: `/Users/josephraub/Code/architect/README.md`, `/Users/josephraub/Code/architect/examples/README.md`
+
+## Important Constraints for Agents
+- Call `Application.run()` before using `Application.make(...)`.
+- If using decorator-based constructor injection, ensure `reflect-metadata` is loaded.
+- If `withRoot(...)` is used, `withRenderer(...)` is required.
+- If adapter is explicitly `inversify`, missing registry factory should be treated as configuration error.
