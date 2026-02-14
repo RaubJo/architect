@@ -1,0 +1,6 @@
+.prettierignore
+.prettierrc
+/tests
+/coverage
+/node_modules
+/examples

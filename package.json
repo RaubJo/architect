@@ -1,0 +1,94 @@
+{
+    "name": "@raubjo/architect-core",
+    "version": "0.1.2",
+    "private": false,
+    "license": "MIT",
+    "type": "module",
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "test": "bun test",
+        "test:coverage": "bun test --coverage",
+        "fix": "prettier -w ./src/**/*"
+    },
+    "exports": {
+        ".": "./src/index.ts",
+        "./react": "./src/react.ts",
+        "./solid": "./src/solid.ts",
+        "./svelte": "./src/svelte.ts",
+        "./vue": "./src/vue.ts",
+        "./application": "./src/foundation/application.ts",
+        "./container/contract": "./src/container/contract.ts",
+        "./container/adapters/inversify": "./src/container/adapters/inversify.ts",
+        "./container/adapters/builtin": "./src/container/adapters/builtin.ts",
+        "./config/adapters/esm": "./src/config/adapters/esm.ts",
+        "./config/env": "./src/config/env.ts",
+        "./config/repository": "./src/config/repository.ts",
+        "./cache/manager": "./src/cache/manager.ts",
+        "./cache/cache": "./src/cache/cache.ts",
+        "./facades/cache": "./src/support/facades/cache.ts",
+        "./storage/manager": "./src/storage/manager.ts",
+        "./storage/adapters/contract": "./src/storage/adapters/contract.ts",
+        "./storage/storage": "./src/storage/storage.ts",
+        "./storage/adapters/memory": "./src/storage/adapters/memory.ts",
+        "./storage/adapters/local-storage": "./src/storage/adapters/local-storage.ts",
+        "./storage/adapters/indexed-db": "./src/storage/adapters/indexed-db.ts",
+        "./facades/storage": "./src/support/facades/storage.ts",
+        "./filesystem/filesystem": "./src/filesystem/filesystem.ts",
+        "./filesystem/local-adapter": "./src/filesystem/adapters/local.ts",
+        "./renderers/contract": "./src/renderers/contract.ts",
+        "./renderers/react": "./src/renderers/adapters/react.tsx",
+        "./renderers/solid": "./src/renderers/adapters/solid.tsx",
+        "./renderers/svelte": "./src/renderers/adapters/svelte.ts",
+        "./renderers/vue": "./src/renderers/adapters/vue.ts",
+        "./facades/config": "./src/support/facades/config.ts",
+        "./runtimes/react": "./src/runtimes/react.tsx",
+        "./runtimes/solid": "./src/runtimes/solid.tsx",
+        "./runtimes/svelte": "./src/runtimes/svelte.ts",
+        "./runtimes/vue": "./src/runtimes/vue.ts",
+        "./str": "./src/support/str.ts",
+        "./service-provider": "./src/support/service-provider.ts",
+        "./facade": "./src/support/facades/facade.ts"
+    },
+    "peerDependencies": {
+        "inversify": "^7.11.0",
+        "reflect-metadata": "^0.2.2",
+        "react": "^19.0.0",
+        "react-dom": "^19.0.0",
+        "svelte": "^5.0.0",
+        "solid-js": "^1.9.0",
+        "vue": "^3.0.0"
+    },
+    "peerDependenciesMeta": {
+        "react": {
+            "optional": true
+        },
+        "react-dom": {
+            "optional": true
+        },
+        "solid-js": {
+            "optional": true
+        },
+        "svelte": {
+            "optional": true
+        },
+        "vue": {
+            "optional": true
+        },
+        "inversify": {
+            "optional": true
+        },
+        "reflect-metadata": {
+            "optional": false
+        }
+    },
+    "devDependencies": {
+        "@types/react": "^19.2.14",
+        "@types/react-dom": "^19.2.3",
+        "bun-types": "^1.3.9",
+        "prettier": "^3.8.1",
+        "solid-js": "^1.9.0",
+        "vue": "^3.5.13"
+    }
+}
