@@ -1,5 +1,5 @@
-import MemoryStorageAdapter from "@/storage/adapters/memory";
-import type { Adapter } from "@/storage/adapters/contract";
+import MemoryStorageAdapter from "./memory";
+import type { Adapter } from "./contract";
 
 type OpenFactory = Pick<IDBFactory, "open">;
 

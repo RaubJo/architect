@@ -5,7 +5,7 @@ import type {
     ContainerContract,
     ContainerFactory,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../contract";
 
 const INJECT_TOKENS_METADATA_KEY = "ioc:inject.tokens";
 

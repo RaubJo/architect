@@ -5,7 +5,7 @@ import type {
     ContainerContract,
     ContainerFactory,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../contract";
 
 function isClassConcrete<T>(value: ContainerConcrete<T>): value is Newable<T> {
     return (

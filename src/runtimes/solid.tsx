@@ -2,7 +2,7 @@ import { createContext, createComponent, useContext, type JSX } from "solid-js";
 import type {
     ContainerContract,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../container/contract";
 
 const ContainerContext = createContext<ContainerContract | null>(null);
 

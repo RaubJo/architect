@@ -1,4 +1,4 @@
-import type { Adapter } from "@/storage/adapters/contract";
+import type { Adapter } from "./contract";
 
 export default class MemoryStorageAdapter implements Adapter {
     protected items = new Map<string, unknown>();

@@ -2,7 +2,7 @@ import { getContext, setContext } from "svelte";
 import type {
     ContainerContract,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../container/contract";
 
 export const containerKey: unique symbol = Symbol("application.container");
 

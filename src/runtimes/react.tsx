@@ -2,7 +2,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import type {
     ContainerContract,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../container/contract";
 
 const ContainerContext = createContext<ContainerContract | null>(null);
 

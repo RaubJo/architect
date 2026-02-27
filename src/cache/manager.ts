@@ -1,9 +1,9 @@
-import type ConfigRepository from "@/config/repository";
-import IndexedDbAdapter from "@/storage/adapters/indexed-db";
-import LocalStorageAdapter from "@/storage/adapters/local-storage";
-import MemoryStorageAdapter from "@/storage/adapters/memory";
-import type { Adapter } from "@/storage/adapters/contract";
-import type { CacheStore } from "@/cache/cache";
+import type ConfigRepository from "../config/repository";
+import IndexedDbAdapter from "../storage/adapters/indexed-db";
+import LocalStorageAdapter from "../storage/adapters/local-storage";
+import MemoryStorageAdapter from "../storage/adapters/memory";
+import type { Adapter } from "../storage/adapters/contract";
+import type { CacheStore } from "./cache";
 
 type CacheStoreConfig = {
     driver?: string;

@@ -1,4 +1,4 @@
-import type { ConfigItems } from "@/config/repository";
+import type { ConfigItems } from "./repository";
 
 export function cloneConfigItems(items: ConfigItems): ConfigItems {
     if (typeof structuredClone === "function") {

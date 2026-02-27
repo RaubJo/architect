@@ -1,25 +1,25 @@
-import CacheManager from "@/cache/manager";
-import { cloneConfigItems } from "@/config/clone";
-import { registerGlobalEnv } from "@/config/env";
-import ConfigRepository, { type ConfigItems } from "@/config/repository";
+import CacheManager from "../cache/manager";
+import { cloneConfigItems } from "../config/clone";
+import { registerGlobalEnv } from "../config/env";
+import ConfigRepository, { type ConfigItems } from "../config/repository";
 import type {
     ContainerContract,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../container/contract";
 import {
     createRuntimeContainer,
     mergeContainerRuntimeOptions,
     type ContainerRuntimeOptions,
-} from "@/container/runtime";
-import type Contract from "@/renderers/contract";
-import type { RootComponent } from "@/renderers/contract";
-import StorageManager from "@/storage/manager";
+} from "../container/runtime";
+import type Contract from "../renderers/contract";
+import type { RootComponent } from "../renderers/contract";
+import StorageManager from "../storage/manager";
 import ServiceProvider, {
     type Cleanup,
     type ServiceProviderContext,
-} from "@/support/service-provider";
-import { registerGlobalStr } from "@/support/str";
-import Facade from "@/support/facades/facade";
+} from "../support/service-provider";
+import { registerGlobalStr } from "../support/str";
+import Facade from "../support/facades/facade";
 
 type StartupHandler = (context: ServiceProviderContext) => void | Cleanup;
 type ServiceRegistrar = (context: ServiceProviderContext) => void | Cleanup;

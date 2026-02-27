@@ -1,5 +1,5 @@
-import type { ConfigItems } from "@/config/repository";
-import type { FileSystemAdapter } from "@/filesystem/filesystem";
+import type { ConfigItems } from "../../config/repository";
+import type { FileSystemAdapter } from "../filesystem";
 
 type ConfigModule = { default?: unknown };
 type GlobLoader = (

@@ -2,7 +2,7 @@ import { inject, type InjectionKey } from "vue";
 import type {
     ContainerContract,
     ContainerIdentifier,
-} from "@/container/contract";
+} from "../container/contract";
 
 export const containerKey: InjectionKey<ContainerContract> = Symbol(
     "application.container",

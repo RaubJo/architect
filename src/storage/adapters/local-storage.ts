@@ -1,4 +1,4 @@
-import type { Adapter } from "@/storage/adapters/contract";
+import type { Adapter } from "./contract";
 
 export default class LocalStorageAdapter implements Adapter {
     protected storage: Storage;

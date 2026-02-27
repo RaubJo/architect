@@ -1,4 +1,4 @@
-import type { ConfigItems } from "@/config/repository";
+import type { ConfigItems } from "../repository";
 
 type ConfigModule = { default?: unknown };
 
