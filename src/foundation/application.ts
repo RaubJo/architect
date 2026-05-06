@@ -19,7 +19,7 @@ import ServiceProvider, {
     type ServiceProviderContext,
 } from "../support/service-provider";
 import { registerGlobalStr } from "../support/str";
-import Facade from "../support/facades/facade";
+import { clearFacadeCache } from "../support/facades/facade";
 
 type StartupHandler = (context: ServiceProviderContext) => void | Cleanup;
 type ServiceRegistrar = (context: ServiceProviderContext) => void | Cleanup;
@@ -143,7 +143,7 @@ export class Application {
 
         Application.container = container;
 
-        Facade.clearResolvedInstances();
+        clearFacadeCache();
 
         const context = { container };
         const cleanupTasks: Cleanup[] = [];
@@ -218,7 +218,7 @@ export class Application {
                 cleanup();
             }
 
-            Facade.clearResolvedInstances();
+            clearFacadeCache();
 
             container.flush();
 

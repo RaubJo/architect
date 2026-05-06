@@ -60,6 +60,9 @@ export default class IndexedDbAdapter implements Adapter {
                     request.error ??
                         new Error("IndexedDB database could not be opened."),
                 );
+        }).catch((error) => {
+            this.dbPromise = null;
+            throw error;
         });
 
         return this.dbPromise;

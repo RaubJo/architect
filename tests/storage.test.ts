@@ -223,6 +223,33 @@ describe("Storage adapters and manager", () => {
     await expect(rejected.set("bad", 1)).rejects.toThrow("set failed");
   });
 
+  test("indexed db adapter retries opening after a transient failure", async () => {
+    const fallback = new MemoryStorageAdapter();
+    const { factory: workingFactory, items } = createIndexedDbFactory();
+    let attempts = 0;
+
+    const flakyFactory: Pick<IDBFactory, "open"> = {
+      open: () => {
+        attempts += 1;
+
+        if (attempts === 1) {
+          return null as unknown as IDBOpenDBRequest;
+        }
+
+        return workingFactory.open();
+      },
+    };
+
+    const adapter = new IndexedDbAdapter({ factory: flakyFactory, fallback });
+
+    await adapter.set("fallback-key", 1);
+    expect(await fallback.get<number>("fallback-key")).toBe(1);
+
+    await adapter.set("indexed-key", 2);
+    expect(items.get("indexed-key")).toBe(2);
+    expect(await adapter.get<number>("indexed-key")).toBe(2);
+  });
+
   test("storage manager chooses and switches drivers", async () => {
     const memory = new MemoryStorageAdapter();
     const alt = new MemoryStorageAdapter();
