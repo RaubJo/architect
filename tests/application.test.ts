@@ -82,15 +82,6 @@ describe("Application", () => {
     (
       globalThis as { __iocConfigGlobForTests?: unknown }
     ).__iocConfigGlobForTests = undefined;
-    (
-      globalThis as { __iocPackageJsonForTests?: unknown }
-    ).__iocPackageJsonForTests = undefined;
-    (
-      globalThis as { __iocPackageJsonGlobForTests?: unknown }
-    ).__iocPackageJsonGlobForTests = undefined;
-    (
-      globalThis as { __iocContainerFactoryRegistry?: unknown }
-    ).__iocContainerFactoryRegistry = undefined;
     Application.clearConfigCache();
   });
 
@@ -259,7 +250,7 @@ describe("Application", () => {
   test("configure options are merged with defaults", () => {
     expect(applicationTestingHelpers.mergeConfigureOptions()).toEqual({
       basePath: "./",
-      container: { adapter: "auto", factory: null },
+      container: { adapter: "auto", factory: null, test: {} },
       config: {},
     });
 
@@ -270,130 +261,85 @@ describe("Application", () => {
       }),
     ).toEqual({
       basePath: "./src",
-      container: { adapter: "builtin", factory: null },
+      container: { adapter: "builtin", factory: null, test: {} },
       config: {},
     });
   });
 
   test("reads package.json candidates from test glob loader", () => {
-    (
-      globalThis as {
-        __iocPackageJsonGlobForTests?: (
-          pattern: string | string[],
-          options?: { eager?: boolean },
-        ) => Record<string, unknown>;
-      }
-    ).__iocPackageJsonGlobForTests = () => ({
+    const globLoader = () => ({
       "/package.json": { default: { dependencies: { inversify: "^7.0.0" } } },
       "/package.raw.json": { dependencies: { react: "^19.0.0" } },
     });
 
-    expect(applicationTestingHelpers.readPackageJsonCandidates()).toEqual([
+    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJsonGlob: globLoader })).toEqual([
       { dependencies: { inversify: "^7.0.0" } },
       { dependencies: { react: "^19.0.0" } },
     ]);
   });
 
   test("reads package.json candidates from test callback", () => {
-    (
-      globalThis as {
-        __iocPackageJsonForTests?: () => { dependencies?: Record<string, string> };
-      }
-    ).__iocPackageJsonForTests = () => ({ dependencies: { inversify: "^7.0.0" } });
-
-    expect(applicationTestingHelpers.readPackageJsonCandidates()).toEqual([
+    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJson: () => ({ dependencies: { inversify: "^7.0.0" } }) })).toEqual([
       { dependencies: { inversify: "^7.0.0" } },
     ]);
   });
 
   test("reads package.json candidates from test array values", () => {
-    (
-      globalThis as {
-        __iocPackageJsonForTests?:
-          | { dependencies?: Record<string, string> }[]
-          | (() => { dependencies?: Record<string, string> }[]);
-      }
-    ).__iocPackageJsonForTests = [
+    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJson: [
       { dependencies: { inversify: "^7.0.0" } },
       { dependencies: { react: "^19.0.0" } },
-    ];
-    expect(applicationTestingHelpers.readPackageJsonCandidates()).toEqual([
+    ] })).toEqual([
       { dependencies: { inversify: "^7.0.0" } },
       { dependencies: { react: "^19.0.0" } },
     ]);
 
-    (
-      globalThis as {
-        __iocPackageJsonForTests?: () => { dependencies?: Record<string, string> }[];
-      }
-    ).__iocPackageJsonForTests = () => [{ dependencies: { vue: "^3.0.0" } }];
-    expect(applicationTestingHelpers.readPackageJsonCandidates()).toEqual([
+    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJson: () => [{ dependencies: { vue: "^3.0.0" } }] })).toEqual([
       { dependencies: { vue: "^3.0.0" } },
     ]);
   });
 
   test("auto container uses builtin when inversify is not listed", () => {
-    (
-      globalThis as {
-        __iocPackageJsonForTests?: { dependencies?: Record<string, string> };
-      }
-    ).__iocPackageJsonForTests = {
-      dependencies: {},
-    };
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };
 
-    const running = Application.configure({ basePath: "./", container: { adapter: "auto" } }).run();
+    const running = Application.configure({ basePath: "./", container: { adapter: "auto", test: { packageJson: { dependencies: {} } } } }).run();
     expect(running.container).toBeInstanceOf(BuiltinContainer);
   });
 
   test("auto container uses inversify when package.json includes inversify", () => {
-    (
-      globalThis as {
-        __iocPackageJsonForTests?: { dependencies?: Record<string, string> };
-      }
-    ).__iocPackageJsonForTests = {
-      dependencies: { inversify: "^7.0.0" },
-    };
-    (
-      globalThis as {
-        __iocContainerFactoryRegistry?: { inversify?: () => unknown };
-      }
-    ).__iocContainerFactoryRegistry = {
-      inversify: () => new InversifyContainer(),
-    };
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };
 
-    const running = Application.configure({ basePath: "./", container: { adapter: "auto" } }).run();
+    const running = Application.configure({
+      basePath: "./",
+      container: {
+        adapter: "auto",
+        test: {
+          packageJson: { dependencies: { inversify: "^7.0.0" } },
+          containerFactoryRegistry: { inversify: () => new InversifyContainer() },
+        },
+      },
+    }).run();
     expect(running.container).toBeInstanceOf(InversifyContainer);
   });
 
   test("auto container falls back to builtin when inversify is detected but factory is missing", () => {
-    (
-      globalThis as {
-        __iocPackageJsonForTests?: { dependencies?: Record<string, string> };
-      }
-    ).__iocPackageJsonForTests = {
-      dependencies: { inversify: "^7.0.0" },
-    };
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };
 
-    const running = Application.configure({ basePath: "./", container: { adapter: "auto" } }).run();
+    const running = Application.configure({
+      basePath: "./",
+      container: {
+        adapter: "auto",
+        test: { packageJson: { dependencies: { inversify: "^7.0.0" } } },
+      },
+    }).run();
     expect(running.container).toBeInstanceOf(BuiltinContainer);
   });
 
   test("configure can force builtin, inversify, or custom factory", () => {
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };
-    (
-      globalThis as {
-        __iocContainerFactoryRegistry?: { inversify?: () => unknown };
-      }
-    ).__iocContainerFactoryRegistry = {
-      inversify: () => new InversifyContainer(),
-    };
 
     const builtin = Application.configure({
       basePath: "./",
@@ -403,7 +349,10 @@ describe("Application", () => {
 
     const inversify = Application.configure({
       basePath: "./",
-      container: { adapter: "inversify" },
+      container: {
+        adapter: "inversify",
+        test: { containerFactoryRegistry: { inversify: () => new InversifyContainer() } },
+      },
     }).run();
     expect(inversify.container).toBeInstanceOf(InversifyContainer);
 
@@ -424,7 +373,7 @@ describe("Application", () => {
         container: { adapter: "inversify" },
       }).run(),
     ).toThrow(
-      "Inversify adapter is not registered. Provide container.factory or register __iocContainerFactoryRegistry.inversify.",
+      "Inversify adapter is not registered. Provide container.factory or set test.containerFactoryRegistry.inversify.",
     );
   });
 

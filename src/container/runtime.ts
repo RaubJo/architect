@@ -3,16 +3,6 @@ import type { ContainerContract } from "./contract";
 
 export type ContainerAdapter = "auto" | "builtin" | "inversify";
 
-export type ContainerRuntimeOptions = {
-    adapter?: ContainerAdapter;
-    factory?: (() => ContainerContract) | null;
-};
-
-export type ResolvedContainerRuntimeOptions = {
-    adapter: ContainerAdapter;
-    factory: (() => ContainerContract) | null;
-};
-
 type PackageJsonLike = {
     dependencies?: Record<string, string>;
     devDependencies?: Record<string, string>;
@@ -28,24 +18,41 @@ type GlobLoader = (
     options?: { eager?: boolean },
 ) => Record<string, unknown>;
 
+export type ContainerRuntimeTestOptions = {
+    packageJson?:
+        | PackageJsonLike
+        | PackageJsonLike[]
+        | (() => PackageJsonLike | PackageJsonLike[]);
+    packageJsonGlob?: GlobLoader;
+    containerFactoryRegistry?: ContainerFactoryRegistry;
+};
+
+export type ContainerRuntimeOptions = {
+    adapter?: ContainerAdapter;
+    factory?: (() => ContainerContract) | null;
+    test?: ContainerRuntimeTestOptions;
+};
+
+export type ResolvedContainerRuntimeOptions = {
+    adapter: ContainerAdapter;
+    factory: (() => ContainerContract) | null;
+    test: ContainerRuntimeTestOptions;
+};
+
 export function mergeContainerRuntimeOptions(
     options: ContainerRuntimeOptions = {},
 ): ResolvedContainerRuntimeOptions {
     return {
         adapter: options.adapter ?? "auto",
         factory: options.factory ?? null,
+        test: options.test ?? {},
     };
 }
 
-export function readPackageJsonCandidates(): PackageJsonLike[] {
-    const testValue = (
-        globalThis as {
-            __iocPackageJsonForTests?:
-                | PackageJsonLike
-                | PackageJsonLike[]
-                | (() => PackageJsonLike | PackageJsonLike[]);
-        }
-    ).__iocPackageJsonForTests;
+export function readPackageJsonCandidates(
+    testOptions?: ContainerRuntimeTestOptions,
+): PackageJsonLike[] {
+    const testValue = testOptions?.packageJson;
 
     if (typeof testValue === "function") {
         const value = testValue();
@@ -60,11 +67,7 @@ export function readPackageJsonCandidates(): PackageJsonLike[] {
             glob?: GlobLoader;
         }
     ).glob;
-    const testGlob = (
-        globalThis as {
-            __iocPackageJsonGlobForTests?: GlobLoader;
-        }
-    ).__iocPackageJsonGlobForTests;
+    const testGlob = testOptions?.packageJsonGlob;
     const glob =
         typeof viteGlob === "function" ? viteGlob
         : typeof testGlob === "function" ? testGlob
@@ -95,23 +98,21 @@ export function packageJsonHasDependency(
 ): boolean {
     return Boolean(
         packageJson.dependencies?.[dependency] ||
-        packageJson.devDependencies?.[dependency] ||
-        packageJson.peerDependencies?.[dependency],
+            packageJson.devDependencies?.[dependency] ||
+            packageJson.peerDependencies?.[dependency],
     );
 }
 
-export function readContainerFactoryRegistry(): ContainerFactoryRegistry {
-    return (
-        (
-            globalThis as {
-                __iocContainerFactoryRegistry?: ContainerFactoryRegistry;
-            }
-        ).__iocContainerFactoryRegistry ?? {}
-    );
+export function readContainerFactoryRegistry(
+    testOptions?: ContainerRuntimeTestOptions,
+): ContainerFactoryRegistry {
+    return testOptions?.containerFactoryRegistry ?? {};
 }
 
-export function hasInversifyDependency(): boolean {
-    const packageJsonCandidates = readPackageJsonCandidates();
+export function hasInversifyDependency(
+    testOptions?: ContainerRuntimeTestOptions,
+): boolean {
+    const packageJsonCandidates = readPackageJsonCandidates(testOptions);
     return packageJsonCandidates.some((packageJson) =>
         packageJsonHasDependency(packageJson, "inversify"),
     );
@@ -128,10 +129,12 @@ export function createRuntimeContainer(
         return new BuiltinContainer();
     }
 
-    const inversifyFactory = readContainerFactoryRegistry().inversify;
+    const inversifyFactory =
+        readContainerFactoryRegistry(options.test).inversify;
     const shouldUseInversify =
         options.adapter === "inversify" ||
-        (options.adapter === "auto" && hasInversifyDependency());
+        (options.adapter === "auto" &&
+            hasInversifyDependency(options.test));
 
     if (shouldUseInversify) {
         if (typeof inversifyFactory === "function") {
@@ -140,7 +143,7 @@ export function createRuntimeContainer(
 
         if (options.adapter === "inversify") {
             throw new Error(
-                "Inversify adapter is not registered. Provide container.factory or register __iocContainerFactoryRegistry.inversify.",
+                "Inversify adapter is not registered. Provide container.factory or set test.containerFactoryRegistry.inversify.",
             );
         }
     }
