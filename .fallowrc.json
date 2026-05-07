@@ -1,0 +1,17 @@
+{
+    "entry": ["tests/**/*.test.ts", "tests/**/*.test.tsx"],
+    "overrides": [
+        {
+            "files": ["examples/**/*"],
+            "rules": {
+                "unused-class-members": "off"
+            }
+        }
+    ],
+    "usedClassMembers": [
+        {
+            "extends": "ServiceProvider",
+            "members": ["register", "boot"]
+        }
+    ]
+}

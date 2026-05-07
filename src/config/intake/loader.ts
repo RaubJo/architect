@@ -10,5 +10,5 @@ export interface ConfigLoader {
    * @param staticItems Static configuration items to merge with loaded items
    * @returns Configuration items
    */
-  load(basePath: string, staticItems?: ConfigItems): Promise<ConfigItems>;
+  load(basePath: string, staticItems?: ConfigItems): ConfigItems;
 }

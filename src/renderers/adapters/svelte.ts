@@ -33,38 +33,58 @@ export default class SvelteRenderer implements Contract {
         }
 
         const props = { container };
-        const svelteMount = mount as unknown as SvelteMount | undefined;
-        const svelteUnmount = unmount as unknown as SvelteUnmount | undefined;
+        const modernCleanup = tryRenderModernSvelte(
+            RootComponent,
+            mountNode,
+            props,
+        );
 
-        if (
-            typeof svelteMount === "function" &&
-            typeof svelteUnmount === "function"
-        ) {
-            try {
-                const instance = svelteMount(RootComponent, {
-                    target: mountNode,
-                    props,
-                });
+        return modernCleanup ?? renderLegacySvelte(RootComponent, mountNode, props);
+    }
+}
 
-                return () => {
-                    void svelteUnmount(instance);
-                };
-            } catch (_error) {
-                // Fallback to the legacy component constructor API.
-            }
-        }
+function tryRenderModernSvelte(
+    RootComponent: unknown,
+    mountNode: Element,
+    props: Record<string, unknown>,
+): Cleanup | null {
+    const svelteMount = mount as unknown as SvelteMount | undefined;
+    const svelteUnmount = unmount as unknown as SvelteUnmount | undefined;
 
-        const Component = RootComponent as SvelteComponentConstructor;
-        const instance = new Component({ target: mountNode, props });
+    if (typeof svelteMount !== "function" || typeof svelteUnmount !== "function") {
+        return null;
+    }
+
+    try {
+        const instance = svelteMount(RootComponent, {
+            target: mountNode,
+            props,
+        });
 
         return () => {
-            if (typeof instance.$destroy === "function") {
-                instance.$destroy();
-                return;
-            }
-            if (typeof instance.destroy === "function") {
-                instance.destroy();
-            }
+            void svelteUnmount(instance);
         };
+    } catch (_error) {
+        return null;
     }
+}
+
+function renderLegacySvelte(
+    RootComponent: unknown,
+    mountNode: Element,
+    props: Record<string, unknown>,
+): Cleanup {
+    const Component = RootComponent as SvelteComponentConstructor;
+    const instance = new Component({ target: mountNode, props });
+
+    return () => {
+        if (typeof instance.$destroy === "function") {
+            instance.$destroy();
+            return;
+        }
+
+        if (typeof instance.destroy === "function") {
+            instance.destroy();
+        }
+    };
 }

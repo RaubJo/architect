@@ -69,6 +69,16 @@ function readInjectTokens(target: object): Map<number, ContainerIdentifier> {
     return tokens;
 }
 
+function readConstructorParamTypes(
+    target: object,
+): Array<ContainerIdentifier | undefined> {
+    return (
+        (metadataReflect.getMetadata?.("design:paramtypes", target) as
+            | Array<ContainerIdentifier | undefined>
+            | undefined) ?? []
+    );
+}
+
 class BuiltinBindingFluent<T> {
     protected record: BindingRecord<T> | null = null;
 
@@ -292,18 +302,11 @@ export default class BuiltinContainer implements ContainerContract {
             return record.value;
         }
 
-        if (
-            record.scope === "singleton" &&
-            "cached" in record &&
-            typeof record.cached !== "undefined"
-        ) {
+        if (this.hasCachedSingleton(record)) {
             return record.cached;
         }
 
-        const resolved =
-            record.kind === "class" ?
-                this.resolveClass(record.concrete)
-            :   record.concrete(this);
+        const resolved = this.resolveConcrete(record);
 
         if (record.scope === "singleton") {
             record.cached = resolved;
@@ -312,36 +315,64 @@ export default class BuiltinContainer implements ContainerContract {
         return resolved;
     }
 
-    protected resolveClass<T>(concrete: ContainerClass<T>): T {
-        if (this.resolving.has(concrete)) {
-            throw new Error(
-                `Circular dependency detected while resolving [${concrete.name || "anonymous"}].`,
-            );
+    protected resolveConcrete<T>(
+        record: Exclude<BindingRecord<T>, { kind: "constant" }>,
+    ): T {
+        if (record.kind === "class") {
+            return this.resolveClass(record.concrete);
         }
 
+        return record.concrete(this);
+    }
+
+    protected hasCachedSingleton<T>(
+        record: BindingRecord<T>,
+    ): record is BindingRecord<T> & { cached: T } {
+        return (
+            record.scope === "singleton" &&
+            "cached" in record &&
+            typeof record.cached !== "undefined"
+        );
+    }
+
+    protected resolveClass<T>(concrete: ContainerClass<T>): T {
+        this.assertNotResolving(concrete);
         this.resolving.add(concrete);
 
         try {
-            const paramTypes =
-                (metadataReflect.getMetadata?.(
-                    "design:paramtypes",
-                    concrete,
-                ) as Array<ContainerIdentifier | undefined> | undefined) ?? [];
+            const paramTypes = readConstructorParamTypes(concrete);
             const injectTokens = readInjectTokens(concrete);
-            const args = paramTypes.map((designType, index) => {
-                const token = injectTokens.get(index) ?? designType;
-                if (!token) {
-                    throw new Error(
-                        `Cannot resolve parameter #${index} for [${concrete.name || "anonymous"}].`,
-                    );
-                }
-
-                return this.make(token);
-            });
+            const args = paramTypes.map((designType, index) =>
+                this.resolveParameter(concrete, injectTokens, designType, index),
+            );
 
             return new concrete(...args);
         } finally {
             this.resolving.delete(concrete);
         }
+    }
+
+    protected assertNotResolving(concrete: ContainerClass): void {
+        if (this.resolving.has(concrete)) {
+            throw new Error(
+                `Circular dependency detected while resolving [${concrete.name || "anonymous"}].`,
+            );
+        }
+    }
+
+    protected resolveParameter(
+        concrete: ContainerClass,
+        injectTokens: Map<number, ContainerIdentifier>,
+        designType: ContainerIdentifier | undefined,
+        index: number,
+    ): unknown {
+        const token = injectTokens.get(index) ?? designType;
+        if (!token) {
+            throw new Error(
+                `Cannot resolve parameter #${index} for [${concrete.name || "anonymous"}].`,
+            );
+        }
+
+        return this.make(token);
     }
 }

@@ -4,9 +4,21 @@ import InversifyContainer from "@/container/adapters/inversify";
 import BuiltinContainer from "@/container/adapters/builtin";
 import { Application } from "@/foundation/application";
 import { applicationTestingHelpers } from "@/foundation/application_test.helpers";
+import {
+  makeFromCurrentApplication,
+  setCurrentApplicationContainer,
+} from "@/foundation/current-application";
 import ServiceProvider from "@/support/service-provider";
 
 const reactContextValues = new Map<object, unknown>();
+function normalizeChildren(children: unknown[]): unknown {
+  if (children.length === 0) {
+    return undefined;
+  }
+
+  return children.length === 1 ? children[0] : children;
+}
+
 const reactModule = {
   createContext<T>(defaultValue: T) {
     const context = {
@@ -28,10 +40,7 @@ const reactModule = {
     if (typeof type === "function") {
       return type({
         ...(props ?? {}),
-        children:
-          children.length === 0 ? undefined
-          : children.length === 1 ? children[0]
-          : children,
+        children: normalizeChildren(children),
       });
     }
     return { type, props: { ...(props ?? {}), children } };
@@ -87,6 +96,14 @@ describe("Application", () => {
 
   test("make throws when container is not initialized", () => {
     expect(() => Application.make("config")).toThrow(
+      "Application container is not available. Call run() first.",
+    );
+  });
+
+  test("current application helper throws when container is not initialized", () => {
+    setCurrentApplicationContainer(null);
+
+    expect(() => makeFromCurrentApplication("config")).toThrow(
       "Application container is not available. Call run() first.",
     );
   });

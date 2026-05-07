@@ -36,17 +36,16 @@ export default class CacheManager implements Adapter {
         const baseDrivers = CacheManager.defaultDrivers();
         const configured =
             config.get<Record<string, unknown>>("cache.stores", {}) ?? {};
-        if (!isRecord(configured) || Object.keys(configured).length === 0) {
+        if (hasNoConfiguredStores(configured)) {
             return baseDrivers;
         }
 
-        const stores: Record<string, CacheStore> = {};
-        for (const [name, storeConfig] of Object.entries(configured)) {
-            const driver = resolveDriver(storeConfig, name);
-            stores[name] = baseDrivers[driver] ?? baseDrivers.memory;
-        }
-
-        return stores;
+        return Object.fromEntries(
+            Object.entries(configured).map(([name, storeConfig]) => {
+                const driver = resolveDriver(storeConfig, name);
+                return [name, baseDrivers[driver] ?? baseDrivers.memory];
+            }),
+        );
     }
 
     protected static defaultDrivers(): Record<string, CacheStore> {
@@ -103,6 +102,10 @@ export default class CacheManager implements Adapter {
     keys(): Promise<string[]> {
         return this.store().keys();
     }
+}
+
+function hasNoConfiguredStores(value: unknown): boolean {
+    return !isRecord(value) || Object.keys(value).length === 0;
 }
 
 function firstStoreName(stores: Record<string, CacheStore>): string {

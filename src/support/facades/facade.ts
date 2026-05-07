@@ -1,4 +1,5 @@
-import { Application } from "../../foundation/application";
+import type { ContainerIdentifier } from "../../container/contract";
+import { makeFromCurrentApplication } from "../../foundation/current-application";
 
 // Module-level state shared by all facades.
 const macroRegistry = new Map<
@@ -171,7 +172,7 @@ function resolveInstance<T>(accessor: string): T {
         return resolvedInstances.get(accessor) as T;
     }
 
-    const instance = Application.make<T>(accessor);
+    const instance = makeFromCurrentApplication<T>(accessor);
     resolvedInstances.set(accessor, instance);
     return instance;
 }
@@ -190,7 +191,7 @@ export default abstract class Facade {
     }
 
     static clearResolvedInstance(
-        name: Parameters<typeof Application.make>[0],
+        name: ContainerIdentifier<unknown>,
     ): void {
         resolvedInstances.delete(name);
     }
@@ -206,7 +207,7 @@ export default abstract class Facade {
             return resolvedInstances.get(accessor) as T;
         }
 
-        const instance = Application.make<T>(accessor);
+        const instance = makeFromCurrentApplication<T>(accessor);
         resolvedInstances.set(accessor, instance);
         return instance;
     }

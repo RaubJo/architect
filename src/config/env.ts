@@ -1,5 +1,15 @@
 export type EnvValue = string | number | boolean | null;
 type EnvMap = Record<string, EnvValue | undefined>;
+const normalizedEnvValues: Record<string, EnvValue> = {
+    "(empty)": "",
+    "(false)": false,
+    "(null)": null,
+    "(true)": true,
+    empty: "",
+    false: false,
+    null: null,
+    true: true,
+};
 
 function normalizeEnvValue(value: EnvValue | undefined): EnvValue | undefined {
     if (typeof value !== "string") {
@@ -7,23 +17,9 @@ function normalizeEnvValue(value: EnvValue | undefined): EnvValue | undefined {
     }
 
     const normalized = value.trim().toLowerCase();
-    if (normalized === "true" || normalized === "(true)") {
-        return true;
-    }
-
-    if (normalized === "false" || normalized === "(false)") {
-        return false;
-    }
-
-    if (normalized === "null" || normalized === "(null)") {
-        return null;
-    }
-
-    if (normalized === "empty" || normalized === "(empty)") {
-        return "";
-    }
-
-    return value;
+    return normalized in normalizedEnvValues ?
+            normalizedEnvValues[normalized]
+        :   value;
 }
 
 function resolveProcessEnv(): EnvMap {

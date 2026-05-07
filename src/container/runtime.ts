@@ -54,53 +54,70 @@ export function readPackageJsonCandidates(
 ): PackageJsonLike[] {
     const testValue = testOptions?.packageJson;
 
-    if (typeof testValue === "function") {
-        const value = testValue();
-        return Array.isArray(value) ? value : [value];
-    }
-    if (testValue) {
-        return Array.isArray(testValue) ? testValue : [testValue];
+    const configuredPackages = normalizePackageJsonCandidates(testValue);
+    if (configuredPackages) {
+        return configuredPackages;
     }
 
-    const viteGlob = (
-        import.meta as ImportMeta & {
-            glob?: GlobLoader;
-        }
-    ).glob;
-    const testGlob = testOptions?.packageJsonGlob;
-    const glob =
-        typeof viteGlob === "function" ? viteGlob
-        : typeof testGlob === "function" ? testGlob
-        : null;
+    const glob = resolvePackageJsonGlob(testOptions);
     if (!glob) {
         return [];
     }
 
     const modules = glob("/package.json", { eager: true });
     return Object.values(modules)
-        .map((value) => {
-            if (
-                value &&
-                typeof value === "object" &&
-                "default" in (value as Record<string, unknown>)
-            ) {
-                return (value as { default: unknown })
-                    .default as PackageJsonLike;
-            }
-            return value as PackageJsonLike;
-        })
+        .map(readPackageJsonModule)
         .filter((value) => Boolean(value && typeof value === "object"));
+}
+
+function normalizePackageJsonCandidates(
+    value: ContainerRuntimeTestOptions["packageJson"],
+): PackageJsonLike[] | null {
+    const packageJson = typeof value === "function" ? value() : value;
+    if (!packageJson) {
+        return null;
+    }
+
+    return Array.isArray(packageJson) ? packageJson : [packageJson];
+}
+
+function resolvePackageJsonGlob(
+    testOptions?: ContainerRuntimeTestOptions,
+): GlobLoader | null {
+    const viteGlob = (
+        import.meta as ImportMeta & {
+            glob?: GlobLoader;
+        }
+    ).glob;
+    if (typeof viteGlob === "function") {
+        return viteGlob;
+    }
+
+    const testGlob = testOptions?.packageJsonGlob;
+    return typeof testGlob === "function" ? testGlob : null;
+}
+
+function readPackageJsonModule(value: unknown): PackageJsonLike {
+    if (
+        value &&
+        typeof value === "object" &&
+        "default" in (value as Record<string, unknown>)
+    ) {
+        return (value as { default: unknown }).default as PackageJsonLike;
+    }
+
+    return value as PackageJsonLike;
 }
 
 export function packageJsonHasDependency(
     packageJson: PackageJsonLike,
     dependency: string,
 ): boolean {
-    return Boolean(
-        packageJson.dependencies?.[dependency] ||
-            packageJson.devDependencies?.[dependency] ||
-            packageJson.peerDependencies?.[dependency],
-    );
+    return [
+        packageJson.dependencies,
+        packageJson.devDependencies,
+        packageJson.peerDependencies,
+    ].some((dependencies) => Boolean(dependencies?.[dependency]));
 }
 
 export function readContainerFactoryRegistry(
@@ -125,28 +142,46 @@ export function createRuntimeContainer(
         return options.factory();
     }
 
-    if (options.adapter === "builtin") {
+    if (shouldUseBuiltinAdapter(options)) {
         return new BuiltinContainer();
     }
 
-    const inversifyFactory =
-        readContainerFactoryRegistry(options.test).inversify;
-    const shouldUseInversify =
-        options.adapter === "inversify" ||
-        (options.adapter === "auto" &&
-            hasInversifyDependency(options.test));
+    return createInversifyOrFallbackContainer(options);
+}
 
-    if (shouldUseInversify) {
-        if (typeof inversifyFactory === "function") {
-            return inversifyFactory();
-        }
+function shouldUseBuiltinAdapter(
+    options: ResolvedContainerRuntimeOptions,
+): boolean {
+    return (
+        options.adapter === "builtin" || !shouldUseInversifyAdapter(options)
+    );
+}
 
-        if (options.adapter === "inversify") {
-            throw new Error(
-                "Inversify adapter is not registered. Provide container.factory or set test.containerFactoryRegistry.inversify.",
-            );
-        }
+function createInversifyOrFallbackContainer(
+    options: ResolvedContainerRuntimeOptions,
+): ContainerContract {
+    const factory = readContainerFactoryRegistry(options.test).inversify;
+    if (typeof factory === "function") {
+        return factory();
     }
 
+    assertOptionalInversifyFallback(options.adapter);
     return new BuiltinContainer();
+}
+
+function assertOptionalInversifyFallback(adapter: ContainerAdapter): void {
+    if (adapter === "inversify") {
+        throw new Error(
+            "Inversify adapter is not registered. Provide container.factory or set test.containerFactoryRegistry.inversify.",
+        );
+    }
+}
+
+function shouldUseInversifyAdapter(
+    options: ResolvedContainerRuntimeOptions,
+): boolean {
+    return (
+        options.adapter === "inversify" ||
+        (options.adapter === "auto" && hasInversifyDependency(options.test))
+    );
 }

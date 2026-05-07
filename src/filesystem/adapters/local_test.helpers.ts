@@ -5,7 +5,7 @@ function fileNameWithoutExtension(path: string): string {
 
 function normalizeBasePath(basePath: string): string {
     const trimmed = basePath.trim();
-    if (!trimmed || trimmed === "." || trimmed === "./" || trimmed === "/") {
+    if (isRootBasePath(trimmed)) {
         return "";
     }
 
@@ -17,30 +17,37 @@ function normalizeBasePath(basePath: string): string {
     return normalized;
 }
 
+function isRootBasePath(basePath: string): boolean {
+    return ["", ".", "./", "/"].includes(basePath);
+}
+
 function isPathInConfigDirectories(path: string, basePath: string): boolean {
     const normalizedPath = path.replace(/\\/g, "/");
     const trimmedPath = normalizedPath.replace(/^\/+/, "").replace(/^\.\//, "");
     const normalizedBasePath = normalizeBasePath(basePath);
+    const targets = configDirectoryTargets(normalizedBasePath);
 
-    const targets =
-        normalizedBasePath ?
-            [
-                `${normalizedBasePath}/config/`,
-                `${normalizedBasePath}/src/config/`,
-            ]
+    return targets.some((target) =>
+        matchesConfigDirectory(normalizedPath, trimmedPath, target),
+    );
+}
+
+function configDirectoryTargets(basePath: string): string[] {
+    return basePath ?
+            [`${basePath}/config/`, `${basePath}/src/config/`]
         :   ["config/", "src/config/"];
+}
 
-    for (const target of targets) {
-        if (
-            trimmedPath.startsWith(target) ||
-            normalizedPath.includes(`/${target}`) ||
-            normalizedPath.endsWith(`/${target.slice(0, -1)}`)
-        ) {
-            return true;
-        }
-    }
-
-    return false;
+function matchesConfigDirectory(
+    normalizedPath: string,
+    trimmedPath: string,
+    target: string,
+): boolean {
+    return (
+        trimmedPath.startsWith(target) ||
+        normalizedPath.includes(`/${target}`) ||
+        normalizedPath.endsWith(`/${target.slice(0, -1)}`)
+    );
 }
 
 export const localAdapterTestingHelpers = {

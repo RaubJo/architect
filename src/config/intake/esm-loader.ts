@@ -17,17 +17,18 @@ function loadConfigFromModules(modules: Record<string, unknown>): ConfigItems {
 
   for (const [path, loaded] of Object.entries(modules)) {
     const key = fileNameWithoutExtension(path);
-    if (key === "index") {
-      continue;
-    }
-
-    const module = loaded as ConfigModule;
-    if (module && "default" in module && module.default !== undefined) {
-      discovered[key] = module.default;
+    const value = readConfigModuleDefault(loaded);
+    if (key !== "index" && value !== undefined) {
+      discovered[key] = value;
     }
   }
 
   return discovered;
+}
+
+function readConfigModuleDefault(loaded: unknown): unknown {
+  const module = loaded as ConfigModule;
+  return module && "default" in module ? module.default : undefined;
 }
 
 function cloneItems(items: ConfigItems): ConfigItems {
@@ -38,6 +39,16 @@ function cloneItems(items: ConfigItems): ConfigItems {
 }
 
 function loadEsmConfigModules(basePath: string): Record<string, unknown> {
+  const glob = resolveConfigGlob();
+  if (!glob) {
+    return {};
+  }
+
+  const modules = glob(configPatternForBasePath(basePath), { eager: true });
+  return modules as Record<string, unknown>;
+}
+
+function resolveConfigGlob(): GlobLoader | null {
   const testGlob = (
     globalThis as {
       __iocConfigGlobForTests?: GlobLoader;
@@ -55,20 +66,17 @@ function loadEsmConfigModules(basePath: string): Record<string, unknown> {
     : typeof viteGlob === "function" ? viteGlob
     : null;
 
-  if (typeof glob !== "function") {
-    return {};
-  }
+  return glob;
+}
 
-  const configPattern = basePath.endsWith("/")
+function configPatternForBasePath(basePath: string): string {
+  return basePath.endsWith("/")
     ? `${basePath}config/**/*.ts`
     : `${basePath}/config/**/*.ts`;
-  const modules = glob(configPattern, { eager: true });
-
-  return modules as Record<string, unknown>;
 }
 
 export class EsmConfigLoader implements ConfigLoader {
-  async load(basePath: string, staticItems: ConfigItems = {}): Promise<ConfigItems> {
+  load(basePath: string, staticItems: ConfigItems = {}): ConfigItems {
     // Only load ESM modules when no static items are provided.
     // When explicit config is passed, ESM loading is skipped.
     const shouldLoadEsm = Object.keys(staticItems).length === 0;

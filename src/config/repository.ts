@@ -24,15 +24,21 @@ function dataGet(
     let cursor: unknown = source;
 
     for (const segment of segments) {
-        if (isPlainObject(cursor) && segment in cursor) {
-            cursor = cursor[segment];
-            continue;
+        if (!hasDataKey(cursor, segment)) {
+            return resolveDefault(defaultValue);
         }
 
-        return resolveDefault(defaultValue);
+        cursor = cursor[segment];
     }
 
     return cursor;
+}
+
+function hasDataKey(
+    value: unknown,
+    key: string,
+): value is Record<string, unknown> {
+    return isPlainObject(value) && key in value;
 }
 
 function dataSet(
@@ -81,7 +87,7 @@ function dataForget(target: Record<string, unknown>, path: string): void {
     }
 }
 
-export default class ConfigRepository {
+class ConfigRepository {
     protected items: ConfigItems;
 
     constructor(items: ConfigItems = {}) {
@@ -240,3 +246,6 @@ export default class ConfigRepository {
         dataForget(this.items, key);
     }
 }
+
+export { ConfigRepository };
+export default ConfigRepository;

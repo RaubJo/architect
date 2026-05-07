@@ -240,6 +240,24 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(await Storage.get("y")).toBe(2);
     });
 
+    test("facade helper methods tolerate missing optional manager methods", () => {
+        const Plain = createFacade("plain") as {
+            use: () => unknown;
+            store: () => unknown;
+            drv: () => unknown;
+            value: string;
+        };
+        const container = new InversifyContainer();
+        container.bind("plain").toConstantValue({ value: "raw" });
+        setContainer(container);
+
+        expect(Plain.use()).toBe(Plain);
+        expect(Plain.store()).toBeUndefined();
+        expect(Plain.drv()).toBeUndefined();
+        expect(Plain.value).toBe("raw");
+        expect("value" in Plain).toBe(true);
+    });
+
     test("clearFacadeCache clears resolved instances", () => {
         const container = new InversifyContainer();
         const repository = new ConfigRepository({ app: { name: "First" } });
@@ -276,6 +294,16 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(() => Config.callFacadeMethod("nonExistent")).toThrow(
             "Method [nonExistent] does not exist on resolved facade instance.",
         );
+    });
+
+    test("callFacadeMethod dispatches registered macros", () => {
+        const container = new InversifyContainer();
+        container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "macro" } }));
+        setContainer(container);
+
+        Config.macro("configuredName", (instance) => instance.get("app.name"));
+
+        expect(Config.callFacadeMethod("configuredName")).toBe("macro");
     });
 });
 

@@ -168,4 +168,23 @@ describe("Svelte runtime and renderer", () => {
     expect(destroyed).toBe(1);
     svelteState.useLegacyApi = false;
   });
+
+  test("supports legacy component cleanup when no destroy hook exists", () => {
+    svelteState.useLegacyApi = true;
+    (globalThis as { document: { getElementById: (id: string) => object | null } }).document = {
+      getElementById: () => ({}),
+    };
+
+    class FakeComponent {}
+
+    const renderer = new SvelteRenderer();
+    const cleanup = renderer.render({
+      RootComponent: FakeComponent,
+      container: new InversifyContainer(),
+      rootElementId: "root",
+    });
+
+    expect(() => cleanup()).not.toThrow();
+    svelteState.useLegacyApi = false;
+  });
 });

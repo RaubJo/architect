@@ -1,5 +1,5 @@
 import CacheManager from "../cache/manager";
-import { registerGlobalEnv } from "../config/env/register";
+import { registerGlobalEnv } from "../config/env";
 import ConfigRepository, { type ConfigItems } from "../config/repository";
 import { createConfig } from "../config/intake";
 import type {
@@ -20,9 +20,17 @@ import ServiceProvider, {
 } from "../support/service-provider";
 import { registerGlobalStr } from "../support/str";
 import { clearFacadeCache } from "../support/facades/facade";
+import {
+    getCurrentApplicationContainer,
+    setLegacyApplicationContainerReader,
+    setCurrentApplicationContainer,
+} from "./current-application";
 
 type StartupHandler = (context: ServiceProviderContext) => void | Cleanup;
 type ServiceRegistrar = (context: ServiceProviderContext) => void | Cleanup;
+type ApplicationRunContext = ServiceProviderContext & {
+    cleanupTasks: Cleanup[];
+};
 
 export type ApplicationConfigureOptions = {
     basePath?: string;
@@ -96,13 +104,14 @@ export class Application {
     }
 
     static make<T>(identifier: ContainerIdentifier<T>): T {
-        if (!Application.container) {
+        const container = getCurrentApplicationContainer();
+        if (!container) {
             throw new Error(
                 "Application container is not available. Call run() first.",
             );
         }
 
-        return Application.container.make<T>(identifier);
+        return container.make<T>(identifier);
     }
 
     withProviders(providers: ServiceProvider[]) {
@@ -138,15 +147,7 @@ export class Application {
         return createRuntimeContainer(this.options.container);
     }
 
-    run() {
-        const container = this.createContainer();
-
-        Application.container = container;
-
-        clearFacadeCache();
-
-        const context = { container };
-        const cleanupTasks: Cleanup[] = [];
+    protected registerCoreServices(container: ContainerContract): void {
         const configRepository = this.getConfigItems();
         const storageManager = StorageManager.fromConfig(configRepository);
         const cacheManager = CacheManager.fromConfig(configRepository);
@@ -157,60 +158,91 @@ export class Application {
         container.instance(StorageManager, storageManager);
         container.instance("cache", cacheManager);
         container.instance(CacheManager, cacheManager);
+    }
 
+    protected rememberCleanup(
+        cleanupTasks: Cleanup[],
+        cleanup: void | Cleanup,
+    ): void {
+        if (typeof cleanup === "function") {
+            cleanupTasks.push(cleanup);
+        }
+    }
+
+    protected registerProviders(context: ApplicationRunContext): void {
         for (const provider of this.providers) {
             if (typeof provider.register === "function") {
-                const cleanup = provider.register(context);
-                if (typeof cleanup === "function") {
-                    cleanupTasks.push(cleanup);
-                }
-            }
-        }
-
-        for (const registerServices of this.serviceRegistrars) {
-            const cleanup = registerServices(context);
-            if (typeof cleanup === "function") {
-                cleanupTasks.push(cleanup);
-            }
-        }
-
-        for (const provider of this.providers) {
-            if (typeof provider.boot === "function") {
-                const cleanup = provider.boot(context);
-                if (typeof cleanup === "function") {
-                    cleanupTasks.push(cleanup);
-                }
-            }
-        }
-
-        for (const startupHandler of this.startupHandlers) {
-            const cleanup = startupHandler(context);
-            if (typeof cleanup === "function") {
-                cleanupTasks.push(cleanup);
-            }
-        }
-
-        let rendererCleanup: Cleanup = () => {};
-
-        if (this.renderer) {
-            if (!this.RootComponent) {
-                throw new Error(
-                    "Root component is required when using a custom renderer.",
+                this.rememberCleanup(
+                    context.cleanupTasks,
+                    provider.register(context),
                 );
             }
+        }
+    }
 
-            rendererCleanup =
-                this.renderer.render({
-                    ...context,
-                    RootComponent: this.RootComponent,
-                    rootElementId: this.rootElementId,
-                }) ?? rendererCleanup;
-        } else if (this.RootComponent) {
+    protected registerServices(context: ApplicationRunContext): void {
+        for (const registerServices of this.serviceRegistrars) {
+            this.rememberCleanup(
+                context.cleanupTasks,
+                registerServices(context),
+            );
+        }
+    }
+
+    protected bootProviders(context: ApplicationRunContext): void {
+        for (const provider of this.providers) {
+            if (typeof provider.boot === "function") {
+                this.rememberCleanup(context.cleanupTasks, provider.boot(context));
+            }
+        }
+    }
+
+    protected runStartupHandlers(context: ApplicationRunContext): void {
+        for (const startupHandler of this.startupHandlers) {
+            this.rememberCleanup(
+                context.cleanupTasks,
+                startupHandler(context),
+            );
+        }
+    }
+
+    protected renderRoot(context: ServiceProviderContext): Cleanup {
+        if (this.renderer) {
+            return this.renderWithConfiguredRenderer(context);
+        }
+
+        if (this.RootComponent) {
             throw new Error(
                 "Renderer is required when root component is set. Install a renderer feature (react/solid/svelte/vue) and call withRenderer(...).",
             );
         }
 
+        return () => {};
+    }
+
+    protected renderWithConfiguredRenderer(
+        context: ServiceProviderContext,
+    ): Cleanup {
+        if (!this.renderer || !this.RootComponent) {
+            throw new Error(
+                "Root component is required when using a custom renderer.",
+            );
+        }
+
+        return (
+            this.renderer.render({
+                ...context,
+                RootComponent: this.RootComponent,
+                rootElementId: this.rootElementId,
+            }) ?? (() => {})
+        );
+    }
+
+    protected createStopHandler(
+        container: ContainerContract,
+        rendererCleanup: Cleanup,
+        cleanupTasks: Cleanup[],
+    ): Cleanup {
         const stop: Cleanup = () => {
             rendererCleanup();
 
@@ -222,10 +254,35 @@ export class Application {
 
             container.flush();
 
-            if (Application.container === container) {
+            if (getCurrentApplicationContainer() === container) {
                 Application.container = null;
+                setCurrentApplicationContainer(null);
             }
         };
+
+        return stop;
+    }
+
+    run() {
+        const container = this.createContainer();
+
+        Application.container = container;
+        setCurrentApplicationContainer(container);
+        clearFacadeCache();
+        this.registerCoreServices(container);
+
+        const context = { container, cleanupTasks: [] };
+        this.registerProviders(context);
+        this.registerServices(context);
+        this.bootProviders(context);
+        this.runStartupHandlers(context);
+
+        const rendererCleanup = this.renderRoot(context);
+        const stop = this.createStopHandler(
+            container,
+            rendererCleanup,
+            context.cleanupTasks,
+        );
 
         window.addEventListener("beforeunload", stop, { once: true });
 
@@ -235,3 +292,5 @@ export class Application {
         };
     }
 }
+
+setLegacyApplicationContainerReader(() => Application.container);

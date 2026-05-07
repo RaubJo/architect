@@ -4,6 +4,14 @@ import InversifyContainer from "@/container/adapters/inversify";
 
 const reactContextValues = new Map<object, unknown>();
 let forcedReactContextValue: unknown = undefined;
+function normalizeChildren(children: unknown[]): unknown {
+  if (children.length === 0) {
+    return undefined;
+  }
+
+  return children.length === 1 ? children[0] : children;
+}
+
 const reactModule = {
   createContext<T>(defaultValue: T) {
     const context = {
@@ -28,10 +36,7 @@ const reactModule = {
     if (typeof type === "function") {
       return type({
         ...(props ?? {}),
-        children:
-          children.length === 0 ? undefined
-          : children.length === 1 ? children[0]
-          : children,
+        children: normalizeChildren(children),
       });
     }
     return { type, props: { ...(props ?? {}), children } };

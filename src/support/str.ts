@@ -43,14 +43,10 @@ export default class Str {
         const source = ignoreCase ? haystack.toLowerCase() : haystack;
         const needles = Array.isArray(needle) ? needle : [needle];
 
-        for (const part of needles) {
+        return needles.some((part) => {
             const target = ignoreCase ? part.toLowerCase() : part;
-            if (source.includes(target)) {
-                return true;
-            }
-        }
-
-        return false;
+            return source.includes(target);
+        });
     }
 
     static startsWith(haystack: string, needle: string | string[]): boolean {

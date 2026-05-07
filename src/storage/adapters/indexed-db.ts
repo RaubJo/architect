@@ -16,9 +16,9 @@ export default class IndexedDbAdapter implements Adapter {
             fallback?: Adapter;
         } = {},
     ) {
-        this.factory = options.factory ?? globalThis.indexedDB ?? null;
-        this.name = options.name ?? "ioc-storage";
-        this.fallback = options.fallback ?? new MemoryStorageAdapter();
+        this.factory = resolveOpenFactory(options.factory);
+        this.name = resolveDatabaseName(options.name);
+        this.fallback = resolveFallbackAdapter(options.fallback);
         this.dbPromise = null;
     }
 
@@ -128,6 +128,18 @@ export default class IndexedDbAdapter implements Adapter {
             return normalized;
         });
     }
+}
+
+function resolveOpenFactory(factory?: OpenFactory | null): OpenFactory | null {
+    return factory ?? globalThis.indexedDB ?? null;
+}
+
+function resolveDatabaseName(name?: string): string {
+    return name ?? "ioc-storage";
+}
+
+function resolveFallbackAdapter(fallback?: Adapter): Adapter {
+    return fallback ?? new MemoryStorageAdapter();
 }
 
 async function actionFallback<T>(

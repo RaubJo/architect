@@ -10,7 +10,7 @@
     "scripts": {
         "test": "bun test",
         "test:coverage": "bun test --coverage",
-        "fix": "prettier -w ./src/**/*",
+        "fix": "biome -w ./src/**/*"
     },
     "exports": {
         ".": "./src/index.ts",
@@ -88,10 +88,8 @@
         "@types/react-dom": "^19.2.3",
         "bun-types": "^1.3.9",
         "fallow": "^2.66.1",
-        "prettier": "^3.8.1",
         "solid-js": "^1.9.0",
         "vue": "^3.5.13"
     },
-    "dependencies": {
-    }
+    "dependencies": {}
 }
