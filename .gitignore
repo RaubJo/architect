@@ -1,2 +1,13 @@
 /coverage
 /**/node_modules
+
+.*
+!.npmignore
+!.nvmrc
+!.prettierignore
+!.prettierrc
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key

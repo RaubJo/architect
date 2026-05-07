@@ -1,7 +1,7 @@
 import CacheManager from "../cache/manager";
-import { cloneConfigItems } from "../config/clone";
-import { registerGlobalEnv } from "../config/env";
+import { registerGlobalEnv } from "../config/env/register";
 import ConfigRepository, { type ConfigItems } from "../config/repository";
+import { createConfig } from "../config/intake";
 import type {
     ContainerContract,
     ContainerIdentifier,
@@ -74,9 +74,9 @@ export class Application {
         return [];
     }
 
-    protected getConfigItems(): ConfigItems {
-        // Give each application instance its own mutable repository data.
-        return cloneConfigItems(this.options.config);
+    protected getConfigItems(): ConfigRepository {
+        // Give each application instance its own mutable repository.
+        return createConfig(this.options.basePath, this.options.config);
     }
 
     static clearConfigCache(_basePath?: string): void {}
@@ -147,7 +147,7 @@ export class Application {
 
         const context = { container };
         const cleanupTasks: Cleanup[] = [];
-        const configRepository = new ConfigRepository(this.getConfigItems());
+        const configRepository = this.getConfigItems();
         const storageManager = StorageManager.fromConfig(configRepository);
         const cacheManager = CacheManager.fromConfig(configRepository);
 

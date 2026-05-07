@@ -29,6 +29,23 @@ describe("BuiltinContainer adapter", () => {
   Reflect.defineMetadata("design:paramtypes", [Object], ServiceWithTokenInjection);
   inject("config")(ServiceWithTokenInjection, undefined, 0);
 
+  test("inject decorator sets metadata correctly", () => {
+    class TestTarget {
+      constructor(public readonly value: unknown) {}
+    }
+
+    inject("test.token")(TestTarget, undefined, 0);
+
+    const metadata = (
+      Reflect as typeof Reflect & {
+        getMetadata?: (key: string, target: object) => Record<number, unknown> | undefined;
+      }
+    ).getMetadata?.("ioc:inject.tokens", TestTarget);
+
+    expect(metadata).toBeTruthy();
+    expect(metadata?.[0]).toBe("test.token");
+  });
+
   test("supports bind/get compatibility", () => {
     const container = new BuiltinContainer();
     container.bind("name").toConstantValue("ioc");

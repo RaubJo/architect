@@ -21,6 +21,7 @@ export type {
   RootComponent,
 } from "./renderers/contract";
 export { default as ConfigRepository } from "./config/repository";
+export { createConfig } from "./config/intake";
 export { env } from "./config/env";
 export { default as Str } from "./support/str";
 export { default as ConfigFacade } from "./support/facades/config";
@@ -36,7 +37,5 @@ export type { Adapter as StorageAdapter } from "./storage/adapters/contract";
 export { default as MemoryStorageAdapter } from "./storage/adapters/memory";
 export { default as LocalStorageAdapter } from "./storage/adapters/local-storage";
 export { default as IndexedDbAdapter } from "./storage/adapters/indexed-db";
-export { FileSystem } from "./filesystem/filesystem";
-export { default as LocalAdapter } from "./filesystem/adapters/local";
 export { default as SvelteRenderer } from "./renderers/adapters/svelte";
 export { default as VueRenderer } from "./renderers/adapters/vue";
