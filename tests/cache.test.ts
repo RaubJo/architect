@@ -89,6 +89,20 @@ describe("CacheManager", () => {
 
     expect(manager.store("memory")).toBeTruthy();
   });
+
+  test("resolveDriver falls back to store name when store config is not a record", () => {
+    const manager = CacheManager.fromConfig(
+      new ConfigRepository({
+        cache: {
+          stores: {
+            myStore: "not-an-object",
+          },
+        },
+      }),
+    );
+
+    expect(manager.store("myStore")).toBeTruthy();
+  });
 });
 
 describe("Cache", () => {

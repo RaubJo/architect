@@ -681,4 +681,24 @@ describe("Collection", () => {
         expect(new Collection([1, 2, 3]).replace([10, 20]).all()).toEqual([10, 20, 3]);
         expect(new Collection([1, 2]).replace([10, 20, 30]).all()).toEqual([10, 20, 30]);
     });
+
+    test("toArray() is an alias for all()", () => {
+        expect(new Collection([1, 2, 3]).toArray()).toEqual([1, 2, 3]);
+    });
+
+    test("pipeInto() passes the collection to a class constructor", () => {
+        class Wrapper<T> {
+            constructor(public col: Collection<T>) {}
+            doubled(): number[] {
+                return (this.col.all() as number[]).map((n) => n * 2);
+            }
+        }
+        const result = new Collection([1, 2, 3]).pipeInto(Wrapper);
+        expect(result.doubled()).toEqual([2, 4, 6]);
+    });
+
+    test("sortKeys() returns a new collection with same items", () => {
+        const result = new Collection([3, 1, 2]).sortKeys();
+        expect(result.all()).toEqual([3, 1, 2]);
+    });
 });

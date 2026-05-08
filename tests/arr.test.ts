@@ -263,4 +263,69 @@ describe("Arr", () => {
         expect(typeof Arr.Arr.wrap).toBe("function");
         expect(Arr.Arr.wrap([1, 2])).toEqual([1, 2]);
     });
+
+    test("mapSpread spreads array items as callback arguments", () => {
+        const result = Arr.mapSpread([[1, 2], [3, 4]], (a, b) => (a as number) + (b as number));
+        expect(result).toEqual([3, 7]);
+    });
+
+    test("push sets a nested key on an object", () => {
+        const obj: Record<string, unknown> = { a: { b: 1 } };
+        const result = Arr.push(obj, "a.c", 2);
+        expect(result).toBe(obj);
+        expect(obj).toEqual({ a: { b: 1, c: 2 } });
+    });
+
+    test("random returns a single item without count", () => {
+        const arr = [1, 2, 3, 4, 5];
+        const item = Arr.random(arr);
+        expect(arr).toContain(item);
+    });
+
+    test("random returns an array of N items with count", () => {
+        const arr = [1, 2, 3, 4, 5];
+        const items = Arr.random(arr, 3) as number[];
+        expect(items).toHaveLength(3);
+        for (const item of items) expect(arr).toContain(item);
+    });
+
+    test("shuffle returns a shuffled copy without mutating original", () => {
+        const original = [1, 2, 3, 4, 5];
+        const shuffled = Arr.shuffle(original);
+        expect(shuffled).toHaveLength(5);
+        expect([...shuffled].sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5]);
+        expect(original).toEqual([1, 2, 3, 4, 5]);
+    });
+
+    test("sortDesc with key sorts objects by key descending", () => {
+        const result = Arr.sortDesc([{ n: 1 }, { n: 3 }, { n: 2 }], "n");
+        expect(result.map((i) => i.n)).toEqual([3, 2, 1]);
+    });
+
+    test("sortDesc covers equal-value branch (returns 0)", () => {
+        const result = Arr.sortDesc([{ n: 1 }, { n: 1 }], "n");
+        expect(result.map((i) => i.n)).toEqual([1, 1]);
+    });
+
+    test("sortRecursive sorts strings", () => {
+        expect(Arr.sortRecursive(["banana", "apple", "cherry"])).toEqual([
+            "apple", "banana", "cherry",
+        ]);
+    });
+
+    test("sortRecursive sorts numbers", () => {
+        expect(Arr.sortRecursive([3, 1, 2])).toEqual([1, 2, 3]);
+    });
+
+    test("sortRecursive sorts nested arrays recursively", () => {
+        const result = Arr.sortRecursive([[3, 1, 2], [6, 4, 5]]);
+        expect(result).toEqual([[1, 2, 3], [4, 5, 6]]);
+    });
+
+    test("sortRecursive sorts object keys and nested arrays", () => {
+        const result = Arr.sortRecursive([{ z: [3, 1], a: 2 }]);
+        const obj = result[0] as { a: number; z: number[] };
+        expect(Object.keys(obj)).toEqual(["a", "z"]);
+        expect(obj.z).toEqual([1, 3]);
+    });
 });

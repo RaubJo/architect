@@ -309,6 +309,10 @@ describe("LazyCollection", () => {
         expect(LazyCollection.make([1, 2, 3]).values().all()).toEqual([1, 2, 3]);
     });
 
+    test("toArray() is an alias for all()", () => {
+        expect(LazyCollection.make([1, 2, 3]).toArray()).toEqual([1, 2, 3]);
+    });
+
     // ── Iterable protocol ─────────────────────────────────────────────────────
 
     test("is iterable via for-of", () => {

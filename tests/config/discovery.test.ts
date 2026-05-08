@@ -39,4 +39,31 @@ describe("Config Discovery", () => {
 
     expect(loader.load("./", { direct: true })).toEqual({ direct: true });
   });
+
+  it("cloneItems falls back to JSON when structuredClone is unavailable", () => {
+    const orig = (globalThis as { structuredClone?: unknown }).structuredClone;
+    (globalThis as { structuredClone?: unknown }).structuredClone = undefined;
+    try {
+      const config = createConfig("./", { fallback: { works: true } });
+      expect(config.get("fallback.works")).toBe(true);
+    } finally {
+      (globalThis as { structuredClone?: unknown }).structuredClone = orig;
+    }
+  });
+
+  it("configPatternForBasePath works without trailing slash", () => {
+    let capturedPattern: string | undefined;
+    const origGlob = (globalThis as { __iocConfigGlobForTests?: unknown }).__iocConfigGlobForTests;
+    (globalThis as { __iocConfigGlobForTests?: unknown }).__iocConfigGlobForTests = (pattern: string) => {
+      capturedPattern = pattern;
+      return {};
+    };
+    try {
+      const loader = new EsmConfigLoader();
+      loader.load("/app");
+      expect(capturedPattern).toBe("/app/config/**/*.ts");
+    } finally {
+      (globalThis as { __iocConfigGlobForTests?: unknown }).__iocConfigGlobForTests = origGlob;
+    }
+  });
 });

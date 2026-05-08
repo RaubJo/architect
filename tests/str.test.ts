@@ -560,4 +560,26 @@ describe("Str helper", () => {
         expect(Str.wrap("value", '"')).toBe('"value"');
         expect(Str.wrap("value", "<", ">")).toBe("<value>");
     });
+
+    test("random falls back to Math.random when crypto.getRandomValues is unavailable", () => {
+        const origCrypto = globalThis.crypto;
+        (globalThis as { crypto?: unknown }).crypto = {};
+        try {
+            const r = Str.random(16);
+            expect(r).toHaveLength(16);
+        } finally {
+            (globalThis as { crypto?: unknown }).crypto = origCrypto;
+        }
+    });
+
+    test("wordWrap cuts long words when cutLongWords is true", () => {
+        const result = Str.wordWrap("superlongword", 5, "\n", true);
+        expect(result).toBe("super\nlongw\nord");
+    });
+
+    test("wordWrap cuts long word mid-string when cutLongWords is true", () => {
+        const result = Str.wordWrap("hi superlongword there", 5, "\n", true);
+        expect(result.split("\n")).toContain("super");
+        expect(result.split("\n")).toContain("hi");
+    });
 });
