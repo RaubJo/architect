@@ -47,6 +47,12 @@
         "./runtimes/svelte": "./src/runtimes/svelte.ts",
         "./runtimes/vue": "./src/runtimes/vue.ts",
         "./str": "./src/support/str.ts",
+        "./arr": "./src/support/arr.ts",
+        "./collection": "./src/support/collection.ts",
+        "./lazy-collection": "./src/support/lazy-collection.ts",
+        "./fluent": "./src/support/fluent.ts",
+        "./num": "./src/support/num.ts",
+        "./pipeline": "./src/support/pipeline.ts",
         "./service-provider": "./src/support/service-provider.ts",
         "./manager": "./src/support/manager.ts",
         "./facade": "./src/support/facades/facade.ts"

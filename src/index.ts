@@ -24,7 +24,13 @@ export type {
 export { default as ConfigRepository } from "./config/repository";
 export { createConfig } from "./config/discovery";
 export { env } from "./config/env";
-export { default as Str } from "./support/str";
+export { Str, registerGlobalStr } from "./support/str";
+export { Arr } from "./support/arr";
+export { Collection } from "./support/collection";
+export { LazyCollection } from "./support/lazy-collection";
+export { Fluent } from "./support/fluent";
+export { Num } from "./support/num";
+export { send as pipelineSend } from "./support/pipeline";
 export { default as ConfigFacade } from "./support/facades/config";
 export { default as Config } from "./support/facades/config";
 export { default as CacheManager } from "./cache/manager";

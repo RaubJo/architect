@@ -1,0 +1,61 @@
+import { describe, expect, test } from "bun:test";
+import { Fluent } from "@/support/fluent";
+
+describe("Fluent", () => {
+    test("get() reads top-level keys", () => {
+        const f = new Fluent({ name: "ioc", version: 1 });
+        expect(f.get("name")).toBe("ioc");
+        expect(f.get("version")).toBe(1);
+    });
+
+    test("get() reads dot-notation paths", () => {
+        const f = new Fluent({ db: { host: "localhost", port: 5432 } });
+        expect(f.get("db.host")).toBe("localhost");
+        expect(f.get("db.port")).toBe(5432);
+    });
+
+    test("get() returns defaultValue for missing paths", () => {
+        const f = new Fluent({ a: 1 });
+        expect(f.get("missing")).toBeNull();
+        expect(f.get("missing", "default")).toBe("default");
+        expect(f.get("a.b.c")).toBeNull();
+    });
+
+    test("set() writes top-level and nested keys", () => {
+        const f = new Fluent<Record<string, unknown>>({});
+        f.set("name", "ioc");
+        f.set("db.host", "localhost");
+        expect(f.get("name")).toBe("ioc");
+        expect(f.get("db.host")).toBe("localhost");
+    });
+
+    test("set() returns this for chaining", () => {
+        const f = new Fluent<Record<string, unknown>>({});
+        const result = f.set("a", 1).set("b", 2);
+        expect(result).toBe(f);
+        expect(f.get("a")).toBe(1);
+        expect(f.get("b")).toBe(2);
+    });
+
+    test("has() returns true for present, false for missing", () => {
+        const f = new Fluent({ name: "ioc" });
+        expect(f.has("name")).toBe(true);
+        expect(f.has("missing")).toBe(false);
+        expect(f.has("name.nested")).toBe(false);
+    });
+
+    test("toArray() returns a shallow copy", () => {
+        const attrs = { a: 1, b: 2 };
+        const f = new Fluent(attrs);
+        const arr = f.toArray();
+        expect(arr).toEqual({ a: 1, b: 2 });
+        expect(arr).not.toBe(attrs);
+    });
+
+    test("constructor copies attributes — mutations don't leak", () => {
+        const attrs: Record<string, unknown> = { a: 1 };
+        const f = new Fluent(attrs);
+        attrs["a"] = 999;
+        expect(f.get("a")).toBe(1);
+    });
+});
