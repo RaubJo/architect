@@ -43,7 +43,7 @@ An abstraction for ephemeral, non-persistent caching. Sits on top of a raw stora
 _Avoid_: cache store (use "CacheManager" or "cache driver")
 
 **Driver**:
-A named backend implementation registered with StorageManager or CacheManager. Built-in drivers: `memory`, `local`, `indexed`. Custom drivers will be registered from a ServiceProvider's `boot()` hook via `manager.extend(name, factory)` — not yet implemented.
+A named backend implementation registered with StorageManager or CacheManager. Built-in drivers: `memory`, `local`, `indexed`. Custom drivers are registered from a ServiceProvider's `boot()` hook via `manager.extend(name, factory)`, where the factory receives the ConfigRepository and returns an Adapter. Drivers are resolved lazily on first access and then cached.
 
 **Fallback chain**:
 The ordered list of drivers a Manager tries when the preferred driver is unavailable. Enables graceful degradation (e.g. IndexedDB → localStorage → memory) without consumer awareness.

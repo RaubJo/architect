@@ -48,6 +48,7 @@
         "./runtimes/vue": "./src/runtimes/vue.ts",
         "./str": "./src/support/str.ts",
         "./service-provider": "./src/support/service-provider.ts",
+        "./manager": "./src/support/manager.ts",
         "./facade": "./src/support/facades/facade.ts"
     },
     "peerDependencies": {

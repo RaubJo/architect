@@ -210,8 +210,8 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(await Storage.get("name")).toBe("ioc");
         expect(await Storage.has("name")).toBe(true);
         expect(await Storage.keys()).toEqual(["name"]);
-        expect(Storage.drv()).toBe(manager.drv());
-        expect(Storage.drv("memory")).toBe(manager.drv("memory"));
+        expect(Storage.driver()).toBe(manager.driver());
+        expect(Storage.driver("memory")).toBe(manager.driver("memory"));
         Storage.use("memory");
         await Storage.delete("name");
         expect(await Storage.get("name")).toBeNull();
@@ -240,7 +240,7 @@ describe("Proxy-based facade (createFacade)", () => {
         const Plain = createFacade("plain") as {
             use: () => unknown;
             store: () => unknown;
-            drv: () => unknown;
+            driver: () => unknown;
             value: string;
         };
         const container = new BuiltinContainer();
@@ -249,7 +249,7 @@ describe("Proxy-based facade (createFacade)", () => {
 
         expect(Plain.use()).toBe(Plain);
         expect(Plain.store()).toBeUndefined();
-        expect(Plain.drv()).toBeUndefined();
+        expect(Plain.driver()).toBeUndefined();
         expect(Plain.value).toBe("raw");
         expect("value" in Plain).toBe(true);
     });

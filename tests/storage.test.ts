@@ -258,8 +258,30 @@ describe("Storage adapters and manager", () => {
     await manager.set("k", 1);
     expect(await manager.get("k")).toBe(1);
     manager.use("alt");
-    expect(manager.drv()).toBe(alt);
-    expect(() => manager.drv("missing")).toThrow("Storage driver [missing] is not defined.");
+    expect(manager.driver()).toBe(alt);
+    expect(() => manager.driver("missing")).toThrow("Storage driver [missing] is not defined.");
+  });
+
+  test("storage manager extend() registers a custom driver lazily", async () => {
+    const manager = new StorageManager({ memory: new MemoryStorageAdapter() });
+    let factoryCalled = 0;
+
+    manager.extend("custom", (_config) => {
+      factoryCalled++;
+      return new MemoryStorageAdapter();
+    });
+
+    // Factory not called yet
+    expect(factoryCalled).toBe(0);
+
+    manager.use("custom");
+    await manager.set("k", "v");
+    expect(await manager.get("k")).toBe("v");
+
+    // Factory called exactly once and result cached
+    expect(factoryCalled).toBe(1);
+    manager.use("custom");
+    expect(factoryCalled).toBe(1);
   });
 
   test("storage manager builds defaults from config", () => {
@@ -280,9 +302,9 @@ describe("Storage adapters and manager", () => {
         }),
       );
 
-      expect(manager.drv()).toBeTruthy();
-      expect(manager.drv("indexed")).toBeTruthy();
-      expect(manager.drv("memory")).toBeTruthy();
+      expect(manager.driver()).toBeTruthy();
+      expect(manager.driver("indexed")).toBeTruthy();
+      expect(manager.driver("memory")).toBeTruthy();
     } finally {
       (globalThis as { window?: unknown }).window = originalWindow;
       (globalThis as { indexedDB?: unknown }).indexedDB = originalIndexedDb;

@@ -1,25 +1,26 @@
-import type ConfigRepository from "../config/repository";
+import ConfigRepository from "../config/repository";
 import IndexedDbAdapter from "./adapters/indexed-db";
 import LocalStorageAdapter from "./adapters/local-storage";
 import MemoryStorageAdapter from "./adapters/memory";
 import type { Adapter } from "./adapters/contract";
+import Manager from "../support/manager";
 
 type DriverName = "memory" | "local" | "indexed";
 
-export default class StorageManager implements Adapter {
-    protected adapters: Record<string, Adapter>;
-    protected active: string;
+export default class StorageManager extends Manager<Adapter> implements Adapter {
+    protected createDriver(raw: Adapter): Adapter {
+        return raw;
+    }
 
-    constructor(adapters: Record<string, Adapter>, active: string = "memory") {
-        this.adapters = adapters;
-        this.active = active in this.adapters ? active : "memory";
+    protected driverType(): string {
+        return "Storage driver";
     }
 
     static fromConfig(config: ConfigRepository): StorageManager {
         const adapters = StorageManager.defaultAdapters();
-        const driver = config.get<string>("storage.driver", "memory");
+        const active = config.get<string>("storage.driver", "memory");
 
-        return new StorageManager(adapters, driver);
+        return new StorageManager(adapters, active, config);
     }
 
     static defaultAdapters(): Record<DriverName, Adapter> {
@@ -39,44 +40,31 @@ export default class StorageManager implements Adapter {
         };
     }
 
-    drv(name?: string): Adapter {
-        if (typeof name === "string") {
-            if (!(name in this.adapters)) {
-                throw new Error(`Storage driver [${name}] is not defined.`);
-            }
-
-            return this.adapters[name];
-        }
-
-        return this.adapters[this.active];
-    }
-
-    use(name: string): this {
-        this.active = this.drv(name) ? name : this.active;
-        return this;
+    driver(name?: string): Adapter {
+        return this.resolve(name ?? this.active);
     }
 
     get<T = unknown>(key: string): Promise<T | null> {
-        return this.drv().get<T>(key);
+        return this.driver().get<T>(key);
     }
 
     set<T = unknown>(key: string, value: T): Promise<void> {
-        return this.drv().set<T>(key, value);
+        return this.driver().set<T>(key, value);
     }
 
     has(key: string): Promise<boolean> {
-        return this.drv().has(key);
+        return this.driver().has(key);
     }
 
     delete(key: string): Promise<void> {
-        return this.drv().delete(key);
+        return this.driver().delete(key);
     }
 
     clear(): Promise<void> {
-        return this.drv().clear();
+        return this.driver().clear();
     }
 
     keys(): Promise<string[]> {
-        return this.drv().keys();
+        return this.driver().keys();
     }
 }

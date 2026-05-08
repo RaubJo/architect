@@ -56,6 +56,28 @@ describe("CacheManager", () => {
     expect(() => manager.store("nope")).toThrow("Cache store [nope] is not defined.");
   });
 
+  test("cache manager extend() registers a custom store lazily", async () => {
+    const manager = CacheManager.fromConfig(new ConfigRepository({}));
+    let factoryCalled = 0;
+
+    manager.extend("custom", (_config) => {
+      factoryCalled++;
+      return new MemoryStorageAdapter();
+    });
+
+    // Factory not called yet
+    expect(factoryCalled).toBe(0);
+
+    manager.use("custom");
+    await manager.set("k", "v", 60);
+    expect(await manager.get("k")).toBe("v");
+
+    // Factory called exactly once and result cached
+    expect(factoryCalled).toBe(1);
+    manager.use("custom");
+    expect(factoryCalled).toBe(1);
+  });
+
   test("handles non-object cache.stores by using defaults", () => {
     const manager = CacheManager.fromConfig(
       new ConfigRepository({

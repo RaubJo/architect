@@ -83,7 +83,7 @@ export function createFacade<T = any>(
             return callable.apply(instance, args) as R;
         },
 
-        // use() and store()/drv() return the manager for chaining.
+        // use() and store()/driver() return the manager for chaining.
         // We return the proxy instead so the chain continues on the facade.
         use(...args: unknown[]): unknown {
             const instance =
@@ -107,13 +107,13 @@ export function createFacade<T = any>(
             return undefined;
         },
 
-        drv(...args: unknown[]): unknown {
+        driver(...args: unknown[]): unknown {
             const instance =
                 resolveInstance<Record<string, (...a: unknown[]) => unknown>>(
                     accessor,
                 );
-            if (typeof instance.drv === "function") {
-                return instance.drv(...args);
+            if (typeof instance.driver === "function") {
+                return instance.driver(...args);
             }
             return undefined;
         },

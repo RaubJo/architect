@@ -14,6 +14,7 @@ export type {
 export { default as ServiceProvider } from "./support/service-provider";
 export { DeferrableServiceProvider } from "./support/service-provider";
 export type { Cleanup, ServiceProviderContext } from "./support/service-provider";
+export { default as Manager } from "./support/manager";
 
 export type {
   default as Contract,
