@@ -1,9 +1,10 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test";
 import type { ContainerIdentifier } from "@/container/contract";
-import InversifyContainer from "@/container/adapters/inversify";
+import BuiltinContainer from "@/container/adapters/builtin";
+
 
 const reactContextValues = new Map<object, unknown>();
-let forcedReactContextValue: unknown = undefined;
+let forcedReactContextValue: unknown ;
 function normalizeChildren(children: unknown[]): unknown {
   if (children.length === 0) {
     return undefined;
@@ -59,20 +60,20 @@ mock.module("react/jsx-dev-runtime", () => ({
   ) => reactModule.createElement(type, props),
 }));
 
-let ApplicationProvider: (props: { container: InversifyContainer; children?: unknown }) => unknown;
+let ApplicationProvider: (props: { container: BuiltinContainer; children?: unknown }) => unknown;
 let useService: <T>(identifier: ContainerIdentifier<T>) => T;
 
 describe("React runtime", () => {
   beforeAll(async () => {
     const runtime = await import("@/runtimes/react");
     ApplicationProvider = runtime.ApplicationProvider as (
-      props: { container: InversifyContainer; children?: unknown },
+      props: { container: BuiltinContainer; children?: unknown },
     ) => unknown;
     useService = runtime.useService;
   });
 
   test("ApplicationProvider + useService resolves from container", () => {
-    const container = new InversifyContainer();
+    const container = new BuiltinContainer();
     const token = Symbol("token");
     container.bind(token).toConstantValue("resolved");
 

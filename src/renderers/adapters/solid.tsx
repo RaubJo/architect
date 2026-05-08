@@ -8,7 +8,7 @@ import type { RendererContext } from "../contract";
 type SolidRootComponent = () => JSX.Element;
 
 export default class SolidRenderer implements Contract {
-    constructor() {}
+    
 
     render({
         RootComponent,

@@ -17,7 +17,7 @@ export default class StorageManager implements Adapter {
 
     static fromConfig(config: ConfigRepository): StorageManager {
         const adapters = StorageManager.defaultAdapters();
-        const driver = config.string("storage.driver", "memory");
+        const driver = config.get<string>("storage.driver", "memory");
 
         return new StorageManager(adapters, driver);
     }

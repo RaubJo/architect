@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { createConfig } from "@/config/intake";
-import ConfigRepository from "@/config/repository";
 import { localAdapterTestingHelpers } from "@/filesystem/adapters/local_test.helpers";
 
 describe("createConfig intake", () => {

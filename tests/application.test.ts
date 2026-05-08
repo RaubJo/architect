@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, mock, test } from "bun:test";
 import ConfigRepository from "@/config/repository";
-import InversifyContainer from "@/container/adapters/inversify";
 import BuiltinContainer from "@/container/adapters/builtin";
 import { Application } from "@/foundation/application";
 import { applicationTestingHelpers } from "@/foundation/application_test.helpers";
@@ -134,15 +133,6 @@ describe("Application", () => {
 
     const app = Application.configure("./")
       .withProviders([new DemoProvider()])
-      .withServices(({ container }) => {
-        calls.push("services");
-        container.bind("services.value").toConstantValue(1);
-        return () => calls.push("services.cleanup");
-      })
-      .withStartup(() => {
-        calls.push("startup");
-        return () => calls.push("startup.cleanup");
-      })
       .withRoot(() => null)
       .withRenderer({
         render: () => {
@@ -155,12 +145,9 @@ describe("Application", () => {
     expect(Application.make("demo")).toBe("value");
     expect(Application.make("storage")).toBeTruthy();
     expect(Application.make("cache")).toBeTruthy();
-    expect(running.container.get("services.value")).toBe(1);
     expect(calls).toEqual([
       "provider.register",
-      "services",
       "provider.boot",
-      "startup",
       "renderer",
     ]);
 
@@ -169,14 +156,10 @@ describe("Application", () => {
 
     expect(calls).toEqual([
       "provider.register",
-      "services",
       "provider.boot",
-      "startup",
       "renderer",
       "renderer.cleanup",
-      "startup.cleanup",
       "provider.boot.cleanup",
-      "services.cleanup",
       "provider.register.cleanup",
     ]);
 
@@ -267,7 +250,7 @@ describe("Application", () => {
   test("configure options are merged with defaults", () => {
     expect(applicationTestingHelpers.mergeConfigureOptions()).toEqual({
       basePath: "./",
-      container: { adapter: "auto", factory: null, test: {} },
+      container: { adapter: "builtin", factory: null },
       config: {},
     });
 
@@ -278,83 +261,20 @@ describe("Application", () => {
       }),
     ).toEqual({
       basePath: "./src",
-      container: { adapter: "builtin", factory: null, test: {} },
+      container: { adapter: "builtin", factory: null },
       config: {},
     });
   });
 
-  test("reads package.json candidates from test glob loader", () => {
-    const globLoader = () => ({
-      "/package.json": { default: { dependencies: { inversify: "^7.0.0" } } },
-      "/package.raw.json": { dependencies: { react: "^19.0.0" } },
-    });
-
-    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJsonGlob: globLoader })).toEqual([
-      { dependencies: { inversify: "^7.0.0" } },
-      { dependencies: { react: "^19.0.0" } },
-    ]);
-  });
-
-  test("reads package.json candidates from test callback", () => {
-    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJson: () => ({ dependencies: { inversify: "^7.0.0" } }) })).toEqual([
-      { dependencies: { inversify: "^7.0.0" } },
-    ]);
-  });
-
-  test("reads package.json candidates from test array values", () => {
-    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJson: [
-      { dependencies: { inversify: "^7.0.0" } },
-      { dependencies: { react: "^19.0.0" } },
-    ] })).toEqual([
-      { dependencies: { inversify: "^7.0.0" } },
-      { dependencies: { react: "^19.0.0" } },
-    ]);
-
-    expect(applicationTestingHelpers.readPackageJsonCandidates({ packageJson: () => [{ dependencies: { vue: "^3.0.0" } }] })).toEqual([
-      { dependencies: { vue: "^3.0.0" } },
-    ]);
-  });
-
-  test("auto container uses builtin when inversify is not listed", () => {
+  test("configure uses builtin container by default", () => {
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };
 
-    const running = Application.configure({ basePath: "./", container: { adapter: "auto", test: { packageJson: { dependencies: {} } } } }).run();
+    const running = Application.configure({ basePath: "./" }).run();
     expect(running.container).toBeInstanceOf(BuiltinContainer);
   });
 
-  test("auto container uses inversify when package.json includes inversify", () => {
-    (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
-      .window = { addEventListener: () => {} };
-
-    const running = Application.configure({
-      basePath: "./",
-      container: {
-        adapter: "auto",
-        test: {
-          packageJson: { dependencies: { inversify: "^7.0.0" } },
-          containerFactoryRegistry: { inversify: () => new InversifyContainer() },
-        },
-      },
-    }).run();
-    expect(running.container).toBeInstanceOf(InversifyContainer);
-  });
-
-  test("auto container falls back to builtin when inversify is detected but factory is missing", () => {
-    (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
-      .window = { addEventListener: () => {} };
-
-    const running = Application.configure({
-      basePath: "./",
-      container: {
-        adapter: "auto",
-        test: { packageJson: { dependencies: { inversify: "^7.0.0" } } },
-      },
-    }).run();
-    expect(running.container).toBeInstanceOf(BuiltinContainer);
-  });
-
-  test("configure can force builtin, inversify, or custom factory", () => {
+  test("configure can use builtin adapter or custom factory", () => {
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };
 
@@ -364,34 +284,11 @@ describe("Application", () => {
     }).run();
     expect(builtin.container).toBeInstanceOf(BuiltinContainer);
 
-    const inversify = Application.configure({
-      basePath: "./",
-      container: {
-        adapter: "inversify",
-        test: { containerFactoryRegistry: { inversify: () => new InversifyContainer() } },
-      },
-    }).run();
-    expect(inversify.container).toBeInstanceOf(InversifyContainer);
-
     const custom = Application.configure({
       basePath: "./",
       container: { factory: () => new BuiltinContainer() },
     }).run();
     expect(custom.container).toBeInstanceOf(BuiltinContainer);
-  });
-
-  test("explicit inversify adapter throws when no factory is registered", () => {
-    (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
-      .window = { addEventListener: () => {} };
-
-    expect(() =>
-      Application.configure({
-        basePath: "./",
-        container: { adapter: "inversify" },
-      }).run(),
-    ).toThrow(
-      "Inversify adapter is not registered. Provide container.factory or set test.containerFactoryRegistry.inversify.",
-    );
   });
 
   test("renderer requires root component", () => {

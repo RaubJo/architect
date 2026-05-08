@@ -21,8 +21,6 @@ function normalizeForSlug(value: string): string {
 }
 
 export default class Str {
-    constructor() {}
-
     static lower(value: string): string {
         return value.toLowerCase();
     }

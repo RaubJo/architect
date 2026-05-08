@@ -41,7 +41,7 @@ function isClassConcrete<T>(
 ): value is ContainerClass<T> {
     return (
         typeof value === "function" &&
-        Object.prototype.hasOwnProperty.call(value, "prototype")
+        Object.hasOwn(value, "prototype")
     );
 }
 
@@ -296,7 +296,7 @@ export default class BuiltinContainer implements ContainerContract {
 
     protected resolveRecord<T>(
         record: BindingRecord<T>,
-        identifier: ContainerIdentifier,
+        _identifier: ContainerIdentifier,
     ): T {
         if (record.kind === "constant") {
             return record.value;

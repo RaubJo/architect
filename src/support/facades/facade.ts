@@ -130,8 +130,8 @@ export function createFacade<T = any>(
 
             // Macro check (takes precedence over instance methods).
             const macros = getMacros(accessor);
-            if (macros.has(name)) {
-                const macro = macros.get(name)!;
+            const macro = macros.get(name);
+            if (macro) {
                 return (...args: unknown[]) => {
                     const instance = resolveInstance<T>(accessor);
                     return macro(instance, ...args);
@@ -183,8 +183,6 @@ function resolveInstance<T>(accessor: string): T {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default abstract class Facade {
     protected static resolvedInstance = resolvedInstances;
-
-    protected constructor() {}
 
     protected static getFacadeAccessor(): string {
         throw new Error("Facade does not implement getFacadeAccessor().");

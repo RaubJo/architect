@@ -20,7 +20,7 @@ type SvelteMount = (
 type SvelteUnmount = (instance: unknown) => void | Promise<void>;
 
 export default class SvelteRenderer implements Contract {
-    constructor() {}
+    
 
     render({
         RootComponent,

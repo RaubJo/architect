@@ -26,8 +26,6 @@ import {
     setCurrentApplicationContainer,
 } from "./current-application";
 
-type StartupHandler = (context: ServiceProviderContext) => void | Cleanup;
-type ServiceRegistrar = (context: ServiceProviderContext) => void | Cleanup;
 type ApplicationRunContext = ServiceProviderContext & {
     cleanupTasks: Cleanup[];
 };
@@ -61,8 +59,6 @@ export class Application {
     protected static container: ContainerContract | null = null;
 
     protected providers: ServiceProvider[];
-    protected serviceRegistrars: ServiceRegistrar[];
-    protected startupHandlers: StartupHandler[];
     protected rootElementId: string;
     protected RootComponent: RootComponent | null;
     protected renderer: Contract | null;
@@ -71,8 +67,6 @@ export class Application {
     constructor(options: ApplicationResolvedOptions) {
         this.options = options;
         this.providers = this.getDefaultProviders();
-        this.serviceRegistrars = [];
-        this.startupHandlers = [];
         this.rootElementId = "root";
         this.RootComponent = null;
         this.renderer = null;
@@ -116,16 +110,6 @@ export class Application {
 
     withProviders(providers: ServiceProvider[]) {
         this.providers.push(...providers);
-        return this;
-    }
-
-    withServices(registerServices: ServiceRegistrar) {
-        this.serviceRegistrars.push(registerServices);
-        return this;
-    }
-
-    withStartup(startupHandler: StartupHandler) {
-        this.startupHandlers.push(startupHandler);
         return this;
     }
 
@@ -180,29 +164,11 @@ export class Application {
         }
     }
 
-    protected registerServices(context: ApplicationRunContext): void {
-        for (const registerServices of this.serviceRegistrars) {
-            this.rememberCleanup(
-                context.cleanupTasks,
-                registerServices(context),
-            );
-        }
-    }
-
     protected bootProviders(context: ApplicationRunContext): void {
         for (const provider of this.providers) {
             if (typeof provider.boot === "function") {
                 this.rememberCleanup(context.cleanupTasks, provider.boot(context));
             }
-        }
-    }
-
-    protected runStartupHandlers(context: ApplicationRunContext): void {
-        for (const startupHandler of this.startupHandlers) {
-            this.rememberCleanup(
-                context.cleanupTasks,
-                startupHandler(context),
-            );
         }
     }
 
@@ -273,9 +239,7 @@ export class Application {
 
         const context = { container, cleanupTasks: [] };
         this.registerProviders(context);
-        this.registerServices(context);
         this.bootProviders(context);
-        this.runStartupHandlers(context);
 
         const rendererCleanup = this.renderRoot(context);
         const stop = this.createStopHandler(

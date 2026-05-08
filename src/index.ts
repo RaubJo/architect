@@ -3,7 +3,7 @@
 export { Application } from "./foundation/application";
 export type { ApplicationConfigureOptions } from "./foundation/application";
 export { default as BuiltinContainer } from "./container/adapters/builtin";
-export { inject as injectDependency } from "./container/adapters/builtin";
+export { inject } from "./container/adapters/builtin";
 export type {
   ContainerContract,
   ContainerIdentifier,

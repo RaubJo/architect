@@ -9,7 +9,7 @@ import type { Cleanup } from "../../support/service-provider";
 type ReactRootComponent = () => ReactElement | null;
 
 export default class ReactRenderer implements Contract {
-    constructor() {}
+    
 
     render({
         RootComponent,

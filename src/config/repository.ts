@@ -139,73 +139,7 @@ class ConfigRepository {
         return results;
     }
 
-    string(
-        key: string,
-        defaultValue: string | (() => string) | null = null,
-    ): string {
-        const value = this.get<string>(key, defaultValue);
-        if (typeof value !== "string") {
-            throw new TypeError(
-                `Configuration value [${key}] is not a string.`,
-            );
-        }
 
-        return value;
-    }
-
-    integer(
-        key: string,
-        defaultValue: number | (() => number) | null = null,
-    ): number {
-        const value = this.get<number>(key, defaultValue);
-        if (typeof value !== "number" || !Number.isInteger(value)) {
-            throw new TypeError(
-                `Configuration value [${key}] is not an integer.`,
-            );
-        }
-
-        return value;
-    }
-
-    float(
-        key: string,
-        defaultValue: number | (() => number) | null = null,
-    ): number {
-        const value = this.get<number>(key, defaultValue);
-        if (typeof value !== "number" || Number.isNaN(value)) {
-            throw new TypeError(`Configuration value [${key}] is not a float.`);
-        }
-
-        return value;
-    }
-
-    boolean(
-        key: string,
-        defaultValue: boolean | (() => boolean) | null = null,
-    ): boolean {
-        const value = this.get<boolean>(key, defaultValue);
-        if (typeof value !== "boolean") {
-            throw new TypeError(
-                `Configuration value [${key}] is not a boolean.`,
-            );
-        }
-
-        return value;
-    }
-
-    array<T = unknown>(
-        key: string,
-        defaultValue: T[] | (() => T[]) | null = null,
-    ): T[] {
-        const value = this.get<T[]>(key, defaultValue);
-        if (!Array.isArray(value)) {
-            throw new TypeError(
-                `Configuration value [${key}] is not an array.`,
-            );
-        }
-
-        return value;
-    }
 
     set(key: string | ConfigItems, value: unknown = null): void {
         const payload = isPlainObject(key) ? key : { [key]: value };
@@ -216,12 +150,12 @@ class ConfigRepository {
     }
 
     prepend(key: string, value: unknown): void {
-        const values = this.array<unknown>(key, []);
+        const values = this.get<unknown[]>(key, []);
         this.set(key, [value, ...values]);
     }
 
     push(key: string, value: unknown): void {
-        const values = this.array<unknown>(key, []);
+        const values = this.get<unknown[]>(key, []);
         values.push(value);
         this.set(key, values);
     }

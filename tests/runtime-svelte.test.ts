@@ -1,10 +1,11 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test";
 import type { ContainerIdentifier } from "@/container/contract";
-import InversifyContainer from "@/container/adapters/inversify";
+import BuiltinContainer from "@/container/adapters/builtin";
+
 
 const svelteState = {
   provided: null as { key: unknown; value: unknown } | null,
-  providedContainer: null as InversifyContainer | null,
+  providedContainer: null as BuiltinContainer | null,
   mounted: null as { component: unknown; options: unknown } | null,
   unmounted: null as unknown,
   useLegacyApi: false,
@@ -13,7 +14,7 @@ const svelteState = {
 mock.module("svelte", () => ({
   setContext: (key: unknown, value: unknown) => {
     svelteState.provided = { key, value };
-    svelteState.providedContainer = value as InversifyContainer;
+    svelteState.providedContainer = value as BuiltinContainer;
   },
   getContext: (key: unknown) => {
     if (svelteState.provided?.key !== key) {
@@ -34,12 +35,12 @@ mock.module("svelte", () => ({
 }));
 
 let containerKey: symbol;
-let provideContainer: (container: InversifyContainer) => void;
+let provideContainer: (container: BuiltinContainer) => void;
 let useService: <T>(identifier: ContainerIdentifier<T>) => T;
 let SvelteRenderer: new () => {
   render: (context: {
     RootComponent: unknown;
-    container: InversifyContainer;
+    container: BuiltinContainer;
     rootElementId: string;
   }) => () => void;
 };
@@ -55,7 +56,7 @@ beforeAll(async () => {
 
 describe("Svelte runtime and renderer", () => {
   test("provideContainer + useService resolves from Svelte context", () => {
-    const container = new InversifyContainer();
+    const container = new BuiltinContainer();
     const token = Symbol("token");
     container.bind(token).toConstantValue("resolved");
 
@@ -85,7 +86,7 @@ describe("Svelte runtime and renderer", () => {
     expect(() =>
       renderer.render({
         RootComponent: class {},
-        container: new InversifyContainer(),
+        container: new BuiltinContainer(),
         rootElementId: "root",
       }),
     ).toThrow("Missing mount node #root.");
@@ -103,7 +104,7 @@ describe("Svelte runtime and renderer", () => {
 
     const RootComponent = {};
 
-    const container = new InversifyContainer();
+    const container = new BuiltinContainer();
     const renderer = new SvelteRenderer();
     const cleanup = renderer.render({
       RootComponent,
@@ -135,7 +136,7 @@ describe("Svelte runtime and renderer", () => {
     const renderer = new SvelteRenderer();
     const cleanup = renderer.render({
       RootComponent: FakeComponent,
-      container: new InversifyContainer(),
+      container: new BuiltinContainer(),
       rootElementId: "root",
     });
 
@@ -160,7 +161,7 @@ describe("Svelte runtime and renderer", () => {
     const renderer = new SvelteRenderer();
     const cleanup = renderer.render({
       RootComponent: FakeComponent,
-      container: new InversifyContainer(),
+      container: new BuiltinContainer(),
       rootElementId: "root",
     });
 
@@ -180,7 +181,7 @@ describe("Svelte runtime and renderer", () => {
     const renderer = new SvelteRenderer();
     const cleanup = renderer.render({
       RootComponent: FakeComponent,
-      container: new InversifyContainer(),
+      container: new BuiltinContainer(),
       rootElementId: "root",
     });
 

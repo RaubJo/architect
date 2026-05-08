@@ -1,4 +1,5 @@
-import ConfigRepository, { type ConfigItems } from "./repository";
+import type ConfigRepository from "./repository";
+import type { ConfigItems } from "./repository";
 import { ConfigFactory } from "./intake/factory";
 
 export function createConfig(

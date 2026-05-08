@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import ConfigRepository from "@/config/repository";
 import { createConfig } from "@/config/intake";
 
 describe("createConfig intake", () => {

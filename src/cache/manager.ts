@@ -25,7 +25,7 @@ export default class CacheManager implements Adapter {
 
     static fromConfig(config: ConfigRepository): CacheManager {
         const stores = CacheManager.storesFromConfig(config);
-        const active = config.string("cache.default", "memory");
+        const active = config.get<string>("cache.default", "memory");
 
         return new CacheManager(stores, active);
     }

@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import CacheManager from "@/cache/manager";
 import type { ContainerContract } from "@/container/contract";
-import InversifyContainer from "@/container/adapters/inversify";
+import BuiltinContainer from "@/container/adapters/builtin";
+
 import ConfigRepository from "@/config/repository";
 import { Application } from "@/foundation/application";
 import MemoryStorageAdapter from "@/storage/adapters/memory";
@@ -33,7 +34,7 @@ describe("Facade base class (backward compatibility)", () => {
         class BrokenFacade extends Facade {
             static callAccessorForTest() {
                 return (
-                    this as unknown as { getFacadeAccessor: () => unknown }
+                    BrokenFacade as unknown as { getFacadeAccessor: () => unknown }
                 ).getFacadeAccessor();
             }
         }
@@ -51,14 +52,14 @@ describe("Facade base class (backward compatibility)", () => {
 
             static callMethod<T>(method: string, ...args: unknown[]) {
                 return (
-                    this as unknown as {
+                    MethodFacade as unknown as {
                         callFacadeMethod: <R>(methodName: string, ...values: unknown[]) => R;
                     }
                 ).callFacadeMethod<T>(method, ...args);
             }
         }
 
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("method.target").toConstantValue({
             sum: (a: number, b: number) => a + b,
         });
@@ -75,14 +76,14 @@ describe("Facade base class (backward compatibility)", () => {
 
             static callMethod<T>(method: string, ...args: unknown[]) {
                 return (
-                    this as unknown as {
+                    MethodFacade as unknown as {
                         callFacadeMethod: <R>(methodName: string, ...values: unknown[]) => R;
                     }
                 ).callFacadeMethod<T>(method, ...args);
             }
         }
 
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("method.target").toConstantValue({});
         setContainer(container);
 
@@ -99,14 +100,14 @@ describe("Facade base class (backward compatibility)", () => {
 
             static callMethod<T>(method: string, ...args: unknown[]) {
                 return (
-                    this as unknown as {
+                    MethodFacade as unknown as {
                         callFacadeMethod: <R>(methodName: string, ...values: unknown[]) => R;
                     }
                 ).callFacadeMethod<T>(method, ...args);
             }
         }
 
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("method.target").toConstantValue({
             value: () => "cached",
         });
@@ -119,10 +120,6 @@ describe("Facade base class (backward compatibility)", () => {
 
     test("base facade constructor is invokable through subclass", () => {
         class ConcreteFacade extends Facade {
-            constructor() {
-                super();
-            }
-
             protected static getFacadeAccessor() {
                 return "noop";
             }
@@ -149,7 +146,7 @@ describe("Proxy-based facade (createFacade)", () => {
     });
 
     test("Config delegates all methods to ConfigRepository", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         const repository = new ConfigRepository({
             app: {
                 name: "IOC",
@@ -165,19 +162,18 @@ describe("Proxy-based facade (createFacade)", () => {
 
         expect(Config.has("app.name")).toBe(true);
         expect(Config.get("app.name")).toBe("IOC");
+        expect(Config.get<number>("app.retries")).toBe(3);
+        expect(Config.get<number>("app.ratio")).toBe(1.5);
+        expect(Config.get<boolean>("app.enabled")).toBe(true);
+        expect(Config.get<string[]>("app.tags")).toEqual(["base"]);
         expect(Config.getMany(["app.name"])).toEqual({ "app.name": "IOC" });
-        expect(Config.string("app.name")).toBe("IOC");
-        expect(Config.integer("app.retries")).toBe(3);
-        expect(Config.float("app.ratio")).toBe(1.5);
-        expect(Config.boolean("app.enabled")).toBe(true);
-        expect(Config.array("app.tags")).toEqual(["base"]);
 
         Config.set("app.name", "Changed");
         Config.prepend("app.tags", "first");
         Config.push("app.tags", "last");
 
         expect(Config.get("app.name")).toBe("Changed");
-        expect(Config.array("app.tags")).toEqual(["first", "base", "last"]);
+        expect(Config.get<string[]>("app.tags")).toEqual(["first", "base", "last"]);
         expect(Config.all()).toMatchObject({
             app: { name: "Changed" },
         });
@@ -185,7 +181,7 @@ describe("Proxy-based facade (createFacade)", () => {
 
     test("Cache delegates async methods to CacheManager", async () => {
         const manager = new CacheManager({ memory: new MemoryStorageAdapter() }, "memory");
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("cache").toConstantValue(manager);
         container.bind(CacheManager).toConstantValue(manager);
         setContainer(container);
@@ -204,7 +200,7 @@ describe("Proxy-based facade (createFacade)", () => {
     });
 
     test("Storage delegates async methods to StorageManager", async () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         const manager = new StorageManager({ memory: new MemoryStorageAdapter() }, "memory");
         container.bind("storage").toConstantValue(manager);
         container.bind(StorageManager).toConstantValue(manager);
@@ -226,7 +222,7 @@ describe("Proxy-based facade (createFacade)", () => {
 
     test("uses() returns the facade for chaining", async () => {
         const manager = new StorageManager({ memory: new MemoryStorageAdapter() }, "memory");
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("storage").toConstantValue(manager);
         container.bind(StorageManager).toConstantValue(manager);
         setContainer(container);
@@ -247,7 +243,7 @@ describe("Proxy-based facade (createFacade)", () => {
             drv: () => unknown;
             value: string;
         };
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("plain").toConstantValue({ value: "raw" });
         setContainer(container);
 
@@ -259,7 +255,7 @@ describe("Proxy-based facade (createFacade)", () => {
     });
 
     test("clearFacadeCache clears resolved instances", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         const repository = new ConfigRepository({ app: { name: "First" } });
         container.bind("config").toConstantValue(repository);
         setContainer(container);
@@ -279,15 +275,15 @@ describe("Proxy-based facade (createFacade)", () => {
     });
 
     test("callFacadeMethod dispatches through proxy facade", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }));
         setContainer(container);
 
-        expect(Config.callFacadeMethod<string>("string", "app.name")).toBe("test");
+        expect(Config.callFacadeMethod<string>("get", "app.name")).toBe("test");
     });
 
     test("callFacadeMethod throws for non-existent method", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({}));
         setContainer(container);
 
@@ -297,7 +293,7 @@ describe("Proxy-based facade (createFacade)", () => {
     });
 
     test("callFacadeMethod dispatches registered macros", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "macro" } }));
         setContainer(container);
 
@@ -311,7 +307,7 @@ describe("Facade macros", () => {
     afterEach(resetContainer);
 
     test("register and invoke a macro", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }));
         setContainer(container);
 
@@ -323,7 +319,7 @@ describe("Facade macros", () => {
     });
 
     test("macro receives the resolved instance as first argument", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(
             new ConfigRepository({ app: { retries: 5 } }),
         );
@@ -340,7 +336,7 @@ describe("Facade macros", () => {
     });
 
     test("macro takes precedence over instance method", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "original" } }));
         setContainer(container);
 
@@ -371,7 +367,7 @@ describe("Facade macros", () => {
 
     test("macros are scoped per accessor", () => {
         const manager = new CacheManager({ memory: new MemoryStorageAdapter() }, "memory");
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({}));
         container.bind("cache").toConstantValue(manager);
         container.bind(CacheManager).toConstantValue(manager);
@@ -383,7 +379,7 @@ describe("Facade macros", () => {
     });
 
     test("macro with arguments passes them through", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({}));
         setContainer(container);
 
@@ -397,7 +393,7 @@ describe("Facade macros", () => {
     });
 
     test("macros survive facade cache clear", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { v: 1 } }));
         setContainer(container);
 
@@ -432,7 +428,7 @@ describe("Facade macros", () => {
     });
 
     test("clearResolvedInstances can be called on the proxy", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }));
         setContainer(container);
 
@@ -442,7 +438,7 @@ describe("Facade macros", () => {
     });
 
     test("clearResolvedInstances can be called on the proxy", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }));
         setContainer(container);
 
@@ -452,7 +448,7 @@ describe("Facade macros", () => {
     });
 
     test("has() proxy trap detects facade properties and macros", () => {
-        const container = new InversifyContainer();
+        const container = new BuiltinContainer();
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }));
         setContainer(container);
 

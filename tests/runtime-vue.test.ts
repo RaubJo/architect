@@ -1,9 +1,10 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test";
 import type { ContainerIdentifier } from "@/container/contract";
-import InversifyContainer from "@/container/adapters/inversify";
+import BuiltinContainer from "@/container/adapters/builtin";
+
 
 const vueState = {
-  injectedContainer: null as InversifyContainer | null,
+  injectedContainer: null as BuiltinContainer | null,
   provided: null as { key: unknown; value: unknown } | null,
   mountedTarget: null as unknown,
   mountedComponent: null as unknown,
@@ -34,7 +35,7 @@ let containerKey: symbol;
 let VueRenderer: new () => {
   render: (context: {
     RootComponent: unknown;
-    container: InversifyContainer;
+    container: BuiltinContainer;
     rootElementId: string;
   }) => () => void;
 };
@@ -50,7 +51,7 @@ beforeAll(async () => {
 
 describe("Vue runtime and renderer", () => {
   test("useService resolves from injected container", () => {
-    const container = new InversifyContainer();
+    const container = new BuiltinContainer();
     const token = Symbol("token");
     container.bind(token).toConstantValue("resolved");
     vueState.injectedContainer = container;
@@ -75,7 +76,7 @@ describe("Vue runtime and renderer", () => {
     expect(() =>
       renderer.render({
         RootComponent: {},
-        container: new InversifyContainer(),
+        container: new BuiltinContainer(),
         rootElementId: "root",
       }),
     ).toThrow("Missing mount node #root.");
@@ -93,7 +94,7 @@ describe("Vue runtime and renderer", () => {
     };
 
     const RootComponent = { name: "RootComponent" };
-    const container = new InversifyContainer();
+    const container = new BuiltinContainer();
     const renderer = new VueRenderer();
 
     const cleanup = renderer.render({

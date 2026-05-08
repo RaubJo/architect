@@ -7,7 +7,7 @@ import type { RendererContext } from "../contract";
 type VueRootComponent = Component;
 
 export default class VueRenderer implements Contract {
-    constructor() {}
+    
 
     render({
         RootComponent,

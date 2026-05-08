@@ -33,7 +33,7 @@ describe("ConfigRepository", () => {
     repository.set("app.name", "IOC");
 
     expect(repository.get("app.name")).toBe("IOC");
-    expect(repository.array("app.middlewares")).toEqual([
+    expect(repository.get<string[]>("app.middlewares")).toEqual([
       "throttle",
       "auth",
       "verified",
@@ -61,51 +61,6 @@ describe("ConfigRepository", () => {
     });
   });
 
-  test("typed accessors return expected values", () => {
-    const repository = new ConfigRepository({
-      app: {
-        name: "IOC",
-        retries: 3,
-        ratio: 0.75,
-        enabled: true,
-        tags: ["alpha"],
-      },
-    });
-
-    expect(repository.string("app.name")).toBe("IOC");
-    expect(repository.integer("app.retries")).toBe(3);
-    expect(repository.float("app.ratio")).toBe(0.75);
-    expect(repository.boolean("app.enabled")).toBe(true);
-    expect(repository.array("app.tags")).toEqual(["alpha"]);
-  });
-
-  test("typed accessors throw when type does not match", () => {
-    const repository = new ConfigRepository({
-      app: {
-        name: 123,
-        retries: "3",
-        ratio: "0.75",
-        enabled: "yes",
-        tags: "nope",
-      },
-    });
-
-    expect(() => repository.string("app.name")).toThrow(
-      "Configuration value [app.name] is not a string.",
-    );
-    expect(() => repository.integer("app.retries")).toThrow(
-      "Configuration value [app.retries] is not an integer.",
-    );
-    expect(() => repository.float("app.ratio")).toThrow(
-      "Configuration value [app.ratio] is not a float.",
-    );
-    expect(() => repository.boolean("app.enabled")).toThrow(
-      "Configuration value [app.enabled] is not a boolean.",
-    );
-    expect(() => repository.array("app.tags")).toThrow(
-      "Configuration value [app.tags] is not an array.",
-    );
-  });
 
   test("supports offset-style helpers", () => {
     const repository = new ConfigRepository({

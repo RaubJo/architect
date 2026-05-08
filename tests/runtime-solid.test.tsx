@@ -1,12 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import { createComponent } from "solid-js";
 import { renderToString } from "solid-js/web/dist/server.js";
-import InversifyContainer from "@/container/adapters/inversify";
+
+import BuiltinContainer from "@/container/adapters/builtin";
 import { ApplicationProvider, useService } from "@/runtimes/solid";
 
 describe("Solid runtime", () => {
   test("ApplicationProvider + useService resolves from container", () => {
-    const container = new InversifyContainer();
+    const container = new BuiltinContainer();
     const token = Symbol("token");
     container.bind(token).toConstantValue("resolved");
 
