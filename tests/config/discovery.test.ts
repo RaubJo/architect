@@ -1,11 +1,11 @@
 import { describe, it, expect } from "bun:test";
-import { createConfig } from "../../src/config/intake";
-import type { ConfigLoader } from "../../src/config/intake/loader";
-import { EsmConfigLoader } from "../../src/config/intake/esm-loader";
-import { ConfigFactory } from "../../src/config/intake/factory";
+import { createConfig } from "../../src/config/discovery";
+import type { ConfigLoader } from "../../src/config/discovery";
+import { EsmConfigLoader } from "../../src/config/discovery";
+import { ConfigFactory } from "../../src/config/discovery";
 import { ConfigRepository } from "../../src/config/repository";
 
-describe("Config Intake", () => {
+describe("Config Discovery", () => {
   it("should create configuration repository", () => {
     const config = createConfig("./", { app: { name: "TestApp" } });
     expect(config).toBeInstanceOf(ConfigRepository);

@@ -21,13 +21,13 @@ export type {
   RootComponent,
 } from "./renderers/contract";
 export { default as ConfigRepository } from "./config/repository";
-export { createConfig } from "./config/intake";
+export { createConfig } from "./config/discovery";
 export { env } from "./config/env";
 export { default as Str } from "./support/str";
 export { default as ConfigFacade } from "./support/facades/config";
 export { default as Config } from "./support/facades/config";
 export { default as CacheManager } from "./cache/manager";
-export type { CacheStore } from "./cache/cache";
+export type { Contract as CacheStore } from "./cache/contract";
 export { default as CacheFacade } from "./support/facades/cache";
 export { default as Cache } from "./support/facades/cache";
 export { default as StorageManager } from "./storage/manager";

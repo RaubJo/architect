@@ -3,9 +3,10 @@ import IndexedDbAdapter from "../storage/adapters/indexed-db";
 import LocalStorageAdapter from "../storage/adapters/local-storage";
 import MemoryStorageAdapter from "../storage/adapters/memory";
 import type { Adapter } from "../storage/adapters/contract";
-import type { CacheStore } from "./cache";
+import type { Contract } from "./contract";
+import { Cache } from "./cache";
 
-type CacheStoreConfig = {
+type ContractConfig = {
     driver?: string;
 };
 
@@ -14,10 +15,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export default class CacheManager implements Adapter {
-    protected stores: Record<string, CacheStore>;
+    protected stores: Record<string, Contract>;
     protected active: string;
 
-    constructor(stores: Record<string, CacheStore>, active = "memory") {
+    constructor(stores: Record<string, Contract>, active = "memory") {
         this.stores = stores;
         this.active =
             active in this.stores ? active : firstStoreName(this.stores);
@@ -32,7 +33,7 @@ export default class CacheManager implements Adapter {
 
     protected static storesFromConfig(
         config: ConfigRepository,
-    ): Record<string, CacheStore> {
+    ): Record<string, Contract> {
         const baseDrivers = CacheManager.defaultDrivers();
         const configured =
             config.get<Record<string, unknown>>("cache.stores", {}) ?? {};
@@ -48,24 +49,26 @@ export default class CacheManager implements Adapter {
         );
     }
 
-    protected static defaultDrivers(): Record<string, CacheStore> {
-        const memory = new MemoryStorageAdapter();
+    protected static defaultDrivers(): Record<string, Contract> {
         const hasWindow = typeof window !== "undefined";
-        const hasLocal =
-            hasWindow && typeof window.localStorage !== "undefined";
+        const hasLocal = hasWindow && typeof window.localStorage !== "undefined";
         const hasIndexed = typeof globalThis.indexedDB !== "undefined";
+
+        const rawMemory = new MemoryStorageAdapter();
+        const memory = new Cache(rawMemory);
 
         return {
             memory,
-            local:
-                hasLocal ?
-                    new LocalStorageAdapter(window.localStorage)
-                :   memory,
-            indexed: hasIndexed ? new IndexedDbAdapter() : memory,
+            local: new Cache(
+                hasLocal ? new LocalStorageAdapter(window.localStorage) : rawMemory,
+            ),
+            indexed: new Cache(
+                hasIndexed ? new IndexedDbAdapter() : rawMemory,
+            ),
         };
     }
 
-    store(name?: string): CacheStore {
+    store(name?: string): Contract {
         const target = typeof name === "string" ? name : this.active;
         if (!(target in this.stores)) {
             throw new Error(`Cache store [${target}] is not defined.`);
@@ -83,8 +86,8 @@ export default class CacheManager implements Adapter {
         return this.store().get<T>(key);
     }
 
-    set<T = unknown>(key: string, value: T): Promise<void> {
-        return this.store().set<T>(key, value);
+    set<T = unknown>(key: string, value: T, ttl?: number | null): Promise<void> {
+        return this.store().set<T>(key, value, ttl);
     }
 
     has(key: string): Promise<boolean> {
@@ -108,7 +111,7 @@ function hasNoConfiguredStores(value: unknown): boolean {
     return !isRecord(value) || Object.keys(value).length === 0;
 }
 
-function firstStoreName(stores: Record<string, CacheStore>): string {
+function firstStoreName(stores: Record<string, Contract>): string {
     if ("memory" in stores) {
         return "memory";
     }
@@ -121,7 +124,7 @@ function resolveDriver(value: unknown, fallback: string): string {
         return fallback;
     }
 
-    const storeConfig = value as CacheStoreConfig;
+    const storeConfig = value as ContractConfig;
     return typeof storeConfig.driver === "string" ?
             storeConfig.driver
         :   fallback;

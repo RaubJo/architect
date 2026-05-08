@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { createConfig } from "@/config/intake";
+import { createConfig } from "@/config/discovery";
 
-describe("createConfig intake", () => {
+describe("createConfig discovery", () => {
   test("merges ESM config modules with static items", () => {
     (globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } })
       .window = { addEventListener: () => {} };

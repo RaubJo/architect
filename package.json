@@ -10,7 +10,8 @@
     "scripts": {
         "test": "bun test",
         "test:coverage": "bun test --coverage",
-        "fix": "biome -w ./src/**/*"
+        "fix": "biome -w ./src/**/*",
+        "sandcastle": "bun .sandcastle/main.ts"
     },
     "exports": {
         ".": "./src/index.ts",
@@ -21,7 +22,6 @@
         "./application": "./src/foundation/application.ts",
         "./container/contract": "./src/container/contract.ts",
         "./container/adapters/builtin": "./src/container/adapters/builtin.ts",
-        "./config/adapters/esm": "./src/config/adapters/esm.ts",
         "./config/env": "./src/config/env.ts",
         "./config/repository": "./src/config/repository.ts",
         "./cache/manager": "./src/cache/manager.ts",
@@ -54,7 +54,7 @@
         "reflect-metadata": "^0.2.2",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
-        "svelte": "^5.0.0",
+        "svelte": "",
         "solid-js": "^1.9.0",
         "vue": "^3.0.0"
     },

@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import ConfigRepository from "@/config/repository";
 import CacheManager from "@/cache/manager";
+import { Cache } from "@/cache/cache";
+import MemoryStorageAdapter from "@/storage/adapters/memory";
 
 describe("CacheManager", () => {
   test("uses cache.default and configured stores", async () => {
@@ -64,5 +66,68 @@ describe("CacheManager", () => {
     );
 
     expect(manager.store("memory")).toBeTruthy();
+  });
+});
+
+describe("Cache", () => {
+  test("returns value before TTL expires", async () => {
+    const adapter = new Cache(new MemoryStorageAdapter());
+    await adapter.set("k", "v", 60);
+    expect(await adapter.get("k")).toBe("v");
+    expect(await adapter.has("k")).toBe(true);
+  });
+
+  test("returns null after TTL expires", async () => {
+    const adapter = new Cache(new MemoryStorageAdapter());
+    await adapter.set("k", "v", 0);
+    expect(await adapter.get("k")).toBeNull();
+    expect(await adapter.has("k")).toBe(false);
+  });
+
+  test("TTL = null means no expiry", async () => {
+    const adapter = new Cache(new MemoryStorageAdapter());
+    await adapter.set("k", "v", null);
+    expect(await adapter.get("k")).toBe("v");
+  });
+
+  test("no TTL argument means no expiry", async () => {
+    const adapter = new Cache(new MemoryStorageAdapter());
+    await adapter.set("k", "v");
+    expect(await adapter.get("k")).toBe("v");
+  });
+
+  test("keys() excludes expired entries without deleting them", async () => {
+    const backing = new MemoryStorageAdapter();
+    const adapter = new Cache(backing);
+    await adapter.set("alive", "a", 60);
+    await adapter.set("dead", "b", 0);
+    await adapter.set("forever", "c");
+
+    expect(await adapter.keys()).toEqual(["alive", "forever"]);
+    // Expired entry is still in the backing store (filter only, no delete)
+    expect(await backing.keys()).toEqual(["alive", "dead", "forever"]);
+  });
+
+  test("delete removes entry", async () => {
+    const adapter = new Cache(new MemoryStorageAdapter());
+    await adapter.set("k", "v");
+    await adapter.delete("k");
+    expect(await adapter.get("k")).toBeNull();
+  });
+
+  test("clear removes all entries", async () => {
+    const adapter = new Cache(new MemoryStorageAdapter());
+    await adapter.set("a", 1);
+    await adapter.set("b", 2, 60);
+    await adapter.clear();
+    expect(await adapter.keys()).toEqual([]);
+  });
+
+  test("CacheManager.set passes TTL through", async () => {
+    const manager = CacheManager.fromConfig(new ConfigRepository({}));
+    await manager.set("live", "yes", 60);
+    await manager.set("dead", "no", 0);
+    expect(await manager.get("live")).toBe("yes");
+    expect(await manager.get("dead")).toBeNull();
   });
 });

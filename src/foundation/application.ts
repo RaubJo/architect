@@ -1,7 +1,7 @@
 import CacheManager from "../cache/manager";
 import { registerGlobalEnv } from "../config/env";
 import ConfigRepository, { type ConfigItems } from "../config/repository";
-import { createConfig } from "../config/intake";
+import { createConfig } from "../config/discovery";
 import type {
     ContainerContract,
     ContainerIdentifier,

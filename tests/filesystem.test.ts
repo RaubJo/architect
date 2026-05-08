@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { createConfig } from "@/config/intake";
+import { createConfig } from "@/config/discovery";
 import { localAdapterTestingHelpers } from "@/filesystem/adapters/local_test.helpers";
 
-describe("createConfig intake", () => {
+describe("createConfig discovery", () => {
   afterEach(() => {
     (
       globalThis as {

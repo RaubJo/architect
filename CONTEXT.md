@@ -39,7 +39,7 @@ _Avoid_: config store, config object, Repository (ambiguous)
 An abstraction over persistent storage backends — localStorage, IndexedDB, and extensible to native file systems (Tauri, React Native) via `extend()` (not yet implemented). The active driver is swapped at runtime with `.use()`.
 
 **CacheManager**:
-An abstraction for ephemeral, non-persistent caching. Intended to sit on top of a storage backend and add TTL and eviction. **Not designed for long-term storage.** TTL and eviction are not yet implemented; the current adapter shape matches StorageManager.
+An abstraction for ephemeral, non-persistent caching. Sits on top of a raw storage adapter via a `TtlAdapter` wrapper that adds TTL-aware `set(key, value, ttl?)` and lazy expiry on read. TTL is in seconds; `null` or omitted means no expiry; `0` expires immediately. **Not designed for long-term storage.**
 _Avoid_: cache store (use "CacheManager" or "cache driver")
 
 **Driver**:
@@ -86,5 +86,5 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 ## Flagged ambiguities
 
 - "Repository" was used as a synonym for **ConfigRepository** — resolved: always say **ConfigRepository**; "Repository" is too generic.
-- "intake" appears as a module name in `src/config/intake.ts` — resolved: not a domain term; the module will be renamed (see `.scratch/rename-intake/`).
+- "intake" appeared as a module name in `src/config/` — resolved: renamed to `discovery.ts`; "intake" was AI-generated with no domain meaning.
 - **StorageManager** and **CacheManager** were described as structurally identical — resolved: they share the same adapter shape today, but **CacheManager** is intentionally separate because it will add TTL and eviction (see `.scratch/cache-ttl-eviction/`).
