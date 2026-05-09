@@ -1,1 +1,1 @@
-export type { Adapter as StorageAdapter, Contract } from "./adapters/contract";
+export type { Adapter as StorageAdapter, Contract } from "./adapters/contract"

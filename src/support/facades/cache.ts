@@ -1,6 +1,6 @@
-import type CacheManager from "../../cache/manager";
-import { createFacade } from "./facade";
+import type CacheManager from "../../cache/manager"
+import { createFacade } from "./facade"
 
-export const Cache = createFacade<CacheManager>("cache");
+export const Cache = createFacade<CacheManager>("cache")
 
-export default Cache;
+export default Cache

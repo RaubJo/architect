@@ -1,79 +1,74 @@
-import { describe, expect, test } from "bun:test";
-import ConfigRepository from "@/config/repository";
+import { describe, expect, test } from "bun:test"
+import ConfigRepository from "@/config/repository"
 
 describe("ConfigRepository", () => {
-  test("gets nested values by dot key", () => {
-    const repository = new ConfigRepository({
-      app: {
-        name: "IOC Application",
-        timezone: "UTC",
-      },
-    });
+    test("gets nested values by dot key", () => {
+        const repository = new ConfigRepository({
+            app: {
+                name: "IOC Application",
+                timezone: "UTC",
+            },
+        })
 
-    expect(repository.get("app.name")).toBe("IOC Application");
-    expect(repository.get("app.timezone")).toBe("UTC");
-  });
+        expect(repository.get("app.name")).toBe("IOC Application")
+        expect(repository.get("app.timezone")).toBe("UTC")
+    })
 
-  test("supports defaults and lazy default callbacks", () => {
-    const repository = new ConfigRepository({});
+    test("supports defaults and lazy default callbacks", () => {
+        const repository = new ConfigRepository({})
 
-    expect(repository.get("app.locale", "en")).toBe("en");
-    expect(repository.get("app.name", () => "fallback")).toBe("fallback");
-  });
+        expect(repository.get("app.locale", "en")).toBe("en")
+        expect(repository.get("app.name", () => "fallback")).toBe("fallback")
+    })
 
-  test("supports set, prepend, and push", () => {
-    const repository = new ConfigRepository({
-      app: {
-        middlewares: ["auth"],
-      },
-    });
+    test("supports set, prepend, and push", () => {
+        const repository = new ConfigRepository({
+            app: {
+                middlewares: ["auth"],
+            },
+        })
 
-    repository.prepend("app.middlewares", "throttle");
-    repository.push("app.middlewares", "verified");
-    repository.set("app.name", "IOC");
+        repository.prepend("app.middlewares", "throttle")
+        repository.push("app.middlewares", "verified")
+        repository.set("app.name", "IOC")
 
-    expect(repository.get("app.name")).toBe("IOC");
-    expect(repository.get<string[]>("app.middlewares")).toEqual([
-      "throttle",
-      "auth",
-      "verified",
-    ]);
-  });
+        expect(repository.get("app.name")).toBe("IOC")
+        expect(repository.get<string[]>("app.middlewares")).toEqual(["throttle", "auth", "verified"])
+    })
 
-  test("supports getMany with list and defaults map", () => {
-    const repository = new ConfigRepository({
-      app: { name: "IOC Application" },
-    });
+    test("supports getMany with list and defaults map", () => {
+        const repository = new ConfigRepository({
+            app: { name: "IOC Application" },
+        })
 
-    expect(repository.getMany(["app.name", "app.locale"])).toEqual({
-      "app.name": "IOC Application",
-      "app.locale": null,
-    });
+        expect(repository.getMany(["app.name", "app.locale"])).toEqual({
+            "app.name": "IOC Application",
+            "app.locale": null,
+        })
 
-    expect(
-      repository.getMany({
-        "app.name": "fallback",
-        "app.locale": "en",
-      }),
-    ).toEqual({
-      "app.name": "IOC Application",
-      "app.locale": "en",
-    });
-  });
+        expect(
+            repository.getMany({
+                "app.name": "fallback",
+                "app.locale": "en",
+            }),
+        ).toEqual({
+            "app.name": "IOC Application",
+            "app.locale": "en",
+        })
+    })
 
+    test("supports offset-style helpers", () => {
+        const repository = new ConfigRepository({
+            app: { name: "IOC Application" },
+        })
 
-  test("supports offset-style helpers", () => {
-    const repository = new ConfigRepository({
-      app: { name: "IOC Application" },
-    });
+        expect(repository.offsetExists("app.name")).toBe(true)
+        expect(repository.offsetGet("app.name")).toBe("IOC Application")
 
-    expect(repository.offsetExists("app.name")).toBe(true);
-    expect(repository.offsetGet("app.name")).toBe("IOC Application");
+        repository.offsetSet("app.name", "Changed")
+        expect(repository.offsetGet("app.name")).toBe("Changed")
 
-    repository.offsetSet("app.name", "Changed");
-    expect(repository.offsetGet("app.name")).toBe("Changed");
-
-    repository.offsetUnset("app.name");
-    expect(repository.offsetExists("app.name")).toBe(false);
-  });
-});
+        repository.offsetUnset("app.name")
+        expect(repository.offsetExists("app.name")).toBe(false)
+    })
+})

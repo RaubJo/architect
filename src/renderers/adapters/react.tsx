@@ -1,35 +1,25 @@
-import ReactDOM from "react-dom/client";
-import { createElement } from "react";
-import type { ReactElement } from "react";
-import { ApplicationProvider } from "../../runtimes/react";
-import type Contract from "../contract";
-import type { RendererContext } from "../contract";
-import type { Cleanup } from "../../support/service-provider";
+import ReactDOM from "react-dom/client"
+import { createElement } from "react"
+import type { ReactElement } from "react"
+import { ApplicationProvider } from "../../runtimes/react"
+import type Contract from "../contract"
+import type { RendererContext } from "../contract"
+import type { Cleanup } from "../../support/service-provider"
 
-type ReactRootComponent = () => ReactElement | null;
+type ReactRootComponent = () => ReactElement | null
 
 export default class ReactRenderer implements Contract {
-    
-
-    render({
-        RootComponent,
-        container,
-        rootElementId,
-    }: RendererContext): Cleanup {
-        const mountNode = document.getElementById(rootElementId);
+    render({ RootComponent, container, rootElementId }: RendererContext): Cleanup {
+        const mountNode = document.getElementById(rootElementId)
         if (!mountNode) {
-            throw new Error(`Missing mount node #${rootElementId}.`);
+            throw new Error(`Missing mount node #${rootElementId}.`)
         }
 
-        const root = ReactDOM.createRoot(mountNode);
+        const root = ReactDOM.createRoot(mountNode)
         root.render(
-            createElement(
-                ApplicationProvider,
-                { container },
-                createElement(RootComponent as ReactRootComponent),
-            ),
-        );
+            createElement(ApplicationProvider, { container }, createElement(RootComponent as ReactRootComponent)),
+        )
 
-        return () => root.unmount();
+        return () => root.unmount()
     }
 }

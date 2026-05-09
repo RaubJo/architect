@@ -1,10 +1,10 @@
-import type { ContainerContract } from "../container/contract";
+import type { ContainerContract } from "../container/contract"
 
-export type Cleanup = () => void;
+export type Cleanup = () => void
 
 export type ServiceProviderContext = {
-    container: ContainerContract;
-};
+    container: ContainerContract
+}
 
 export default class ServiceProvider {
     register(_context: ServiceProviderContext): void | Cleanup {}
@@ -14,6 +14,6 @@ export default class ServiceProvider {
 
 export class DeferrableServiceProvider extends ServiceProvider {
     provides(): Array<string> {
-        return [];
+        return []
     }
 }

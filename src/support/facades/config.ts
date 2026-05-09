@@ -1,6 +1,6 @@
-import type ConfigRepository from "../../config/repository";
-import { createFacade } from "./facade";
+import type ConfigRepository from "../../config/repository"
+import { createFacade } from "./facade"
 
-export const Config = createFacade<ConfigRepository>("config");
+export const Config = createFacade<ConfigRepository>("config")
 
-export default Config;
+export default Config

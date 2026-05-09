@@ -1,6 +1,6 @@
-import type { EnvValue } from "./env";
+import type { EnvValue } from "./env"
 
-type EnvMap = Record<string, EnvValue | undefined>;
+type EnvMap = Record<string, EnvValue | undefined>
 const normalizedEnvValues: Record<string, EnvValue> = {
     "(empty)": "",
     "(false)": false,
@@ -10,45 +10,43 @@ const normalizedEnvValues: Record<string, EnvValue> = {
     false: false,
     null: null,
     true: true,
-};
+}
 
 function normalizeEnvValue(value: EnvValue | undefined): EnvValue | undefined {
     if (typeof value !== "string") {
-        return value;
+        return value
     }
 
-    const normalized = value.trim().toLowerCase();
-    return normalized in normalizedEnvValues ?
-            normalizedEnvValues[normalized]
-        :   value;
+    const normalized = value.trim().toLowerCase()
+    return normalized in normalizedEnvValues ? normalizedEnvValues[normalized] : value
 }
 
 function resolveProcessEnv(): EnvMap {
-    const processValue = (globalThis as { process?: { env?: EnvMap } }).process;
+    const processValue = (globalThis as { process?: { env?: EnvMap } }).process
 
     if (!processValue?.env) {
-        return {};
+        return {}
     }
 
-    return processValue.env;
+    return processValue.env
 }
 
 function resolveImportMetaEnv(): EnvMap {
     const testEnv = (
         globalThis as {
-            __iocImportMetaEnvForTests?: EnvMap;
+            __iocImportMetaEnvForTests?: EnvMap
         }
-    ).__iocImportMetaEnvForTests;
+    ).__iocImportMetaEnvForTests
     if (testEnv) {
-        return testEnv;
+        return testEnv
     }
 
-    const meta = import.meta as ImportMeta & { env?: EnvMap };
-    return meta.env ?? {};
+    const meta = import.meta as ImportMeta & { env?: EnvMap }
+    return meta.env ?? {}
 }
 
 export const envTestingHelpers = {
     normalizeEnvValue,
     resolveImportMetaEnv,
     resolveProcessEnv,
-};
+}
