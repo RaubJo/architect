@@ -1,4 +1,3 @@
-import type { ContainerIdentifier } from "../../container/contract"
 import { makeFromCurrentApplication } from "../../foundation/current-application"
 
 // Module-level state shared by all facades.
@@ -36,7 +35,7 @@ export function createFacade<T = any>(
         },
 
         macro(name: string, fn: (instance: T, ...args: unknown[]) => unknown): void {
-            getMacros(accessor).set(name, fn)
+            getMacros(accessor).set(name, fn as (...args: unknown[]) => unknown)
         },
 
         hasMacro(name: string): boolean {
@@ -102,7 +101,7 @@ export function createFacade<T = any>(
     proxy = new Proxy(facade, {
         get(target, prop) {
             if (prop in target) {
-                return target[prop]
+                return target[prop as string]
             }
 
             const name = String(prop)
@@ -164,7 +163,7 @@ export default abstract class Facade {
         throw new Error("Facade does not implement getFacadeAccessor().")
     }
 
-    static clearResolvedInstance(name: ContainerIdentifier<unknown>): void {
+    static clearResolvedInstance(name: string): void {
         resolvedInstances.delete(name)
     }
 

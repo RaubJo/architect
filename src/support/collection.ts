@@ -32,7 +32,7 @@ export class Collection<T> {
         if (value == null) return new Collection<U>()
         if (value instanceof Collection) return new Collection(value.all())
         if (Array.isArray(value)) return new Collection(value)
-        return new Collection([value])
+        return new Collection([value as U])
     }
 
     static unwrap<U>(value: U | U[] | Collection<U>): U[] | U {
@@ -240,7 +240,7 @@ export class Collection<T> {
 
     value(key: keyof T): T[keyof T] | null {
         const first = this.first()
-        if (first === null) return null
+        if (first === null || first === undefined) return null
         return first[key]
     }
 
@@ -583,8 +583,8 @@ export class Collection<T> {
 
     sortBy(key: keyof T | ((item: T) => unknown), direction: "asc" | "desc" = "asc"): Collection<T> {
         const sorted = [...this.items].sort((a, b) => {
-            const av = typeof key === "function" ? key(a) : a[key]
-            const bv = typeof key === "function" ? key(b) : b[key]
+            const av = (typeof key === "function" ? key(a) : a[key]) as string | number
+            const bv = (typeof key === "function" ? key(b) : b[key]) as string | number
             if (av < bv) return direction === "asc" ? -1 : 1
             if (av > bv) return direction === "asc" ? 1 : -1
             return 0
@@ -831,7 +831,7 @@ export class Collection<T> {
         const [min, max] = range
         return new Collection(
             this.items.filter((item) => {
-                const v = item[key] as unknown
+                const v = item[key] as never
                 return v >= (min as never) && v <= (max as never)
             }),
         )
@@ -841,7 +841,7 @@ export class Collection<T> {
         const [min, max] = range
         return new Collection(
             this.items.filter((item) => {
-                const v = item[key] as unknown
+                const v = item[key] as never
                 return v < (min as never) || v > (max as never)
             }),
         )

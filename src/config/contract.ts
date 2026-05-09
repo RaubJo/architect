@@ -10,7 +10,9 @@ export interface Contract {
     /**
      * Get a configuration value by key
      */
-    get<T = unknown>(key: string, defaultValue?: T | (() => T) | null): T | null
+    get<T = unknown>(key: string): T | null
+    get<T = unknown>(key: string, defaultValue: T | (() => T)): T
+    get<T = unknown>(key: string, defaultValue: T | (() => T) | null): T | null
 
     /**
      * Get multiple configuration values

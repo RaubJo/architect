@@ -17,7 +17,6 @@ import { registerGlobalStr } from "../support/str"
 import { clearFacadeCache } from "../support/facades/facade"
 import {
     getCurrentApplicationContainer,
-    setLegacyApplicationContainerReader,
     setCurrentApplicationContainer,
 } from "./current-application"
 
@@ -49,8 +48,6 @@ function mergeConfigureOptions(options: ApplicationConfigureOptions = {}): Appli
 }
 
 export class Application {
-    protected static container: ContainerContract | null = null
-
     protected providers: ServiceProvider[]
     protected rootElementId: string
     protected RootComponent: RootComponent | null
@@ -195,7 +192,6 @@ export class Application {
             container.flush()
 
             if (getCurrentApplicationContainer() === container) {
-                Application.container = null
                 setCurrentApplicationContainer(null)
             }
         }
@@ -206,7 +202,6 @@ export class Application {
     run() {
         const container = this.createContainer()
 
-        Application.container = container
         setCurrentApplicationContainer(container)
         clearFacadeCache()
         this.registerCoreServices(container)
@@ -227,4 +222,3 @@ export class Application {
     }
 }
 
-setLegacyApplicationContainerReader(() => Application.container)

@@ -94,7 +94,9 @@ class ConfigRepository implements Contract {
         return true
     }
 
-    get<T = unknown>(key: string, defaultValue?: T | (() => T) | null): T | null
+    get<T = unknown>(key: string): T | null
+    get<T = unknown>(key: string, defaultValue: T | (() => T)): T
+    get<T = unknown>(key: string, defaultValue: T | (() => T) | null): T | null
     get(key: string[]): Record<string, unknown>
     get<T = unknown>(
         key: string | string[],

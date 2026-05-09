@@ -4,25 +4,28 @@ import type { ContainerContract } from "@/container/contract"
 import BuiltinContainer from "@/container/adapters/builtin"
 
 import ConfigRepository from "@/config/repository"
-import { Application } from "@/foundation/application"
 import MemoryStorageAdapter from "@/storage/adapters/memory"
 import StorageManager from "@/storage/manager"
 import Facade, { clearFacadeCache, createFacade, flushAllMacros } from "@/support/facades/facade"
 import Cache from "@/support/facades/cache"
 import Config from "@/support/facades/config"
 import Storage from "@/support/facades/storage"
+import {
+    setCurrentApplicationContainer,
+    getCurrentApplicationContainer,
+} from "@/foundation/current-application"
 
 // Helper to inject a fake container for facade tests.
 function setContainer(container: ContainerContract) {
-    ;(Application as unknown as { container: ContainerContract | null }).container = container
+    setCurrentApplicationContainer(container)
 }
 
 function resetContainer() {
-    const app = Application as unknown as { container: ContainerContract | null }
-    if (app.container && typeof app.container.flush === "function") {
-        app.container.flush()
+    const container = getCurrentApplicationContainer()
+    if (container && typeof container.flush === "function") {
+        container.flush()
     }
-    app.container = null
+    setCurrentApplicationContainer(null)
     clearFacadeCache()
     flushAllMacros()
 }

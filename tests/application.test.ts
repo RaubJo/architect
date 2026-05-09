@@ -133,7 +133,7 @@ describe("Application", () => {
             })
             .run()
 
-        expect(Application.make("demo")).toBe("value")
+        expect(Application.make<string>("demo")).toBe("value")
         expect(Application.make("storage")).toBeTruthy()
         expect(Application.make("cache")).toBeTruthy()
         expect(calls).toEqual(["provider.register", "provider.boot", "renderer"])
@@ -198,14 +198,14 @@ describe("Application", () => {
         const secondConfig = second.container.get(ConfigRepository)
 
         expect(firstConfig.get("app")).toBeNull()
-        expect(firstConfig.get("cache")).toEqual({ store: "memory" })
+        expect(firstConfig.get<{ store: string }>("cache")).toEqual({ store: "memory" })
         expect(firstConfig.get("ignored")).toBeNull()
         expect(firstConfig.all()).toEqual(secondConfig.all())
         expect(firstConfig.all()).not.toBe(secondConfig.all())
 
         // Config passed to configure should be cloned into each app instance.
         firstConfig.set("cache.store", "updated")
-        expect(secondConfig.get("cache.store")).toBe("memory")
+        expect(secondConfig.get<string>("cache.store")).toBe("memory")
 
         first.stop()
         second.stop()
@@ -224,7 +224,7 @@ describe("Application", () => {
         }).run()
 
         const config = running.container.get(ConfigRepository)
-        expect(config.get("app.name")).toBe("From configure()")
+        expect(config.get<string>("app.name")).toBe("From configure()")
     })
 
     test("configure options are merged with defaults", () => {

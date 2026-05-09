@@ -5,6 +5,9 @@ export class Fluent<T extends Record<string, unknown> = Record<string, unknown>>
         this.attributes = { ...attributes }
     }
 
+    get<V = unknown>(key: string): V | null
+    get<V = unknown>(key: string, defaultValue: V): V
+    get<V = unknown>(key: string, defaultValue: V | null): V | null
     get<V = unknown>(key: string, defaultValue: V | null = null): V | null {
         const parts = key.split(".")
         let current: unknown = this.attributes
