@@ -26,8 +26,8 @@ describe("createConfig discovery", () => {
 
         const config = createConfig("./src")
 
-        expect(config.get("app.name")).toBe("ESM App")
-        expect(config.get("cache.driver")).toBe("memory")
+        expect(config.get<string>("app.name")).toBe("ESM App")
+        expect(config.get<string>("cache.driver")).toBe("memory")
     })
 
     test("skips ESM loading when static items are provided", () => {
@@ -45,20 +45,20 @@ describe("createConfig discovery", () => {
         const config = createConfig("./src", { app: { name: "Static" } })
 
         // ESM modules should NOT be loaded when static items are provided
-        expect(config.get("app.name")).toBe("Static")
+        expect(config.get<string>("app.name")).toBe("Static")
     })
 
     test("returns independent repository instances", () => {
         const first = createConfig("./", { app: { name: "First" } })
         const second = createConfig("./", { app: { name: "Second" } })
 
-        expect(first.get("app.name")).toBe("First")
-        expect(second.get("app.name")).toBe("Second")
+        expect(first.get<string>("app.name")).toBe("First")
+        expect(second.get<string>("app.name")).toBe("Second")
 
         // Mutations don't leak between instances
         first.set("app.name", "Modified")
-        expect(first.get("app.name")).toBe("Modified")
-        expect(second.get("app.name")).toBe("Second")
+        expect(first.get<string>("app.name")).toBe("Modified")
+        expect(second.get<string>("app.name")).toBe("Second")
     })
 
     test("returns empty config when no glob implementation is available", () => {

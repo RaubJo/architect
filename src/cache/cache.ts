@@ -6,6 +6,8 @@ type Envelope<T> = { v: T; e: number | null }
 export class Cache implements Contract {
     constructor(private readonly backing: Adapter) {}
 
+    async get(key: string): Promise<unknown>
+    async get<T>(key: string): Promise<T | null>
     async get<T = unknown>(key: string): Promise<T | null> {
         const raw = await this.backing.get<Envelope<T>>(key)
         if (raw === null) return null

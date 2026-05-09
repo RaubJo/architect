@@ -48,8 +48,8 @@ describe("BuiltinContainer adapter", () => {
         const container = new BuiltinContainer()
         container.bind("name").toConstantValue("ioc")
 
-        expect(container.get("name")).toBe("ioc")
-        expect(container.make("name")).toBe("ioc")
+        expect(container.get<string>("name")).toBe("ioc")
+        expect(container.make<string>("name")).toBe("ioc")
     })
 
     test("bind throws when identifier is already bound", () => {
@@ -112,8 +112,8 @@ describe("BuiltinContainer adapter", () => {
         container.singleton("singleton.value", 7)
         container.transient("transient.value", 9)
 
-        expect(container.make("singleton.value")).toBe(7)
-        expect(container.make("transient.value")).toBe(9)
+        expect(container.make<number>("singleton.value")).toBe(7)
+        expect(container.make<number>("transient.value")).toBe(9)
     })
 
     test("supports factory registrations", () => {
@@ -121,7 +121,7 @@ describe("BuiltinContainer adapter", () => {
         container.instance("seed", 5)
         container.singleton("answer", (ioc) => ioc.make<number>("seed") + 37)
 
-        expect(container.make("answer")).toBe(42)
+        expect(container.make<number>("answer")).toBe(42)
     })
 
     test("supports fluent dynamic and class registrations", () => {
@@ -161,8 +161,8 @@ describe("BuiltinContainer adapter", () => {
         dynamicScopes.inTransientScope()
         dynamicScopes.inSingletonScope()
 
-        expect(container.make("class.binding")).toBe("class.constant")
-        expect(container.make("dynamic.binding")).toBe("dynamic.constant")
+        expect(container.make<string>("class.binding")).toBe("class.constant")
+        expect(container.make<string>("dynamic.binding")).toBe("dynamic.constant")
     })
 
     test("detects circular dependencies", () => {
@@ -198,14 +198,14 @@ describe("BuiltinContainer adapter", () => {
         const originalGetMetadata = reflectWithMetadata.getMetadata
         const originalDefineMetadata = reflectWithMetadata.defineMetadata
 
-        reflectWithMetadata.getMetadata = undefined
-        reflectWithMetadata.defineMetadata = undefined
+        ;(reflectWithMetadata as Record<string, unknown>).getMetadata = undefined
+        ;(reflectWithMetadata as Record<string, unknown>).defineMetadata = undefined
 
         try {
             expect(() => inject("safe.token")(target, undefined, 0)).not.toThrow()
         } finally {
-            reflectWithMetadata.getMetadata = originalGetMetadata
-            reflectWithMetadata.defineMetadata = originalDefineMetadata
+            ;(reflectWithMetadata as Record<string, unknown>).getMetadata = originalGetMetadata
+            ;(reflectWithMetadata as Record<string, unknown>).defineMetadata = originalDefineMetadata
         }
     })
 

@@ -94,9 +94,10 @@ class ConfigRepository implements Contract {
         return true
     }
 
-    get<T = unknown>(key: string): T | null
-    get<T = unknown>(key: string, defaultValue: T | (() => T)): T
-    get<T = unknown>(key: string, defaultValue: T | (() => T) | null): T | null
+    get(key: string): unknown
+    get<T>(key: string): T | null
+    get<T>(key: string, defaultValue: T | (() => T)): T
+    get<T>(key: string, defaultValue: T | (() => T) | null): T | null
     get(key: string[]): Record<string, unknown>
     get<T = unknown>(
         key: string | string[],
@@ -154,6 +155,8 @@ class ConfigRepository implements Contract {
         return this.has(key)
     }
 
+    offsetGet(key: string): unknown
+    offsetGet<T>(key: string): T | null
     offsetGet<T = unknown>(key: string): T | null {
         return this.get<T>(key) as T | null
     }

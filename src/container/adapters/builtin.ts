@@ -294,7 +294,7 @@ export default class BuiltinContainer implements ContainerContract {
     }
 
     protected hasCachedSingleton<T>(record: BindingRecord<T>): record is BindingRecord<T> & { cached: T } {
-        return record.scope === "singleton" && "cached" in record && typeof record.cached !== "undefined"
+        return record.kind !== "constant" && record.scope === "singleton" && "cached" in record && typeof record.cached !== "undefined"
     }
 
     protected resolveClass<T>(concrete: ContainerClass<T>): T {
@@ -314,14 +314,14 @@ export default class BuiltinContainer implements ContainerContract {
         }
     }
 
-    protected assertNotResolving(concrete: ContainerClass): void {
+    protected assertNotResolving(concrete: ContainerClass<unknown>): void {
         if (this.resolving.has(concrete)) {
             throw new Error(`Circular dependency detected while resolving [${concrete.name || "anonymous"}].`)
         }
     }
 
     protected resolveParameter(
-        concrete: ContainerClass,
+        concrete: ContainerClass<unknown>,
         injectTokens: Map<number, ContainerIdentifier>,
         designType: ContainerIdentifier | undefined,
         index: number,

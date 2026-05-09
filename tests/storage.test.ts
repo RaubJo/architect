@@ -48,12 +48,12 @@ function makeRequest<T>(resolveValue: () => T, shouldFail = false): IDBRequest<T
 
     queueMicrotask(() => {
         if (shouldFail) {
-            request.error = new Error("fail") as unknown as DOMException
+            ;(request as { error: DOMException | null }).error = new Error("fail") as unknown as DOMException
             request.onerror?.call(request as IDBRequest<T>, new Event("error"))
             return
         }
 
-        request.result = resolveValue()
+        ;(request as { result: T }).result = resolveValue()
         request.onsuccess?.call(request as IDBRequest<T>, new Event("success"))
     })
 
@@ -71,7 +71,7 @@ function createIndexedDbFactory(options: { failOpen?: boolean; failGet?: boolean
                 items.set(String(key), value)
                 return key as IDBValidKey
             }),
-        count: (key?: IDBValidKey | IDBKeyRange) => makeRequest(() => (items.has(String(key)) ? 1 : 0)),
+        count: (key?: IDBValidKey | IDBKeyRange) => makeRequest<number>(() => (items.has(String(key)) ? 1 : 0)),
         delete: (key: IDBValidKey | IDBKeyRange) =>
             makeRequest(() => {
                 items.delete(String(key))
@@ -99,7 +99,7 @@ function createIndexedDbFactory(options: { failOpen?: boolean; failGet?: boolean
         transaction: () =>
             ({
                 objectStore: () => store as IDBObjectStore,
-            }) as IDBTransaction,
+            }) as unknown as IDBTransaction,
     }
 
     const factory: Pick<IDBFactory, "open"> = {
@@ -112,12 +112,12 @@ function createIndexedDbFactory(options: { failOpen?: boolean; failGet?: boolean
 
             queueMicrotask(() => {
                 if (options.failOpen) {
-                    request.error = new Error("open failed") as unknown as DOMException
+                    ;(request as { error: DOMException | null }).error = new Error("open failed") as unknown as DOMException
                     request.onerror?.call(request as IDBOpenDBRequest, new Event("error"))
                     return
                 }
 
-                request.result = db as IDBDatabase
+                ;(request as { result: IDBDatabase }).result = db as IDBDatabase
                 request.onupgradeneeded?.call(
                     request as IDBOpenDBRequest,
                     new Event("upgradeneeded") as IDBVersionChangeEvent,
@@ -235,7 +235,7 @@ describe("Storage adapters and manager", () => {
                     return null as unknown as IDBOpenDBRequest
                 }
 
-                return workingFactory.open()
+                return workingFactory.open("db")
             },
         }
 

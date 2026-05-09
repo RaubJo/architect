@@ -29,7 +29,7 @@ describe("Arr", () => {
     })
 
     test("crossJoin", () => {
-        expect(Arr.crossJoin([1, 2], ["a", "b"])).toEqual([
+        expect(Arr.crossJoin<number | string>([1, 2], ["a", "b"])).toEqual([
             [1, "a"],
             [1, "b"],
             [2, "a"],
@@ -101,9 +101,9 @@ describe("Arr", () => {
     test("forget", () => {
         const obj = { a: 1, b: { c: 2, d: 3 } }
         Arr.forget(obj as Record<string, unknown>, "b.c")
-        expect(obj).toEqual({ a: 1, b: { d: 3 } })
+        expect(obj as Record<string, unknown>).toEqual({ a: 1, b: { d: 3 } })
         Arr.forget(obj as Record<string, unknown>, "a")
-        expect(obj).toEqual({ b: { d: 3 } })
+        expect(obj as Record<string, unknown>).toEqual({ b: { d: 3 } })
     })
 
     test("get", () => {

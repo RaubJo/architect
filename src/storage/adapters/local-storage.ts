@@ -7,6 +7,8 @@ export default class LocalStorageAdapter implements Adapter {
         this.storage = storage
     }
 
+    async get(key: string): Promise<unknown>
+    async get<T>(key: string): Promise<T | null>
     async get<T = unknown>(key: string): Promise<T | null> {
         const value = this.storage.getItem(key)
         if (value === null) {

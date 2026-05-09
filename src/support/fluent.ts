@@ -5,17 +5,19 @@ export class Fluent<T extends Record<string, unknown> = Record<string, unknown>>
         this.attributes = { ...attributes }
     }
 
-    get<V = unknown>(key: string): V | null
-    get<V = unknown>(key: string, defaultValue: V): V
-    get<V = unknown>(key: string, defaultValue: V | null): V | null
-    get<V = unknown>(key: string, defaultValue: V | null = null): V | null {
+    get(key: string): unknown
+    get<V>(key: string): V | null
+    get<V>(key: string, defaultValue: V): V
+    get<V>(key: string, defaultValue: V | null): V | null
+    get<V = unknown>(key: string, defaultValue?: V | null): unknown {
+        const fallback = defaultValue !== undefined ? defaultValue : null
         const parts = key.split(".")
         let current: unknown = this.attributes
         for (const part of parts) {
-            if (current === null || current === undefined || typeof current !== "object") return defaultValue
+            if (current === null || current === undefined || typeof current !== "object") return fallback
             current = (current as Record<string, unknown>)[part]
         }
-        return (current === undefined ? defaultValue : current) as V | null
+        return current === undefined ? fallback : current
     }
 
     set(key: string, value: unknown): this {

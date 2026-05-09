@@ -3,6 +3,8 @@ import type { Adapter } from "./contract"
 export default class MemoryStorageAdapter implements Adapter {
     protected items = new Map<string, unknown>()
 
+    async get(key: string): Promise<unknown>
+    async get<T>(key: string): Promise<T | null>
     async get<T = unknown>(key: string): Promise<T | null> {
         if (!this.items.has(key)) {
             return null

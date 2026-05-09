@@ -69,6 +69,8 @@ export default class CacheManager extends Manager<Contract, Adapter> implements 
         return this.resolve(name ?? this.active)
     }
 
+    get(key: string): Promise<unknown>
+    get<T>(key: string): Promise<T | null>
     get<T = unknown>(key: string): Promise<T | null> {
         return this.store().get<T>(key)
     }

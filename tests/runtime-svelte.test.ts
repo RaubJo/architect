@@ -59,7 +59,7 @@ describe("Svelte runtime and renderer", () => {
         svelteState.providedContainer = null
 
         provideContainer(container)
-        expect(svelteState.provided).toEqual({ key: containerKey, value: container })
+        expect(svelteState.provided as { key: unknown; value: unknown } | null).toEqual({ key: containerKey, value: container })
         expect(useService<string>(token)).toBe("resolved")
     })
 
@@ -105,7 +105,7 @@ describe("Svelte runtime and renderer", () => {
             rootElementId: "root",
         })
 
-        expect(svelteState.mounted).toEqual({
+        expect(svelteState.mounted as { component: unknown; options: unknown } | null).toEqual({
             component: RootComponent,
             options: { target: mountNode, props: { container } },
         })

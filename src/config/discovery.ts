@@ -1,4 +1,4 @@
-import type { ConfigItems } from "./contract"
+import type { ConfigItems } from "./repository"
 import ConfigRepository from "./repository"
 
 type GlobLoader = (pattern: string | string[], options?: { eager?: boolean }) => Record<string, unknown>

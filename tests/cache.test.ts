@@ -19,7 +19,7 @@ describe("CacheManager", () => {
         )
 
         await manager.set("key", "value")
-        expect(await manager.get("key")).toBe("value")
+        expect(await manager.get<string>("key")).toBe("value")
         expect(await manager.has("key")).toBe(true)
         expect(await manager.keys()).toEqual(["key"])
         await manager.delete("key")
@@ -30,13 +30,13 @@ describe("CacheManager", () => {
 
         manager.use("fast")
         await manager.set("fast-key", 123)
-        expect(await manager.get("fast-key")).toBe(123)
+        expect(await manager.get<number>("fast-key")).toBe(123)
     })
 
     test("falls back to default stores and memory default", async () => {
         const manager = CacheManager.fromConfig(new ConfigRepository({}))
         await manager.set("a", 1)
-        expect(await manager.get("a")).toBe(1)
+        expect(await manager.get<number>("a")).toBe(1)
         expect(manager.store("memory")).toBeTruthy()
     })
 
@@ -70,7 +70,7 @@ describe("CacheManager", () => {
 
         manager.use("custom")
         await manager.set("k", "v", 60)
-        expect(await manager.get("k")).toBe("v")
+        expect(await manager.get<string>("k")).toBe("v")
 
         // Factory called exactly once and result cached
         expect(factoryCalled).toBe(1)
@@ -109,7 +109,7 @@ describe("Cache", () => {
     test("returns value before TTL expires", async () => {
         const adapter = new Cache(new MemoryStorageAdapter())
         await adapter.set("k", "v", 60)
-        expect(await adapter.get("k")).toBe("v")
+        expect(await adapter.get<string>("k")).toBe("v")
         expect(await adapter.has("k")).toBe(true)
     })
 
@@ -123,13 +123,13 @@ describe("Cache", () => {
     test("TTL = null means no expiry", async () => {
         const adapter = new Cache(new MemoryStorageAdapter())
         await adapter.set("k", "v", null)
-        expect(await adapter.get("k")).toBe("v")
+        expect(await adapter.get<string>("k")).toBe("v")
     })
 
     test("no TTL argument means no expiry", async () => {
         const adapter = new Cache(new MemoryStorageAdapter())
         await adapter.set("k", "v")
-        expect(await adapter.get("k")).toBe("v")
+        expect(await adapter.get<string>("k")).toBe("v")
     })
 
     test("keys() excludes expired entries without deleting them", async () => {
@@ -163,7 +163,7 @@ describe("Cache", () => {
         const manager = CacheManager.fromConfig(new ConfigRepository({}))
         await manager.set("live", "yes", 60)
         await manager.set("dead", "no", 0)
-        expect(await manager.get("live")).toBe("yes")
+        expect(await manager.get<string>("live")).toBe("yes")
         expect(await manager.get("dead")).toBeNull()
     })
 })

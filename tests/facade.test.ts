@@ -155,10 +155,10 @@ describe("Proxy-based facade (createFacade)", () => {
 
         expect(Config.has("app.name")).toBe(true)
         expect(Config.get("app.name")).toBe("IOC")
-        expect(Config.get<number>("app.retries")).toBe(3)
-        expect(Config.get<number>("app.ratio")).toBe(1.5)
-        expect(Config.get<boolean>("app.enabled")).toBe(true)
-        expect(Config.get<string[]>("app.tags")).toEqual(["base"])
+        expect(Config.get("app.retries")).toBe(3)
+        expect(Config.get("app.ratio")).toBe(1.5)
+        expect(Config.get("app.enabled")).toBe(true)
+        expect(Config.get("app.tags")).toEqual(["base"])
         expect(Config.getMany(["app.name"])).toEqual({ "app.name": "IOC" })
 
         Config.set("app.name", "Changed")
@@ -166,7 +166,7 @@ describe("Proxy-based facade (createFacade)", () => {
         Config.push("app.tags", "last")
 
         expect(Config.get("app.name")).toBe("Changed")
-        expect(Config.get<string[]>("app.tags")).toEqual(["first", "base", "last"])
+        expect(Config.get("app.tags")).toEqual(["first", "base", "last"])
         expect(Config.all()).toMatchObject({
             app: { name: "Changed" },
         })
@@ -225,12 +225,12 @@ describe("Proxy-based facade (createFacade)", () => {
         // Should return the facade proxy (truthy object).
         expect(result).toBeTruthy()
         // Should be able to chain.
-        await Storage.use("memory").set("y", 2)
+        await (Storage.use("memory") as typeof Storage).set("y", 2)
         expect(await Storage.get("y")).toBe(2)
     })
 
     test("facade helper methods tolerate missing optional manager methods", () => {
-        const Plain = createFacade("plain") as {
+        const Plain = createFacade("plain") as unknown as {
             use: () => unknown
             store: () => unknown
             driver: () => unknown
@@ -308,7 +308,7 @@ describe("Facade macros", () => {
             return instance.get<string>("app.name")
         })
 
-        expect((Config as Record<string, unknown>).appName()).toBe("test")
+        expect(Config.appName()).toBe("test")
     })
 
     test("macro receives the resolved instance as first argument", () => {
@@ -322,7 +322,7 @@ describe("Facade macros", () => {
             return "ok"
         })
 
-        ;(Config as Record<string, unknown>).capture()
+        ;Config.capture()
         expect(receivedInstance).toBeInstanceOf(ConfigRepository)
     })
 
@@ -337,7 +337,7 @@ describe("Facade macros", () => {
         Config.macro("get", () => "overridden")
 
         // After macro: macro wins.
-        expect((Config as Record<string, unknown>).get("app.name")).toBe("overridden")
+        expect(Config.get("app.name")).toBe("overridden")
     })
 
     test("hasMacro returns correct value", () => {
@@ -374,12 +374,14 @@ describe("Facade macros", () => {
         container.bind("config").toConstantValue(new ConfigRepository({}))
         setContainer(container)
 
-        Config.macro("required", (instance, key: string, defaultValue?: string) => {
+        Config.macro("required", (instance, ...args) => {
+            const key = args[0] as string
+            const defaultValue = args[1] as string | undefined
             const value = instance.get<string>(key)
             return value ?? defaultValue ?? "missing"
         })
 
-        const result = (Config as Record<string, unknown>).required("non.existent", "fallback")
+        const result = Config.required("non.existent", "fallback")
         expect(result).toBe("fallback")
     })
 
@@ -388,15 +390,16 @@ describe("Facade macros", () => {
         container.bind("config").toConstantValue(new ConfigRepository({ app: { v: 1 } }))
         setContainer(container)
 
-        Config.macro("double", (instance, key: string) => {
+        Config.macro("double", (instance, ...args) => {
+            const key = args[0] as string
             return (instance.get<number>(key) ?? 0) * 2
         })
 
-        expect((Config as Record<string, unknown>).double("app.v")).toBe(2)
+        expect(Config.double("app.v")).toBe(2)
 
         clearFacadeCache()
 
-        expect((Config as Record<string, unknown>).double("app.v")).toBe(2)
+        expect(Config.double("app.v")).toBe(2)
     })
 
     test("flushAllMacros clears all facade macros", () => {
@@ -414,7 +417,7 @@ describe("Facade macros", () => {
 
     test("clearResolvedInstance can be called on the proxy", () => {
         // Call the method directly - it clears from the internal Map.
-        ;(Config as Record<string, unknown>).clearResolvedInstance("config")
+        ;Config.clearResolvedInstance("config")
         expect(true).toBe(true)
     })
 
@@ -424,7 +427,7 @@ describe("Facade macros", () => {
         setContainer(container)
 
         // Call the method to cover the line.
-        ;(Config as Record<string, unknown>).clearResolvedInstances()
+        ;Config.clearResolvedInstances()
         expect(true).toBe(true)
     })
 
@@ -434,7 +437,7 @@ describe("Facade macros", () => {
         setContainer(container)
 
         // Call the method to cover the line.
-        ;(Config as Record<string, unknown>).clearResolvedInstances()
+        ;Config.clearResolvedInstances()
         expect(true).toBe(true)
     })
 

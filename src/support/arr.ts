@@ -99,6 +99,8 @@ export function forget(obj: AnyObject, keys: string | string[]): void {
     }
 }
 
+export function get(obj: AnyObject, key: string): unknown
+export function get<T>(obj: AnyObject, key: string, fallback?: T | null): T | null
 export function get<T = unknown>(obj: AnyObject, key: string, fallback: T | null = null): T | null {
     const parts = key.split(".")
     let current: unknown = obj
@@ -202,6 +204,8 @@ export function query(obj: AnyObject): string {
     return new URLSearchParams(Object.entries(dot(obj)).map(([k, v]) => [k, String(v)])).toString()
 }
 
+export function random<T>(arr: T[]): T
+export function random<T>(arr: T[], number: number): T[]
 export function random<T>(arr: T[], number?: number): T | T[] {
     const shuffled = [...arr].sort(() => Math.random() - 0.5)
     if (number === undefined) return shuffled[0]

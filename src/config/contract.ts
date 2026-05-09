@@ -10,9 +10,10 @@ export interface Contract {
     /**
      * Get a configuration value by key
      */
-    get<T = unknown>(key: string): T | null
-    get<T = unknown>(key: string, defaultValue: T | (() => T)): T
-    get<T = unknown>(key: string, defaultValue: T | (() => T) | null): T | null
+    get(key: string): unknown
+    get<T>(key: string): T | null
+    get<T>(key: string, defaultValue: T | (() => T)): T
+    get<T>(key: string, defaultValue: T | (() => T) | null): T | null
 
     /**
      * Get multiple configuration values
@@ -47,7 +48,8 @@ export interface Contract {
     /**
      * Get a configuration value by offset (offset-style)
      */
-    offsetGet<T = unknown>(key: string): T | null
+    offsetGet(key: string): unknown
+    offsetGet<T>(key: string): T | null
 
     /**
      * Set a configuration value by offset (offset-style)

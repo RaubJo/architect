@@ -22,10 +22,26 @@ function getMacros(accessor: string): Map<string, (...args: unknown[]) => unknow
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface FacadeInstance<T = unknown> {
+    getFacadeAccessor(): string
+    macro(name: string, fn: (instance: T, ...args: unknown[]) => unknown): void
+    hasMacro(name: string): boolean
+    flushMacros(): void
+    clearResolvedInstance(name: string): void
+    clearResolvedInstances(): void
+    callFacadeMethod(method: string, ...args: unknown[]): unknown
+    callFacadeMethod<R = unknown>(method: string, ...args: unknown[]): R
+    use(...args: unknown[]): unknown
+    store(...args: unknown[]): unknown
+    driver(...args: unknown[]): unknown
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createFacade<T = any>(
     accessor: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Record<string, any> & { getFacadeAccessor: () => string } {
+): FacadeInstance<T> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let proxy: any
 
@@ -137,9 +153,7 @@ export function createFacade<T = any>(
         },
     })
 
-    return proxy as Record<string, unknown> & {
-        getFacadeAccessor: () => string
-    }
+    return proxy as FacadeInstance<T>
 }
 
 function resolveInstance<T>(accessor: string): T {

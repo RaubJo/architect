@@ -97,7 +97,7 @@ describe("Vue runtime and renderer", () => {
 
         expect(vueState.mountedComponent).toBe(RootComponent)
         expect(vueState.mountedTarget).toBe(mountNode)
-        expect(vueState.provided).toEqual({ key: containerKey, value: container })
+        expect(vueState.provided as { key: unknown; value: unknown } | null).toEqual({ key: containerKey, value: container })
 
         cleanup()
         expect(vueState.unmounted).toBe(1)

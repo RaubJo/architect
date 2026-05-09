@@ -72,6 +72,8 @@ export default class IndexedDbAdapter implements Adapter {
         }
     }
 
+    async get(key: string): Promise<unknown>
+    async get<T>(key: string): Promise<T | null>
     async get<T = unknown>(key: string): Promise<T | null> {
         return this.withStore("readonly", async (store) => {
             const value = await this.req<unknown>(store.get(key))
@@ -159,28 +161,30 @@ function createReadonlyProxy(fallback: Adapter): Partial<IDBObjectStore> {
 function createReadWriteProxy(fallback: Adapter): Partial<IDBObjectStore> {
     return {
         ...createReadonlyProxy(fallback),
-        put: (value: unknown, key?: IDBValidKey) => wrapPromiseRequest(fallback.set(String(key as IDBValidKey), value)),
-        delete: (key: IDBValidKey | IDBKeyRange) => wrapPromiseRequest(fallback.delete(String(key as IDBValidKey))),
-        clear: () => wrapPromiseRequest(fallback.clear()),
+        put: (value: unknown, key?: IDBValidKey) => wrapPromiseRequest(fallback.set(String(key as IDBValidKey), value)) as unknown as IDBRequest<IDBValidKey>,
+        delete: (key: IDBValidKey | IDBKeyRange) => wrapPromiseRequest(fallback.delete(String(key as IDBValidKey))) as unknown as IDBRequest<undefined>,
+        clear: () => wrapPromiseRequest(fallback.clear()) as unknown as IDBRequest<undefined>,
     }
 }
 
 function wrapPromiseRequest<T>(promise: Promise<T>): IDBRequest<T> {
-    const request: Partial<IDBRequest<T>> = {
-        onsuccess: null,
-        onerror: null,
+    const request = {
+        onsuccess: null as ((this: IDBRequest<T>, ev: Event) => unknown) | null,
+        onerror: null as ((this: IDBRequest<T>, ev: Event) => unknown) | null,
+        result: undefined as T | undefined,
+        error: null as DOMException | null,
     }
 
     promise.then(
         (result) => {
             request.result = result
-            request.onsuccess?.call(request as IDBRequest<T>, new Event("success"))
+            request.onsuccess?.call(request as unknown as IDBRequest<T>, new Event("success"))
         },
         (error) => {
             request.error = error as DOMException
-            request.onerror?.call(request as IDBRequest<T>, new Event("error"))
+            request.onerror?.call(request as unknown as IDBRequest<T>, new Event("error"))
         },
     )
 
-    return request as IDBRequest<T>
+    return request as unknown as IDBRequest<T>
 }
