@@ -11,7 +11,11 @@ const vueState = {
 }
 
 mock.module("vue", () => ({
+    defineComponent: (component: unknown) => component,
+    h: (component: unknown) => component,
     inject: (_key: unknown, defaultValue: unknown) => vueState.injectedContainer ?? defaultValue,
+    onUnmounted: () => undefined,
+    provide: () => undefined,
     createApp: (component: unknown) => {
         vueState.mountedComponent = component
         return {

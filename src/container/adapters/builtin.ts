@@ -146,7 +146,41 @@ export default class BuiltinContainer implements ContainerContract {
     protected bindings = new Map<ContainerIdentifier, BindingRecord>()
     protected resolving = new Set<ContainerIdentifier>()
 
-    bind<T>(identifier: ContainerIdentifier<T>): ContainerBindToSyntax<T> {
+    bind<T>(identifier: ContainerIdentifier<T>): ContainerBindToSyntax<T>
+    bind<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
+    bind<T>(
+        identifier: ContainerIdentifier<T>,
+        concrete?: ContainerConcrete<T>,
+    ): ContainerBindToSyntax<T> | this {
+        if (typeof concrete !== "undefined") {
+            this.removeIfBound(identifier)
+
+            if (isClassConcrete(concrete)) {
+                this.bindings.set(identifier, {
+                    kind: "class",
+                    concrete,
+                    scope: "transient",
+                })
+                return this
+            }
+
+            if (isFactoryConcrete(concrete)) {
+                this.bindings.set(identifier, {
+                    kind: "factory",
+                    concrete,
+                    scope: "transient",
+                })
+                return this
+            }
+
+            this.bindings.set(identifier, {
+                kind: "factory",
+                concrete: () => concrete as T,
+                scope: "transient",
+            })
+            return this
+        }
+
         if (this.bindings.has(identifier)) {
             throw new Error(`Cannot bind [${String(identifier)}] because it is already bound.`)
         }
@@ -178,35 +212,6 @@ export default class BuiltinContainer implements ContainerContract {
         this.bindings.set(identifier, {
             kind: "constant",
             value: concrete as T,
-        })
-        return this
-    }
-
-    transient<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this {
-        this.removeIfBound(identifier)
-
-        if (isClassConcrete(concrete)) {
-            this.bindings.set(identifier, {
-                kind: "class",
-                concrete,
-                scope: "transient",
-            })
-            return this
-        }
-
-        if (isFactoryConcrete(concrete)) {
-            this.bindings.set(identifier, {
-                kind: "factory",
-                concrete,
-                scope: "transient",
-            })
-            return this
-        }
-
-        this.bindings.set(identifier, {
-            kind: "factory",
-            concrete: () => concrete as T,
-            scope: "transient",
         })
         return this
     }

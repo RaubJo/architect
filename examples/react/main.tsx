@@ -1,12 +1,14 @@
 import "reflect-metadata";
 import { Application } from "@raubjo/architect-core";
-import { Renderer } from "@raubjo/architect-core/react";
+import { ContextProvider } from "@raubjo/architect-core/react";
+import ReactDOM from "react-dom/client";
+import { createElement } from "react";
 
 import App from "./app";
 import Counter from "./counter/provider";
 import Heartbeat from "./heartbeat/provider";
 
-Application.configure({
+const application = Application.configure({
         container: {
             adapter: "builtin"
         },
@@ -19,7 +21,7 @@ Application.configure({
     .withProviders([
         new Counter(),
         new Heartbeat(),
-    ])
-    .withRoot(App)
-    .withRenderer(new Renderer())
-    .run();
+    ]);
+
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+root.render(createElement(ContextProvider, { application }, createElement(App)));

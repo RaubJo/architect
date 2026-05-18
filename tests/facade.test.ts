@@ -9,7 +9,7 @@ import StorageManager from "@/storage/manager"
 import Facade, { clearFacadeCache, createFacade, flushAllMacros } from "@/support/facades/facade"
 import Cache from "@/support/facades/cache"
 import Config from "@/support/facades/config"
-import Storage from "@/support/facades/storage"
+import Store from "@/support/facades/store"
 import {
     setCurrentApplicationContainer,
     getCurrentApplicationContainer,
@@ -135,7 +135,7 @@ describe("Proxy-based facade (createFacade)", () => {
     test("getFacadeAccessor returns the configured accessor", () => {
         expect((Config as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("config")
         expect((Cache as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("cache")
-        expect((Storage as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("storage")
+        expect((Store as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("storage")
     })
 
     test("Config delegates all methods to ConfigRepository", () => {
@@ -192,25 +192,25 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(await Cache.keys()).toEqual([])
     })
 
-    test("Storage delegates async methods to StorageManager", async () => {
+    test("Store delegates async methods to StorageManager", async () => {
         const container = new BuiltinContainer()
         const manager = new StorageManager({ memory: new MemoryStorageAdapter() }, "memory")
         container.bind("storage").toConstantValue(manager)
         container.bind(StorageManager).toConstantValue(manager)
         setContainer(container)
 
-        await Storage.set("name", "ioc")
-        expect(await Storage.get("name")).toBe("ioc")
-        expect(await Storage.has("name")).toBe(true)
-        expect(await Storage.keys()).toEqual(["name"])
-        expect(Storage.driver()).toBe(manager.driver())
-        expect(Storage.driver("memory")).toBe(manager.driver("memory"))
-        Storage.use("memory")
-        await Storage.delete("name")
-        expect(await Storage.get("name")).toBeNull()
-        await Storage.set("x", 1)
-        await Storage.clear()
-        expect(await Storage.keys()).toEqual([])
+        await Store.set("name", "ioc")
+        expect(await Store.get("name")).toBe("ioc")
+        expect(await Store.has("name")).toBe(true)
+        expect(await Store.keys()).toEqual(["name"])
+        expect(Store.driver()).toBe(manager.driver())
+        expect(Store.driver("memory")).toBe(manager.driver("memory"))
+        Store.use("memory")
+        await Store.delete("name")
+        expect(await Store.get("name")).toBeNull()
+        await Store.set("x", 1)
+        await Store.clear()
+        expect(await Store.keys()).toEqual([])
     })
 
     test("uses() returns the facade for chaining", async () => {
@@ -220,13 +220,13 @@ describe("Proxy-based facade (createFacade)", () => {
         container.bind(StorageManager).toConstantValue(manager)
         setContainer(container)
 
-        await Storage.set("x", 1)
-        const result = Storage.use("memory")
+        await Store.set("x", 1)
+        const result = Store.use("memory")
         // Should return the facade proxy (truthy object).
         expect(result).toBeTruthy()
         // Should be able to chain.
-        await (Storage.use("memory") as typeof Storage).set("y", 2)
-        expect(await Storage.get("y")).toBe(2)
+        await (Store.use("memory") as typeof Store).set("y", 2)
+        expect(await Store.get("y")).toBe(2)
     })
 
     test("facade helper methods tolerate missing optional manager methods", () => {

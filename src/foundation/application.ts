@@ -8,8 +8,6 @@ import {
     mergeContainerRuntimeOptions,
     type ContainerRuntimeOptions,
 } from "../container/runtime"
-import type Contract from "../renderers/contract"
-import type { RootComponent } from "../renderers/contract"
 import StorageManager from "../storage/manager"
 import type ServiceProvider from "../support/service-provider"
 import type { Cleanup, ServiceProviderContext } from "../support/service-provider"
@@ -49,17 +47,11 @@ function mergeConfigureOptions(options: ApplicationConfigureOptions = {}): Appli
 
 export class Application {
     protected providers: ServiceProvider[]
-    protected rootElementId: string
-    protected RootComponent: RootComponent | null
-    protected renderer: Contract | null
     protected options: ApplicationResolvedOptions
 
     constructor(options: ApplicationResolvedOptions) {
         this.options = options
         this.providers = this.getDefaultProviders()
-        this.rootElementId = "root"
-        this.RootComponent = null
-        this.renderer = null
     }
 
     protected getDefaultProviders(): ServiceProvider[] {
@@ -94,17 +86,6 @@ export class Application {
 
     withProviders(providers: ServiceProvider[]) {
         this.providers.push(...providers)
-        return this
-    }
-
-    withRoot(RootComponent: RootComponent, options: { rootElementId?: string } = {}) {
-        this.RootComponent = RootComponent
-        this.rootElementId = options.rootElementId ?? this.rootElementId
-        return this
-    }
-
-    withRenderer(renderer: Contract) {
-        this.renderer = renderer
         return this
     }
 
@@ -147,42 +128,8 @@ export class Application {
         }
     }
 
-    protected renderRoot(context: ServiceProviderContext): Cleanup {
-        if (this.renderer) {
-            return this.renderWithConfiguredRenderer(context)
-        }
-
-        if (this.RootComponent) {
-            throw new Error(
-                "Renderer is required when root component is set. Install a renderer feature (react/solid/svelte/vue) and call withRenderer(...).",
-            )
-        }
-
-        return () => {}
-    }
-
-    protected renderWithConfiguredRenderer(context: ServiceProviderContext): Cleanup {
-        if (!this.renderer || !this.RootComponent) {
-            throw new Error("Root component is required when using a custom renderer.")
-        }
-
-        return (
-            this.renderer.render({
-                ...context,
-                RootComponent: this.RootComponent,
-                rootElementId: this.rootElementId,
-            }) ?? (() => {})
-        )
-    }
-
-    protected createStopHandler(
-        container: ContainerContract,
-        rendererCleanup: Cleanup,
-        cleanupTasks: Cleanup[],
-    ): Cleanup {
+    protected createStopHandler(container: ContainerContract, cleanupTasks: Cleanup[]): Cleanup {
         const stop: Cleanup = () => {
-            rendererCleanup()
-
             for (const cleanup of cleanupTasks.reverse()) {
                 cleanup()
             }
@@ -210,8 +157,7 @@ export class Application {
         this.registerProviders(context)
         this.bootProviders(context)
 
-        const rendererCleanup = this.renderRoot(context)
-        const stop = this.createStopHandler(container, rendererCleanup, context.cleanupTasks)
+        const stop = this.createStopHandler(container, context.cleanupTasks)
 
         window.addEventListener("beforeunload", stop, { once: true })
 
@@ -221,4 +167,3 @@ export class Application {
         }
     }
 }
-

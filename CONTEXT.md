@@ -52,7 +52,7 @@ The ordered list of drivers a Manager tries when the preferred driver is unavail
 A framework-specific adapter that mounts and unmounts the root component. Adapters are provided for React, Solid, Svelte, and Vue. Passed to `.withRenderer()`.
 
 **Facade**:
-A static proxy that forwards calls to a service resolved from the container. Usable from `boot()` hooks onward — not in `register()` (register/boot contract). Calling a facade before `.run()` throws. Built-in facades: `Config`, `Cache`, `Storage`.
+A static proxy that forwards calls to a service resolved from the container. Usable from `boot()` hooks onward — not in `register()` (register/boot contract). Calling a facade before `.run()` throws. Built-in facades: `Config`, `Cache`, `Store`.
 _Avoid_: static accessor, global service
 
 **Macro**:

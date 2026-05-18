@@ -62,7 +62,7 @@ describe("BuiltinContainer adapter", () => {
     test("resolves constructor dependencies from metadata", () => {
         const container = new BuiltinContainer()
         container.singleton(Logger, Logger)
-        container.transient(ServiceWithCtorInjection, ServiceWithCtorInjection)
+        container.bind(ServiceWithCtorInjection, ServiceWithCtorInjection)
 
         const service = container.make(ServiceWithCtorInjection)
         expect(service.logger).toBe(container.make(Logger))
@@ -71,7 +71,7 @@ describe("BuiltinContainer adapter", () => {
     test("resolves token overrides from inject decorator", () => {
         const container = new BuiltinContainer()
         container.instance("config", { name: "app" })
-        container.transient(ServiceWithTokenInjection, ServiceWithTokenInjection)
+        container.bind(ServiceWithTokenInjection, ServiceWithTokenInjection)
 
         const service = container.make(ServiceWithTokenInjection)
         expect(service.config).toEqual({ name: "app" })
@@ -101,7 +101,7 @@ describe("BuiltinContainer adapter", () => {
 
         const container = new BuiltinContainer()
         container.singleton("singleton.counter", Counter)
-        container.transient("transient.counter", Counter)
+        container.bind("transient.counter", Counter)
 
         expect(container.make<Counter>("singleton.counter")).toBe(container.make("singleton.counter"))
         expect(container.make<Counter>("transient.counter")).not.toBe(container.make("transient.counter"))
@@ -110,7 +110,7 @@ describe("BuiltinContainer adapter", () => {
     test("supports singleton/transient with non-function concrete values", () => {
         const container = new BuiltinContainer()
         container.singleton("singleton.value", 7)
-        container.transient("transient.value", 9)
+        container.bind("transient.value", 9)
 
         expect(container.make<number>("singleton.value")).toBe(7)
         expect(container.make<number>("transient.value")).toBe(9)

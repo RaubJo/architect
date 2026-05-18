@@ -20,12 +20,10 @@ export interface ContainerBindToSyntax<T> {
 }
 
 export interface ContainerContract {
-    /** Register a binding fluent definition for an identifier. */
-    bind<T>(identifier: ContainerIdentifier<T>): ContainerBindToSyntax<T>
     /** Register a singleton binding using a class, factory, or value concrete. */
     singleton<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
-    /** Register a transient binding using a class, factory, or value concrete. */
-    transient<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
+    /** Register a binding using a class, factory, or value concrete. */
+    bind<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
     /** Register an existing instance as a shared binding. */
     instance<T>(identifier: ContainerIdentifier<T>, value: T): this
     /** Resolve an instance from the container. */

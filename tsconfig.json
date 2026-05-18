@@ -5,12 +5,11 @@
         "moduleResolution": "Bundler",
         "jsx": "react-jsx",
         "strict": true,
-        "types": ["bun-types"],
         "paths": {
             "@/*": ["./src/*"]
         },
         "skipLibCheck": true,
         "noEmit": true
     },
-    "include": ["src", "tests"]
+    "include": ["src"]
 }

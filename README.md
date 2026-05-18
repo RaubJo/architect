@@ -74,7 +74,7 @@ bun add @raubjo/architect-core reflect-metadata
 Framework integrations are imported from subpaths:
 
 ```ts
-import { Renderer, useService } from "@raubjo/architect-core/react";
+import { ContextProvider, useService } from "@raubjo/architect-core/react";
 ```
 
 Optional peer dependencies depend on the runtime you use:
@@ -98,7 +98,9 @@ This is the smallest useful application shape:
 ```ts
 import "reflect-metadata";
 import { Application, ServiceProvider, type ServiceProviderContext } from "@raubjo/architect-core";
-import { Renderer as ReactRenderer, useService } from "@raubjo/architect-core/react";
+import { ContextProvider, useService } from "@raubjo/architect-core/react";
+import ReactDOM from "react-dom/client";
+import { createElement } from "react";
 
 class CounterService {
   protected count = 0;
@@ -133,22 +135,19 @@ function App() {
   );
 }
 
-const running = Application.configure({
+const application = Application.configure({
   container: { adapter: "builtin" },
   config: {
     app: { name: "Architect Example" },
   },
 })
-  .withProviders([new CounterProvider()])
-  .withRoot(App)
-  .withRenderer(new ReactRenderer())
-  .run();
+  .withProviders([new CounterProvider()]);
 
-// Optional teardown hook.
-running.stop();
+const root = ReactDOM.createRoot(document.getElementById("root")!);
+root.render(createElement(ContextProvider, { application }, createElement(App)));
 ```
 
-`run()` returns:
+`Application.run()` returns:
 
 ```ts
 {
@@ -157,7 +156,7 @@ running.stop();
 }
 ```
 
-The returned `container` is the active runtime container. `stop()` unmounts the renderer, runs cleanup callbacks in reverse order, clears facade caches, and flushes the container.
+The returned `container` is the active runtime container. `stop()` runs cleanup callbacks in reverse order, clears facade caches, and flushes the container.
 
 ## Core mental model
 
@@ -197,15 +196,13 @@ The examples in this repository show both simple imperative services and service
 2. `.withServices(...)` callbacks
 3. provider `boot()`
 4. `.withStartup(...)` callbacks
-5. renderer mount
 
 Cleanup runs in reverse order when `stop()` is called:
 
-1. renderer cleanup
-2. startup cleanup
-3. provider `boot()` cleanup
-4. service registrar cleanup
-5. provider `register()` cleanup
+1. startup cleanup
+2. provider `boot()` cleanup
+3. service registrar cleanup
+4. provider `register()` cleanup
 
 The application also registers a `beforeunload` listener and calls `stop()` once when the page unloads.
 
@@ -228,8 +225,6 @@ The main fluent API is:
 - `.withProviders(providers)`
 - `.withServices(registerServices)`
 - `.withStartup(startupHandler)`
-- `.withRoot(RootComponent, { rootElementId? })`
-- `.withRenderer(renderer)`
 - `.run()`
 
 Static resolution is also available:
@@ -425,17 +420,19 @@ You can mix providers with `.withServices(...)` and `.withStartup(...)` when a f
 Each supported framework has:
 
 - a runtime entrypoint with service resolution helpers
-- a renderer adapter that mounts the root component and injects the container
+- a context/provider helper so you choose the context boundary
+- an optional renderer adapter you can use directly if you want a turnkey mount
 
 ### React
 
 Import from `@raubjo/architect-core/react`:
 
-- `Renderer`
+- `ContextProvider`
 - `ApplicationProvider`
+- `Renderer`
 - `useService`
 
-The React renderer mounts your root component inside `ApplicationProvider`, which provides the container through React context.
+`ContextProvider` runs the application and provides the container through React context, so you can decide where the application boundary lives in your component tree.
 
 ```ts
 import { useService } from "@raubjo/architect-core/react";
@@ -450,11 +447,12 @@ function App() {
 
 Import from `@raubjo/architect-core/solid`:
 
-- `Renderer`
+- `ContextProvider`
 - `ApplicationProvider`
+- `Renderer`
 - `useService`
 
-The Solid renderer uses context in the same style as React.
+`ContextProvider` runs the application and provides the container through Solid context.
 
 ```ts
 import { useService } from "@raubjo/architect-core/solid";
@@ -471,10 +469,10 @@ Import from `@raubjo/architect-core/svelte`:
 
 - `Renderer`
 - `containerKey`
-- `provideContainer`
+- `provideContainer` (alias: `ContextProvider`)
 - `useService`
 
-The Svelte renderer passes `container` as a prop to the root component. Inside the component, call `provideContainer(container)` before using `useService(...)`.
+The Svelte renderer passes `container` as a prop to the root component. Inside the component, call `provideContainer(container)` (or `ContextProvider(container)`) before using `useService(...)`.
 
 ```svelte
 <script lang="ts">
@@ -492,10 +490,11 @@ The Svelte renderer passes `container` as a prop to the root component. Inside t
 
 Import from `@raubjo/architect-core/vue`:
 
+- `ContextProvider`
 - `Renderer`
 - `useService`
 
-The Vue renderer creates the app, provides the container with an injection key, and mounts your root component.
+`ContextProvider` runs the application, provides the container via Vue injection, and renders its slot content.
 
 ```vue
 <script setup lang="ts">
@@ -513,7 +512,7 @@ All renderers:
 - throw if the mount node does not exist
 - return a cleanup function that unmounts the rendered tree
 
-If you call `.withRoot(...)`, you must also call `.withRenderer(...)`. The application throws if either side of that pairing is missing.
+Renderers are not coupled to `Application`. If you want turnkey mounting, call `app.run()` yourself, then pass the returned `container` into a renderer (or into a framework `ContextProvider`).
 
 ## Configuration
 
@@ -691,16 +690,16 @@ Facade classes provide a static access pattern similar to Laravel:
 
 - `Config`
 - `Cache`
-- `Storage`
+- `Store`
 
 Example:
 
 ```ts
-import { Config, Cache, Storage } from "@raubjo/architect-core";
+import { Config, Cache, Store } from "@raubjo/architect-core";
 
 const name = Config.get("app.name");
 await Cache.set("token", "abc");
-await Storage.set("draft", { id: 1 });
+await Store.set("draft", { id: 1 });
 ```
 
 Facade resolution works through `Application.make(...)`, and resolved instances are cached per facade accessor until the application is stopped or facade caches are cleared.
@@ -754,7 +753,7 @@ Important root exports include:
 - `ConfigRepository`
 - `env`
 - `Str`
-- `Config`, `Cache`, `Storage`
+- `Config`, `Cache`, `Store`
 - `CacheManager`
 - `StorageManager`
 - `MemoryStorageAdapter`

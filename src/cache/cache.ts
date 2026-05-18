@@ -4,12 +4,12 @@ import type { Contract } from "./contract"
 type Envelope<T> = { v: T; e: number | null }
 
 export class Cache implements Contract {
-    constructor(private readonly backing: Adapter) {}
+    constructor(private readonly adapter: Adapter) {}
 
     async get(key: string): Promise<unknown>
     async get<T>(key: string): Promise<T | null>
     async get<T = unknown>(key: string): Promise<T | null> {
-        const raw = await this.backing.get<Envelope<T>>(key)
+        const raw = await this.adapter.get<Envelope<T>>(key)
         if (raw === null) return null
         if (raw.e !== null && Date.now() >= raw.e) return null
         return raw.v
@@ -17,7 +17,7 @@ export class Cache implements Contract {
 
     async set<T = unknown>(key: string, value: T, ttl?: number | null): Promise<void> {
         const e = typeof ttl === "number" ? Date.now() + ttl * 1000 : null
-        return this.backing.set<Envelope<T>>(key, { v: value, e })
+        return this.adapter.set<Envelope<T>>(key, { v: value, e })
     }
 
     async has(key: string): Promise<boolean> {
@@ -25,19 +25,19 @@ export class Cache implements Contract {
     }
 
     async delete(key: string): Promise<void> {
-        return this.backing.delete(key)
+        return this.adapter.delete(key)
     }
 
     async clear(): Promise<void> {
-        return this.backing.clear()
+        return this.adapter.clear()
     }
 
     async keys(): Promise<string[]> {
-        const allKeys = await this.backing.keys()
+        const allKeys = await this.adapter.keys()
         const now = Date.now()
         const alive: string[] = []
         for (const k of allKeys) {
-            const raw = await this.backing.get<Envelope<unknown>>(k)
+            const raw = await this.adapter.get<Envelope<unknown>>(k)
             if (raw !== null && (raw.e === null || now < raw.e)) {
                 alive.push(k)
             }

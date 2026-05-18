@@ -41,6 +41,18 @@ const reactModule = {
         }
         return { type, props: { ...(props ?? {}), children } }
     },
+    useEffect() {
+        return undefined
+    },
+    useMemo<T>(factory: () => T) {
+        return factory()
+    },
+    useRef<T>(value: T) {
+        return { current: value }
+    },
+    useState<T>(value: T) {
+        return [value, () => undefined] as const
+    },
 }
 
 mock.module("react", () => reactModule)
@@ -81,6 +93,6 @@ describe("React runtime", () => {
     test("useService throws when provider is missing", () => {
         forcedReactContextValue = undefined
         reactContextValues.clear()
-        expect(() => useService("missing")).toThrow("Application container is not available in React context.")
+        expect(() => useService("missing")).toThrow("You must use `useService` inside the Application Context.")
     })
 })

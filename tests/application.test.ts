@@ -41,6 +41,10 @@ const reactModule = {
         }
         return { type, props: { ...(props ?? {}), children } }
     },
+    useEffect: () => undefined,
+    useMemo: <T>(factory: () => T) => factory(),
+    useRef: <T>(value: T) => ({ current: value }),
+    useState: <T>(value: T) => [value, () => undefined] as const,
 }
 
 const reactDomState = {
@@ -95,7 +99,7 @@ describe("Application", () => {
         )
     })
 
-    test("run with custom renderer executes lifecycle and cleanup in reverse order", () => {
+    test("run executes lifecycle and cleanup in reverse order", () => {
         const calls: string[] = []
         let beforeUnload: (() => void) | undefined
 
@@ -122,33 +126,17 @@ describe("Application", () => {
             }
         }
 
-        const _app = Application.configure("./")
-            .withProviders([new DemoProvider()])
-            .withRoot(() => null)
-            .withRenderer({
-                render: () => {
-                    calls.push("renderer")
-                    return () => calls.push("renderer.cleanup")
-                },
-            })
-            .run()
+        const _app = Application.configure("./").withProviders([new DemoProvider()]).run()
 
         expect(Application.make<string>("demo")).toBe("value")
         expect(Application.make("storage")).toBeTruthy()
         expect(Application.make("cache")).toBeTruthy()
-        expect(calls).toEqual(["provider.register", "provider.boot", "renderer"])
+        expect(calls).toEqual(["provider.register", "provider.boot"])
 
         expect(typeof beforeUnload).toBe("function")
         beforeUnload?.()
 
-        expect(calls).toEqual([
-            "provider.register",
-            "provider.boot",
-            "renderer",
-            "renderer.cleanup",
-            "provider.boot.cleanup",
-            "provider.register.cleanup",
-        ])
+        expect(calls).toEqual(["provider.register", "provider.boot", "provider.boot.cleanup", "provider.register.cleanup"])
 
         expect(() => Application.make("demo")).toThrow("Application container is not available. Call run() first.")
     })
@@ -273,16 +261,6 @@ describe("Application", () => {
         expect(custom.container).toBeInstanceOf(BuiltinContainer)
     })
 
-    test("renderer requires root component", () => {
-        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
-            addEventListener: () => {},
-        }
-
-        const app = Application.configure("./").withRenderer({ render: () => () => {} })
-
-        expect(() => app.run()).toThrow("Root component is required when using a custom renderer.")
-    })
-
     test("react renderer throws if mount node is missing", async () => {
         const { default: ReactRenderer } = await import("@/renderers/adapters/react")
 
@@ -293,11 +271,12 @@ describe("Application", () => {
             getElementById: () => null,
         }
 
-        const app = Application.configure("./")
-            .withRoot(() => null)
-            .withRenderer(new ReactRenderer())
+        const running = Application.configure("./").run()
+        const renderer = new ReactRenderer()
 
-        expect(() => app.run()).toThrow("Missing mount node #root.")
+        expect(() => renderer.render({ container: running.container, RootComponent: () => null, rootElementId: "root" })).toThrow(
+            "Missing mount node #root.",
+        )
     })
 
     test("react renderer mounts and unmounts when stopped", async () => {
@@ -318,42 +297,26 @@ describe("Application", () => {
         reactDomState.unmounted = 0
         reactDomState.mountNode = undefined
 
-        const running = Application.configure("./")
-            .withRoot(() => null)
-            .withRenderer(new ReactRenderer())
-            .run()
+        const running = Application.configure("./").run()
+        const renderer = new ReactRenderer()
+        const rendererCleanup =
+            renderer.render({ container: running.container, RootComponent: () => null, rootElementId: "root" }) ??
+            (() => {})
         expect(reactDomState.rendered).toBe(1)
         expect(reactDomState.mountNode).toBeTruthy()
+        rendererCleanup()
         running.stop()
         expect(reactDomState.unmounted).toBe(1)
-        // Stop twice should still be safe if beforeunload callback also runs.
+        // Application shutdown is separate from renderer cleanup; a second stop remains a no-op for the renderer.
         beforeUnload?.()
-        expect(reactDomState.unmounted).toBe(2)
+        expect(reactDomState.unmounted).toBe(1)
     })
 
-    test("uses fallback no-op renderer cleanup when custom renderer returns nothing", () => {
-        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
-            addEventListener: (_event, cb) => {
-                cb()
-            },
-        }
-
-        const app = Application.configure("./")
-            .withRoot(() => null)
-            .withRenderer({ render: () => undefined })
-
-        expect(() => app.run()).not.toThrow()
-    })
-
-    test("requires explicit renderer when root component is set", () => {
+    test("does not require a renderer", () => {
         ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
             addEventListener: () => {},
         }
 
-        const app = Application.configure("./").withRoot(() => null)
-
-        expect(() => app.run()).toThrow(
-            "Renderer is required when root component is set. Install a renderer feature (react/solid/svelte/vue) and call withRenderer(...).",
-        )
+        expect(() => Application.configure("./").run()).not.toThrow()
     })
 })
