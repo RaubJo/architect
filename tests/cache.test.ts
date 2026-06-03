@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test"
-import ConfigRepository from "@/config/repository"
-import CacheManager from "@/cache/manager"
 import { Cache } from "@/cache/cache"
-import MemoryStorageAdapter from "@/storage/adapters/memory"
+import CacheManager from "@/cache/manager"
+import ConfigRepository from "@/config/repository"
+import MemoryStoreAdapter from "@/store/adapters/memory"
 
 describe("CacheManager", () => {
     test("uses cache.default and configured stores", async () => {
@@ -62,7 +62,7 @@ describe("CacheManager", () => {
 
         manager.extend("custom", (_config) => {
             factoryCalled++
-            return new MemoryStorageAdapter()
+            return new MemoryStoreAdapter()
         })
 
         // Factory not called yet
@@ -107,33 +107,33 @@ describe("CacheManager", () => {
 
 describe("Cache", () => {
     test("returns value before TTL expires", async () => {
-        const adapter = new Cache(new MemoryStorageAdapter())
+        const adapter = new Cache(new MemoryStoreAdapter())
         await adapter.set("k", "v", 60)
         expect(await adapter.get<string>("k")).toBe("v")
         expect(await adapter.has("k")).toBe(true)
     })
 
     test("returns null after TTL expires", async () => {
-        const adapter = new Cache(new MemoryStorageAdapter())
+        const adapter = new Cache(new MemoryStoreAdapter())
         await adapter.set("k", "v", 0)
         expect(await adapter.get("k")).toBeNull()
         expect(await adapter.has("k")).toBe(false)
     })
 
     test("TTL = null means no expiry", async () => {
-        const adapter = new Cache(new MemoryStorageAdapter())
+        const adapter = new Cache(new MemoryStoreAdapter())
         await adapter.set("k", "v", null)
         expect(await adapter.get<string>("k")).toBe("v")
     })
 
     test("no TTL argument means no expiry", async () => {
-        const adapter = new Cache(new MemoryStorageAdapter())
+        const adapter = new Cache(new MemoryStoreAdapter())
         await adapter.set("k", "v")
         expect(await adapter.get<string>("k")).toBe("v")
     })
 
     test("keys() excludes expired entries without deleting them", async () => {
-        const backing = new MemoryStorageAdapter()
+        const backing = new MemoryStoreAdapter()
         const adapter = new Cache(backing)
         await adapter.set("alive", "a", 60)
         await adapter.set("dead", "b", 0)
@@ -145,14 +145,14 @@ describe("Cache", () => {
     })
 
     test("delete removes entry", async () => {
-        const adapter = new Cache(new MemoryStorageAdapter())
+        const adapter = new Cache(new MemoryStoreAdapter())
         await adapter.set("k", "v")
         await adapter.delete("k")
         expect(await adapter.get("k")).toBeNull()
     })
 
     test("clear removes all entries", async () => {
-        const adapter = new Cache(new MemoryStorageAdapter())
+        const adapter = new Cache(new MemoryStoreAdapter())
         await adapter.set("a", 1)
         await adapter.set("b", 2, 60)
         await adapter.clear()

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test"
-import type { ContainerIdentifier } from "@/container/contract"
 import BuiltinContainer from "@/container/adapters/builtin"
+import type { ContainerIdentifier } from "@/container/contract"
 
 const vueState = {
     injectedContainer: null as BuiltinContainer | null,
@@ -101,7 +101,10 @@ describe("Vue runtime and renderer", () => {
 
         expect(vueState.mountedComponent).toBe(RootComponent)
         expect(vueState.mountedTarget).toBe(mountNode)
-        expect(vueState.provided as { key: unknown; value: unknown } | null).toEqual({ key: containerKey, value: container })
+        expect(vueState.provided as { key: unknown; value: unknown } | null).toEqual({
+            key: containerKey,
+            value: container,
+        })
 
         cleanup()
         expect(vueState.unmounted).toBe(1)

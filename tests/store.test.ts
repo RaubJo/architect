@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import ConfigRepository from "@/config/repository"
-import IndexedDbAdapter from "@/storage/adapters/indexed-db"
-import LocalStorageAdapter from "@/storage/adapters/local-storage"
-import MemoryStorageAdapter from "@/storage/adapters/memory"
-import StorageManager from "@/storage/manager"
+import IndexedDbAdapter from "@/store/adapters/indexed-db"
+import LocalStorageAdapter from "@/store/adapters/local-storage"
+import MemoryStoreAdapter from "@/store/adapters/memory"
+import StoreManager from "@/store/manager"
 
 class FakeWebStorage implements Storage {
     protected data = new Map<string, string>()
@@ -112,7 +112,9 @@ function createIndexedDbFactory(options: { failOpen?: boolean; failGet?: boolean
 
             queueMicrotask(() => {
                 if (options.failOpen) {
-                    ;(request as { error: DOMException | null }).error = new Error("open failed") as unknown as DOMException
+                    ;(request as { error: DOMException | null }).error = new Error(
+                        "open failed",
+                    ) as unknown as DOMException
                     request.onerror?.call(request as IDBOpenDBRequest, new Event("error"))
                     return
                 }
@@ -132,9 +134,9 @@ function createIndexedDbFactory(options: { failOpen?: boolean; failGet?: boolean
     return { factory, items }
 }
 
-describe("Storage adapters and manager", () => {
+describe("Store adapters and manager", () => {
     test("memory adapter reads/writes/deletes/clears", async () => {
-        const adapter = new MemoryStorageAdapter()
+        const adapter = new MemoryStoreAdapter()
 
         await adapter.set("a", 1)
         expect(await adapter.get<number>("a")).toBe(1)
@@ -179,7 +181,7 @@ describe("Storage adapters and manager", () => {
     })
 
     test("indexed db adapter falls back to memory when indexeddb is unavailable or fails", async () => {
-        const fallback = new MemoryStorageAdapter()
+        const fallback = new MemoryStoreAdapter()
         const unavailable = new IndexedDbAdapter({ factory: null, fallback })
 
         await unavailable.set("a", 1)
@@ -223,7 +225,7 @@ describe("Storage adapters and manager", () => {
     })
 
     test("indexed db adapter retries opening after a transient failure", async () => {
-        const fallback = new MemoryStorageAdapter()
+        const fallback = new MemoryStoreAdapter()
         const { factory: workingFactory, items } = createIndexedDbFactory()
         let attempts = 0
 
@@ -249,25 +251,25 @@ describe("Storage adapters and manager", () => {
         expect(await adapter.get<number>("indexed-key")).toBe(2)
     })
 
-    test("storage manager chooses and switches drivers", async () => {
-        const memory = new MemoryStorageAdapter()
-        const alt = new MemoryStorageAdapter()
-        const manager = new StorageManager({ memory, alt }, "memory")
+    test("store manager chooses and switches drivers", async () => {
+        const memory = new MemoryStoreAdapter()
+        const alt = new MemoryStoreAdapter()
+        const manager = new StoreManager({ memory, alt }, "memory")
 
         await manager.set("k", 1)
         expect(await manager.get("k")).toBe(1)
         manager.use("alt")
         expect(manager.driver()).toBe(alt)
-        expect(() => manager.driver("missing")).toThrow("Storage driver [missing] is not defined.")
+        expect(() => manager.driver("missing")).toThrow("Store driver [missing] is not defined.")
     })
 
-    test("storage manager extend() registers a custom driver lazily", async () => {
-        const manager = new StorageManager({ memory: new MemoryStorageAdapter() })
+    test("store manager extend() registers a custom driver lazily", async () => {
+        const manager = new StoreManager({ memory: new MemoryStoreAdapter() })
         let factoryCalled = 0
 
         manager.extend("custom", (_config) => {
             factoryCalled++
-            return new MemoryStorageAdapter()
+            return new MemoryStoreAdapter()
         })
 
         // Factory not called yet
@@ -283,7 +285,7 @@ describe("Storage adapters and manager", () => {
         expect(factoryCalled).toBe(1)
     })
 
-    test("storage manager builds defaults from config", () => {
+    test("store manager builds defaults from config", () => {
         const originalWindow = (globalThis as { window?: unknown }).window
         const originalIndexedDb = (globalThis as { indexedDB?: unknown }).indexedDB
 
@@ -293,9 +295,9 @@ describe("Storage adapters and manager", () => {
             }
             ;(globalThis as { indexedDB?: unknown }).indexedDB = createIndexedDbFactory().factory
 
-            const manager = StorageManager.fromConfig(
+            const manager = StoreManager.fromConfig(
                 new ConfigRepository({
-                    storage: {
+                    store: {
                         driver: "local",
                     },
                 }),

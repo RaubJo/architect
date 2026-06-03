@@ -1,5 +1,5 @@
-import MemoryStorageAdapter from "./memory"
 import type { Adapter } from "./contract"
+import MemoryStoreAdapter from "./memory"
 
 type OpenFactory = Pick<IDBFactory, "open">
 
@@ -112,12 +112,7 @@ export default class IndexedDbAdapter implements Adapter {
     async keys(): Promise<string[]> {
         return this.withStore("readonly", async (store) => {
             const keys = await this.req<Array<IDBValidKey>>(store.getAllKeys())
-            const normalized: string[] = []
-            for (const key of keys) {
-                normalized.push(String(key))
-            }
-
-            return normalized
+            return keys.map(String)
         })
     }
 }
@@ -127,11 +122,11 @@ function resolveOpenFactory(factory?: OpenFactory | null): OpenFactory | null {
 }
 
 function resolveDatabaseName(name?: string): string {
-    return name ?? "ioc-storage"
+    return name ?? "ioc-store"
 }
 
 function resolveFallbackAdapter(fallback?: Adapter): Adapter {
-    return fallback ?? new MemoryStorageAdapter()
+    return fallback ?? new MemoryStoreAdapter()
 }
 
 async function actionFallback<T>(
@@ -161,8 +156,10 @@ function createReadonlyProxy(fallback: Adapter): Partial<IDBObjectStore> {
 function createReadWriteProxy(fallback: Adapter): Partial<IDBObjectStore> {
     return {
         ...createReadonlyProxy(fallback),
-        put: (value: unknown, key?: IDBValidKey) => wrapPromiseRequest(fallback.set(String(key as IDBValidKey), value)) as unknown as IDBRequest<IDBValidKey>,
-        delete: (key: IDBValidKey | IDBKeyRange) => wrapPromiseRequest(fallback.delete(String(key as IDBValidKey))) as unknown as IDBRequest<undefined>,
+        put: (value: unknown, key?: IDBValidKey) =>
+            wrapPromiseRequest(fallback.set(String(key as IDBValidKey), value)) as unknown as IDBRequest<IDBValidKey>,
+        delete: (key: IDBValidKey | IDBKeyRange) =>
+            wrapPromiseRequest(fallback.delete(String(key as IDBValidKey))) as unknown as IDBRequest<undefined>,
         clear: () => wrapPromiseRequest(fallback.clear()) as unknown as IDBRequest<undefined>,
     }
 }

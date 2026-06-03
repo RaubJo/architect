@@ -1,6 +1,6 @@
-import { createApp, type Component } from "vue"
-import type { Cleanup } from "../../support/service-provider"
+import { type Component, createApp } from "vue"
 import { containerKey } from "../../runtimes/vue"
+import type { Cleanup } from "../../support/service-provider"
 import type Contract from "../contract"
 import type { RendererContext } from "../contract"
 

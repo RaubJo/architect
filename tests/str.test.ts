@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { Str, registerGlobalStr, strTestingHelpers } from "@/support/str"
+import { registerGlobalStr, Str, strTestingHelpers } from "@/support/str"
 
 describe("Str helper", () => {
     const originalGlobalStr = (globalThis as { Str?: unknown }).Str

@@ -1,7 +1,7 @@
-import { render } from "solid-js/web"
 import { createComponent, type JSX } from "solid-js"
-import type { Cleanup } from "../../support/service-provider"
+import { render } from "solid-js/web"
 import { ApplicationProvider } from "../../runtimes/solid"
+import type { Cleanup } from "../../support/service-provider"
 import type Contract from "../contract"
 import type { RendererContext } from "../contract"
 

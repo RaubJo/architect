@@ -1,6 +1,6 @@
 import type {
-    ContainerClass,
     ContainerBindToSyntax,
+    ContainerClass,
     ContainerConcrete,
     ContainerContract,
     ContainerFactory,
@@ -148,10 +148,7 @@ export default class BuiltinContainer implements ContainerContract {
 
     bind<T>(identifier: ContainerIdentifier<T>): ContainerBindToSyntax<T>
     bind<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
-    bind<T>(
-        identifier: ContainerIdentifier<T>,
-        concrete?: ContainerConcrete<T>,
-    ): ContainerBindToSyntax<T> | this {
+    bind<T>(identifier: ContainerIdentifier<T>, concrete?: ContainerConcrete<T>): ContainerBindToSyntax<T> | this {
         if (typeof concrete !== "undefined") {
             this.removeIfBound(identifier)
 
@@ -299,7 +296,12 @@ export default class BuiltinContainer implements ContainerContract {
     }
 
     protected hasCachedSingleton<T>(record: BindingRecord<T>): record is BindingRecord<T> & { cached: T } {
-        return record.kind !== "constant" && record.scope === "singleton" && "cached" in record && typeof record.cached !== "undefined"
+        return (
+            record.kind !== "constant" &&
+            record.scope === "singleton" &&
+            "cached" in record &&
+            typeof record.cached !== "undefined"
+        )
     }
 
     protected resolveClass<T>(concrete: ContainerClass<T>): T {

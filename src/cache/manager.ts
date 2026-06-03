@@ -1,11 +1,11 @@
 import type ConfigRepository from "../config/repository"
-import IndexedDbAdapter from "../storage/adapters/indexed-db"
-import LocalStorageAdapter from "../storage/adapters/local-storage"
-import MemoryStorageAdapter from "../storage/adapters/memory"
-import type { Adapter } from "../storage/adapters/contract"
-import type { Contract } from "./contract"
-import { Cache } from "./cache"
+import type { Adapter } from "../store/adapters/contract"
+import IndexedDbAdapter from "../store/adapters/indexed-db"
+import LocalStorageAdapter from "../store/adapters/local-storage"
+import MemoryStoreAdapter from "../store/adapters/memory"
 import Manager from "../support/manager"
+import { Cache } from "./cache"
+import type { Contract } from "./contract"
 
 type StoreConfig = {
     driver?: string
@@ -55,7 +55,7 @@ export default class CacheManager extends Manager<Contract, Adapter> implements 
         const hasLocal = hasWindow && typeof window.localStorage !== "undefined"
         const hasIndexed = typeof globalThis.indexedDB !== "undefined"
 
-        const rawMemory = new MemoryStorageAdapter()
+        const rawMemory = new MemoryStoreAdapter()
         const memory = new Cache(rawMemory)
 
         return {

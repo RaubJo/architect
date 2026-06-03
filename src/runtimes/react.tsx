@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react"
+import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react"
 import type { ContainerContract, ContainerIdentifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
@@ -26,9 +26,7 @@ export function ContextProvider({ application, container, fallback = null, child
     }
 
     const externalRuntime = useMemo(() => (container ? { container, stop: () => {} } : null), [container])
-    const [runtime, setRuntime] = useState<{ container: ContainerContract; stop: () => void } | null>(
-        externalRuntime,
-    )
+    const [runtime, setRuntime] = useState<{ container: ContainerContract; stop: () => void } | null>(externalRuntime)
 
     const stopRef = useRef<null | (() => void)>(null)
     const startedRef = useRef(false)
@@ -45,7 +43,7 @@ export function ContextProvider({ application, container, fallback = null, child
 
         startedRef.current = true
 
-        const running = application!.run()
+        const running = application?.run()
         stopRef.current = running.stop
         setRuntime(running)
 

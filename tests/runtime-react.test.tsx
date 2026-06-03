@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test"
-import type { ContainerIdentifier } from "@/container/contract"
 import BuiltinContainer from "@/container/adapters/builtin"
+import type { ContainerIdentifier } from "@/container/contract"
 
 const reactContextValues = new Map<object, unknown>()
 let forcedReactContextValue: unknown

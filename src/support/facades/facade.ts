@@ -32,16 +32,12 @@ export interface FacadeInstance<T = unknown> {
     callFacadeMethod(method: string, ...args: unknown[]): unknown
     callFacadeMethod<R = unknown>(method: string, ...args: unknown[]): R
     use(...args: unknown[]): unknown
-    store(...args: unknown[]): unknown
-    driver(...args: unknown[]): unknown
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createFacade<T = any>(
-    accessor: string,
-): FacadeInstance<T> {
+export function createFacade<T = any>(accessor: string): FacadeInstance<T> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let proxy: any
 
@@ -86,30 +82,13 @@ export function createFacade<T = any>(
             return callable.apply(instance, args) as R
         },
 
-        // use() and store()/driver() return the manager for chaining.
-        // We return the proxy instead so the chain continues on the facade.
+        // use() returns the proxy instead of the instance's return value so callers can chain.
         use(...args: unknown[]): unknown {
             const instance = resolveInstance<Record<string, (...a: unknown[]) => unknown>>(accessor)
             if (typeof instance.use === "function") {
                 instance.use(...args)
             }
             return proxy
-        },
-
-        store(...args: unknown[]): unknown {
-            const instance = resolveInstance<Record<string, (...a: unknown[]) => unknown>>(accessor)
-            if (typeof instance.store === "function") {
-                return instance.store(...args)
-            }
-            return undefined
-        },
-
-        driver(...args: unknown[]): unknown {
-            const instance = resolveInstance<Record<string, (...a: unknown[]) => unknown>>(accessor)
-            if (typeof instance.driver === "function") {
-                return instance.driver(...args)
-            }
-            return undefined
         },
     }
 
@@ -164,48 +143,4 @@ function resolveInstance<T>(accessor: string): T {
     const instance = makeFromCurrentApplication<T>(accessor)
     resolvedInstances.set(accessor, instance)
     return instance
-}
-
-// Backward-compatible Facade class.
-// New code should prefer `createFacade()`. This class exists so existing
-// subclassing patterns and `Facade.clearResolvedInstances()` still work.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default abstract class Facade {
-    protected static resolvedInstance = resolvedInstances
-
-    protected static getFacadeAccessor(): string {
-        throw new Error("Facade does not implement getFacadeAccessor().")
-    }
-
-    static clearResolvedInstance(name: string): void {
-        resolvedInstances.delete(name)
-    }
-
-    static clearResolvedInstances(): void {
-        resolvedInstances.clear()
-    }
-
-    protected static resolveFacadeInstance<T>(): T {
-        // biome-ignore lint/complexity/noThisInStatic: requries this for polymorphism
-        const accessor = this.getFacadeAccessor()
-
-        if (resolvedInstances.has(accessor)) {
-            return resolvedInstances.get(accessor) as T
-        }
-
-        const instance = makeFromCurrentApplication<T>(accessor)
-        resolvedInstances.set(accessor, instance)
-        return instance
-    }
-
-    protected static callFacadeMethod<T = unknown>(method: string, ...args: unknown[]): T {
-        // biome-ignore lint/complexity/noThisInStatic: this is required for polymorphism
-        const instance = this.resolveFacadeInstance<Record<string, (...a: unknown[]) => unknown>>()
-        const callable = instance[method]
-        if (typeof callable !== "function") {
-            throw new Error(`Method [${method}] does not exist on resolved facade instance.`)
-        }
-
-        return callable.apply(instance, args) as T
-    }
 }

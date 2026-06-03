@@ -1,6 +1,6 @@
-import { mergeContainerRuntimeOptions } from "../container/runtime"
-import type { ContainerRuntimeOptions } from "../container/runtime"
 import type { ConfigItems } from "../config/repository"
+import type { ContainerRuntimeOptions } from "../container/runtime"
+import { mergeContainerRuntimeOptions } from "../container/runtime"
 import { localAdapterTestingHelpers } from "../filesystem/adapters/local_test.helpers"
 
 type ApplicationConfigureOptions = {

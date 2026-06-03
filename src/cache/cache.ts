@@ -1,4 +1,4 @@
-import type { Adapter } from "../storage/adapters/contract"
+import type { Adapter } from "../store/adapters/contract"
 import type { Contract } from "./contract"
 
 type Envelope<T> = { v: T; e: number | null }
@@ -35,13 +35,12 @@ export class Cache implements Contract {
     async keys(): Promise<string[]> {
         const allKeys = await this.adapter.keys()
         const now = Date.now()
-        const alive: string[] = []
-        for (const k of allKeys) {
-            const raw = await this.adapter.get<Envelope<unknown>>(k)
-            if (raw !== null && (raw.e === null || now < raw.e)) {
-                alive.push(k)
-            }
-        }
-        return alive
+        const results = await Promise.all(
+            allKeys.map(async (k) => {
+                const raw = await this.adapter.get<Envelope<unknown>>(k)
+                return raw !== null && (raw.e === null || now < raw.e) ? k : null
+            }),
+        )
+        return results.filter((k): k is string => k !== null)
     }
 }

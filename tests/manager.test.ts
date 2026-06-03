@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import Manager from "@/support/manager"
 import ConfigRepository from "@/config/repository"
+import Manager from "@/support/manager"
 
 class ConcreteManager extends Manager<string> {
     protected createDriver(raw: string): string {

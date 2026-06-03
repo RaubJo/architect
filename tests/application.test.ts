@@ -4,6 +4,7 @@ import BuiltinContainer from "@/container/adapters/builtin"
 import { Application } from "@/foundation/application"
 import { applicationTestingHelpers } from "@/foundation/application_test.helpers"
 import { makeFromCurrentApplication, setCurrentApplicationContainer } from "@/foundation/current-application"
+import { defaultProviders } from "@/index"
 import ServiceProvider from "@/support/service-provider"
 
 const reactContextValues = new Map<object, unknown>()
@@ -126,17 +127,24 @@ describe("Application", () => {
             }
         }
 
-        const _app = Application.configure("./").withProviders([new DemoProvider()]).run()
+        const _app = Application.configure("./")
+            .withProviders([...defaultProviders, new DemoProvider()])
+            .run()
 
         expect(Application.make<string>("demo")).toBe("value")
-        expect(Application.make("storage")).toBeTruthy()
+        expect(Application.make("store")).toBeTruthy()
         expect(Application.make("cache")).toBeTruthy()
         expect(calls).toEqual(["provider.register", "provider.boot"])
 
         expect(typeof beforeUnload).toBe("function")
         beforeUnload?.()
 
-        expect(calls).toEqual(["provider.register", "provider.boot", "provider.boot.cleanup", "provider.register.cleanup"])
+        expect(calls).toEqual([
+            "provider.register",
+            "provider.boot",
+            "provider.boot.cleanup",
+            "provider.register.cleanup",
+        ])
 
         expect(() => Application.make("demo")).toThrow("Application container is not available. Call run() first.")
     })
@@ -274,9 +282,9 @@ describe("Application", () => {
         const running = Application.configure("./").run()
         const renderer = new ReactRenderer()
 
-        expect(() => renderer.render({ container: running.container, RootComponent: () => null, rootElementId: "root" })).toThrow(
-            "Missing mount node #root.",
-        )
+        expect(() =>
+            renderer.render({ container: running.container, RootComponent: () => null, rootElementId: "root" }),
+        ).toThrow("Missing mount node #root.")
     })
 
     test("react renderer mounts and unmounts when stopped", async () => {

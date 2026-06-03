@@ -1,6 +1,6 @@
 import type { Adapter } from "./contract"
 
-export default class MemoryStorageAdapter implements Adapter {
+export default class MemoryStoreAdapter implements Adapter {
     protected items = new Map<string, unknown>()
 
     async get(key: string): Promise<unknown>

@@ -1,19 +1,15 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import CacheManager from "@/cache/manager"
-import type { ContainerContract } from "@/container/contract"
-import BuiltinContainer from "@/container/adapters/builtin"
-
 import ConfigRepository from "@/config/repository"
-import MemoryStorageAdapter from "@/storage/adapters/memory"
-import StorageManager from "@/storage/manager"
-import Facade, { clearFacadeCache, createFacade, flushAllMacros } from "@/support/facades/facade"
+import BuiltinContainer from "@/container/adapters/builtin"
+import type { ContainerContract } from "@/container/contract"
+import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "@/foundation/current-application"
+import MemoryStoreAdapter from "@/store/adapters/memory"
+import StoreManager from "@/store/manager"
 import Cache from "@/support/facades/cache"
 import Config from "@/support/facades/config"
+import { clearFacadeCache, createFacade, flushAllMacros } from "@/support/facades/facade"
 import Store from "@/support/facades/store"
-import {
-    setCurrentApplicationContainer,
-    getCurrentApplicationContainer,
-} from "@/foundation/current-application"
 
 // Helper to inject a fake container for facade tests.
 function setContainer(container: ContainerContract) {
@@ -30,112 +26,13 @@ function resetContainer() {
     flushAllMacros()
 }
 
-describe("Facade base class (backward compatibility)", () => {
-    afterEach(resetContainer)
-
-    test("throws when accessor is not implemented", () => {
-        class BrokenFacade extends Facade {
-            static callAccessorForTest() {
-                return (BrokenFacade as unknown as { getFacadeAccessor: () => unknown }).getFacadeAccessor()
-            }
-        }
-
-        expect(() => BrokenFacade.callAccessorForTest()).toThrow("Facade does not implement getFacadeAccessor().")
-    })
-
-    test("callFacadeMethod dispatches to target method", () => {
-        class MethodFacade extends Facade {
-            protected static getFacadeAccessor() {
-                return "method.target"
-            }
-
-            static callMethod<T>(method: string, ...args: unknown[]) {
-                return (
-                    MethodFacade as unknown as {
-                        callFacadeMethod: <R>(methodName: string, ...values: unknown[]) => R
-                    }
-                ).callFacadeMethod<T>(method, ...args)
-            }
-        }
-
-        const container = new BuiltinContainer()
-        container.bind("method.target").toConstantValue({
-            sum: (a: number, b: number) => a + b,
-        })
-        setContainer(container)
-
-        expect(MethodFacade.callMethod<number>("sum", 2, 3)).toBe(5)
-    })
-
-    test("callFacadeMethod throws for missing target method", () => {
-        class MethodFacade extends Facade {
-            protected static getFacadeAccessor() {
-                return "method.target"
-            }
-
-            static callMethod<T>(method: string, ...args: unknown[]) {
-                return (
-                    MethodFacade as unknown as {
-                        callFacadeMethod: <R>(methodName: string, ...values: unknown[]) => R
-                    }
-                ).callFacadeMethod<T>(method, ...args)
-            }
-        }
-
-        const container = new BuiltinContainer()
-        container.bind("method.target").toConstantValue({})
-        setContainer(container)
-
-        expect(() => MethodFacade.callMethod("missing")).toThrow(
-            "Method [missing] does not exist on resolved facade instance.",
-        )
-    })
-
-    test("can clear a single resolved instance", () => {
-        class MethodFacade extends Facade {
-            protected static getFacadeAccessor() {
-                return "method.target"
-            }
-
-            static callMethod<T>(method: string, ...args: unknown[]) {
-                return (
-                    MethodFacade as unknown as {
-                        callFacadeMethod: <R>(methodName: string, ...values: unknown[]) => R
-                    }
-                ).callFacadeMethod<T>(method, ...args)
-            }
-        }
-
-        const container = new BuiltinContainer()
-        container.bind("method.target").toConstantValue({
-            value: () => "cached",
-        })
-        setContainer(container)
-
-        expect(MethodFacade.callMethod<string>("value")).toBe("cached")
-        Facade.clearResolvedInstance("method.target")
-        expect(MethodFacade.callMethod<string>("value")).toBe("cached")
-    })
-
-    test("base facade constructor is invokable through subclass", () => {
-        class ConcreteFacade extends Facade {
-            protected static getFacadeAccessor() {
-                return "noop"
-            }
-        }
-
-        const instance = new ConcreteFacade()
-        expect(instance).toBeInstanceOf(ConcreteFacade)
-    })
-})
-
 describe("Proxy-based facade (createFacade)", () => {
     afterEach(resetContainer)
 
     test("getFacadeAccessor returns the configured accessor", () => {
         expect((Config as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("config")
         expect((Cache as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("cache")
-        expect((Store as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("storage")
+        expect((Store as unknown as { getFacadeAccessor: () => string }).getFacadeAccessor()).toBe("store")
     })
 
     test("Config delegates all methods to ConfigRepository", () => {
@@ -173,7 +70,7 @@ describe("Proxy-based facade (createFacade)", () => {
     })
 
     test("Cache delegates async methods to CacheManager", async () => {
-        const manager = new CacheManager({ memory: new MemoryStorageAdapter() }, "memory")
+        const manager = new CacheManager({ memory: new MemoryStoreAdapter() }, "memory")
         const container = new BuiltinContainer()
         container.bind("cache").toConstantValue(manager)
         container.bind(CacheManager).toConstantValue(manager)
@@ -192,11 +89,10 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(await Cache.keys()).toEqual([])
     })
 
-    test("Store delegates async methods to StorageManager", async () => {
+    test("Store delegates async methods to StoreManager", async () => {
         const container = new BuiltinContainer()
-        const manager = new StorageManager({ memory: new MemoryStorageAdapter() }, "memory")
-        container.bind("storage").toConstantValue(manager)
-        container.bind(StorageManager).toConstantValue(manager)
+        const manager = new StoreManager({ memory: new MemoryStoreAdapter() }, "memory")
+        container.bind("store").toConstantValue(manager)
         setContainer(container)
 
         await Store.set("name", "ioc")
@@ -214,10 +110,9 @@ describe("Proxy-based facade (createFacade)", () => {
     })
 
     test("uses() returns the facade for chaining", async () => {
-        const manager = new StorageManager({ memory: new MemoryStorageAdapter() }, "memory")
+        const manager = new StoreManager({ memory: new MemoryStoreAdapter() }, "memory")
         const container = new BuiltinContainer()
-        container.bind("storage").toConstantValue(manager)
-        container.bind(StorageManager).toConstantValue(manager)
+        container.bind("store").toConstantValue(manager)
         setContainer(container)
 
         await Store.set("x", 1)
@@ -229,11 +124,9 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(await Store.get("y")).toBe(2)
     })
 
-    test("facade helper methods tolerate missing optional manager methods", () => {
+    test("use() returns the facade for chaining even when instance has no use method", () => {
         const Plain = createFacade("plain") as unknown as {
             use: () => unknown
-            store: () => unknown
-            driver: () => unknown
             value: string
         }
         const container = new BuiltinContainer()
@@ -241,8 +134,6 @@ describe("Proxy-based facade (createFacade)", () => {
         setContainer(container)
 
         expect(Plain.use()).toBe(Plain)
-        expect(Plain.store()).toBeUndefined()
-        expect(Plain.driver()).toBeUndefined()
         expect(Plain.value).toBe("raw")
         expect("value" in Plain).toBe(true)
     })
@@ -322,7 +213,7 @@ describe("Facade macros", () => {
             return "ok"
         })
 
-        ;Config.capture()
+        Config.capture()
         expect(receivedInstance).toBeInstanceOf(ConfigRepository)
     })
 
@@ -357,7 +248,7 @@ describe("Facade macros", () => {
     })
 
     test("macros are scoped per accessor", () => {
-        const manager = new CacheManager({ memory: new MemoryStorageAdapter() }, "memory")
+        const manager = new CacheManager({ memory: new MemoryStoreAdapter() }, "memory")
         const container = new BuiltinContainer()
         container.bind("config").toConstantValue(new ConfigRepository({}))
         container.bind("cache").toConstantValue(manager)
@@ -417,7 +308,7 @@ describe("Facade macros", () => {
 
     test("clearResolvedInstance can be called on the proxy", () => {
         // Call the method directly - it clears from the internal Map.
-        ;Config.clearResolvedInstance("config")
+        Config.clearResolvedInstance("config")
         expect(true).toBe(true)
     })
 
@@ -427,7 +318,7 @@ describe("Facade macros", () => {
         setContainer(container)
 
         // Call the method to cover the line.
-        ;Config.clearResolvedInstances()
+        Config.clearResolvedInstances()
         expect(true).toBe(true)
     })
 
@@ -437,7 +328,7 @@ describe("Facade macros", () => {
         setContainer(container)
 
         // Call the method to cover the line.
-        ;Config.clearResolvedInstances()
+        Config.clearResolvedInstances()
         expect(true).toBe(true)
     })
 

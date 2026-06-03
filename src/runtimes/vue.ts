@@ -1,4 +1,4 @@
-import { defineComponent, h, inject, onUnmounted, provide, type InjectionKey } from "vue"
+import { defineComponent, type InjectionKey, inject, onUnmounted, provide } from "vue"
 import type { ContainerContract, ContainerIdentifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
@@ -15,7 +15,7 @@ export const ContextProvider = defineComponent({
             throw new Error("ContextProvider requires either `application` or `container`.")
         }
 
-        const runtime = props.container ? { container: props.container, stop: () => {} } : props.application!.run()
+        const runtime = props.container ? { container: props.container, stop: () => {} } : props.application?.run()
 
         provide(containerKey, runtime.container)
         onUnmounted(() => runtime.stop())

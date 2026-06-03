@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, mock, test } from "bun:test"
-import type { ContainerIdentifier } from "@/container/contract"
 import BuiltinContainer from "@/container/adapters/builtin"
+import type { ContainerIdentifier } from "@/container/contract"
 
 const svelteState = {
     provided: null as { key: unknown; value: unknown } | null,
@@ -59,7 +59,10 @@ describe("Svelte runtime and renderer", () => {
         svelteState.providedContainer = null
 
         provideContainer(container)
-        expect(svelteState.provided as { key: unknown; value: unknown } | null).toEqual({ key: containerKey, value: container })
+        expect(svelteState.provided as { key: unknown; value: unknown } | null).toEqual({
+            key: containerKey,
+            value: container,
+        })
         expect(useService<string>(token)).toBe("resolved")
     })
 

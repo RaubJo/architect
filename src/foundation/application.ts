@@ -1,22 +1,19 @@
-import CacheManager from "../cache/manager"
-import { registerGlobalEnv } from "../config/env"
-import ConfigRepository, { type ConfigItems } from "../config/repository"
 import { createConfig } from "../config/discovery"
+import { registerGlobalEnv } from "../config/env"
+import { ConfigProvider } from "../config/provider"
+import type ConfigRepository from "../config/repository"
+import type { ConfigItems } from "../config/repository"
 import type { ContainerContract, ContainerIdentifier } from "../container/contract"
 import {
+    type ContainerRuntimeOptions,
     createRuntimeContainer,
     mergeContainerRuntimeOptions,
-    type ContainerRuntimeOptions,
 } from "../container/runtime"
-import StorageManager from "../storage/manager"
+import { clearFacadeCache } from "../support/facades/facade"
 import type ServiceProvider from "../support/service-provider"
 import type { Cleanup, ServiceProviderContext } from "../support/service-provider"
 import { registerGlobalStr } from "../support/str"
-import { clearFacadeCache } from "../support/facades/facade"
-import {
-    getCurrentApplicationContainer,
-    setCurrentApplicationContainer,
-} from "./current-application"
+import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "./current-application"
 
 type ApplicationRunContext = ServiceProviderContext & {
     cleanupTasks: Cleanup[]
@@ -51,15 +48,10 @@ export class Application {
 
     constructor(options: ApplicationResolvedOptions) {
         this.options = options
-        this.providers = this.getDefaultProviders()
-    }
-
-    protected getDefaultProviders(): ServiceProvider[] {
-        return []
+        this.providers = []
     }
 
     protected getConfigItems(): ConfigRepository {
-        // Give each application instance its own mutable repository.
         return createConfig(this.options.basePath, this.options.config)
     }
 
@@ -93,38 +85,9 @@ export class Application {
         return createRuntimeContainer(this.options.container)
     }
 
-    protected registerCoreServices(container: ContainerContract): void {
-        const configRepository = this.getConfigItems()
-        const storageManager = StorageManager.fromConfig(configRepository)
-        const cacheManager = CacheManager.fromConfig(configRepository)
-
-        container.instance("config", configRepository)
-        container.instance(ConfigRepository, configRepository)
-        container.instance("storage", storageManager)
-        container.instance(StorageManager, storageManager)
-        container.instance("cache", cacheManager)
-        container.instance(CacheManager, cacheManager)
-    }
-
     protected rememberCleanup(cleanupTasks: Cleanup[], cleanup: void | Cleanup): void {
         if (typeof cleanup === "function") {
             cleanupTasks.push(cleanup)
-        }
-    }
-
-    protected registerProviders(context: ApplicationRunContext): void {
-        for (const provider of this.providers) {
-            if (typeof provider.register === "function") {
-                this.rememberCleanup(context.cleanupTasks, provider.register(context))
-            }
-        }
-    }
-
-    protected bootProviders(context: ApplicationRunContext): void {
-        for (const provider of this.providers) {
-            if (typeof provider.boot === "function") {
-                this.rememberCleanup(context.cleanupTasks, provider.boot(context))
-            }
         }
     }
 
@@ -151,11 +114,17 @@ export class Application {
 
         setCurrentApplicationContainer(container)
         clearFacadeCache()
-        this.registerCoreServices(container)
 
-        const context = { container, cleanupTasks: [] }
-        this.registerProviders(context)
-        this.bootProviders(context)
+        const providers = [new ConfigProvider(this.getConfigItems()), ...this.providers]
+        const context: ApplicationRunContext = { container, cleanupTasks: [] }
+
+        for (const provider of providers) {
+            this.rememberCleanup(context.cleanupTasks, provider.register(context))
+        }
+
+        for (const provider of providers) {
+            this.rememberCleanup(context.cleanupTasks, provider.boot(context))
+        }
 
         const stop = this.createStopHandler(container, context.cleanupTasks)
 

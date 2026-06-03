@@ -38,8 +38,12 @@ _Avoid_: config store, config object, Repository (ambiguous)
 **StorageManager**:
 An abstraction over persistent storage backends — localStorage, IndexedDB, and extensible to native file systems (Tauri, React Native) via `extend()` (not yet implemented). The active driver is swapped at runtime with `.use()`.
 
+**Cache**:
+The TTL-aware wrapper around a raw storage **Adapter**. Wraps every stored value in a `{v, e}` envelope where `e` is the absolute expiry timestamp in milliseconds (or `null` for no expiry). Expiry is checked lazily on `get` and `keys`. Per-call TTL is passed in seconds to `set(key, value, ttl?)`; `null` or omitted means no expiry; `0` expires immediately. **CacheManager** creates one **Cache** per configured driver.
+_Avoid_: TtlAdapter (the class is `Cache`)
+
 **CacheManager**:
-An abstraction for ephemeral, non-persistent caching. Sits on top of a raw storage adapter via a `TtlAdapter` wrapper that adds TTL-aware `set(key, value, ttl?)` and lazy expiry on read. TTL is in seconds; `null` or omitted means no expiry; `0` expires immediately. **Not designed for long-term storage.**
+An abstraction for ephemeral, non-persistent caching. Manages a set of named **Cache** drivers — each a **Cache** wrapping a raw storage **Adapter**. The active driver is swapped at runtime with `.use()`. **Not designed for long-term storage.**
 _Avoid_: cache store (use "CacheManager" or "cache driver")
 
 **Driver**:

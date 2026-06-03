@@ -1,30 +1,30 @@
 import type ConfigRepository from "../config/repository"
+import Manager from "../support/manager"
+import type { Adapter } from "./adapters/contract"
 import IndexedDbAdapter from "./adapters/indexed-db"
 import LocalStorageAdapter from "./adapters/local-storage"
-import MemoryStorageAdapter from "./adapters/memory"
-import type { Adapter } from "./adapters/contract"
-import Manager from "../support/manager"
+import MemoryStoreAdapter from "./adapters/memory"
 
 type DriverName = "memory" | "local" | "indexed"
 
-export default class StorageManager extends Manager<Adapter> implements Adapter {
+export default class StoreManager extends Manager<Adapter> implements Adapter {
     protected createDriver(raw: Adapter): Adapter {
         return raw
     }
 
     protected driverType(): string {
-        return "Storage driver"
+        return "Store driver"
     }
 
-    static fromConfig(config: ConfigRepository): StorageManager {
-        const adapters = StorageManager.defaultAdapters()
-        const active = config.get<string>("storage.driver", "memory")
+    static fromConfig(config: ConfigRepository): StoreManager {
+        const adapters = StoreManager.defaultAdapters()
+        const active = config.get<string>("store.driver", "memory")
 
-        return new StorageManager(adapters, active, config)
+        return new StoreManager(adapters, active, config)
     }
 
     static defaultAdapters(): Record<DriverName, Adapter> {
-        const memory = new MemoryStorageAdapter()
+        const memory = new MemoryStoreAdapter()
         const hasWindow = typeof window !== "undefined"
         const hasLocal = hasWindow && typeof window.localStorage !== "undefined"
         const hasIndexed = typeof globalThis.indexedDB !== "undefined"

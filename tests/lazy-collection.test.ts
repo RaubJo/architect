@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import { LazyCollection } from "@/support/lazy-collection"
 import { Collection } from "@/support/collection"
+import { LazyCollection } from "@/support/lazy-collection"
 
 describe("LazyCollection", () => {
     // ── make() ────────────────────────────────────────────────────────────────

@@ -1,8 +1,6 @@
-import { describe, it, expect } from "bun:test"
-import { createConfig } from "../../src/config/discovery"
+import { describe, expect, it } from "bun:test"
 import type { ConfigLoader } from "../../src/config/discovery"
-import { EsmConfigLoader } from "../../src/config/discovery"
-import { ConfigFactory } from "../../src/config/discovery"
+import { ConfigFactory, createConfig, EsmConfigLoader } from "../../src/config/discovery"
 import { ConfigRepository } from "../../src/config/repository"
 
 describe("Config Discovery", () => {
