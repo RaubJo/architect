@@ -3,6 +3,15 @@ export class Fluent<T extends Record<string, unknown> = Record<string, unknown>>
 
     constructor(attributes: T = {} as T) {
         this.attributes = { ...attributes }
+
+        return new Proxy(this, {
+            get(target, prop, receiver) {
+                if (typeof prop === "string" && !(prop in target)) {
+                    return target.attributes[prop]
+                }
+                return Reflect.get(target, prop, receiver)
+            },
+        }) as Fluent<T>
     }
 
     get(key: string): unknown
@@ -40,3 +49,7 @@ export class Fluent<T extends Record<string, unknown> = Record<string, unknown>>
         return { ...this.attributes } as T
     }
 }
+
+// Interface merging gives property access on T — obj.user typed as T["user"]
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface Fluent<T extends Record<string, unknown> = Record<string, unknown>> extends T {}

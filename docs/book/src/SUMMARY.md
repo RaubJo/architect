@@ -1,5 +1,19 @@
 # Summary
 
 - [Installation](./installation.md)
-- [Building a Container](./building-a-container.md)
-
+- [Quick Start](./quick-start.md)
+- [Core Concepts]()
+  - [Application & Lifecycle](./concepts/application.md)
+  - [Service Providers](./concepts/service-providers.md)
+  - [Container](./concepts/container.md)
+- [Built-in Services]()
+  - [Config](./services/config.md)
+  - [Cache](./services/cache.md)
+  - [Store](./services/store.md)
+  - [Events](./services/events.md)
+- [Facades](./facades.md)
+- [Framework Adapters](./adapters.md)
+- [Utilities](./utilities.md)
+- [Advanced]()
+  - [Deferrable Providers](./advanced/deferrable-providers.md)
+  - [Custom Drivers](./advanced/custom-drivers.md)

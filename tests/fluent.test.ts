@@ -52,6 +52,24 @@ describe("Fluent", () => {
         expect(arr).not.toBe(attrs)
     })
 
+    test("property access is equivalent to get()", () => {
+        const f = new Fluent({ name: "ioc", db: { host: "localhost", port: 5432 } })
+        expect(f.name).toBe(f.get("name"))
+        expect(f.db).toEqual(f.get("db"))
+        expect((f.db as Record<string, unknown>).host).toBe(f.get("db.host"))
+    })
+
+    test("property access returns undefined for missing keys", () => {
+        const f = new Fluent({ name: "ioc" })
+        expect((f as unknown as Record<string, unknown>).missing).toBeUndefined()
+    })
+
+    test("class methods take priority over attribute keys of the same name", () => {
+        const f = new Fluent({ get: "overridden", set: "overridden" } as Record<string, unknown>)
+        expect(typeof f.get).toBe("function")
+        expect(typeof f.set).toBe("function")
+    })
+
     test("constructor copies attributes — mutations don't leak", () => {
         const attrs: Record<string, unknown> = { a: 1 }
         const f = new Fluent(attrs)

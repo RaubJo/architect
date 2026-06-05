@@ -12,7 +12,6 @@ import {
 import { clearFacadeCache } from "../support/facades/facade"
 import type ServiceProvider from "../support/service-provider"
 import type { Cleanup, ServiceProviderContext } from "../support/service-provider"
-import { registerGlobalStr } from "../support/str"
 import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "./current-application"
 
 type ApplicationRunContext = ServiceProviderContext & {
@@ -32,7 +31,6 @@ type ApplicationResolvedOptions = {
 }
 
 registerGlobalEnv()
-registerGlobalStr()
 
 function mergeConfigureOptions(options: ApplicationConfigureOptions = {}): ApplicationResolvedOptions {
     return {

@@ -43,7 +43,7 @@ The TTL-aware wrapper around a raw storage **Adapter**. Wraps every stored value
 _Avoid_: TtlAdapter (the class is `Cache`)
 
 **CacheManager**:
-An abstraction for ephemeral, non-persistent caching. Manages a set of named **Cache** drivers — each a **Cache** wrapping a raw storage **Adapter**. The active driver is swapped at runtime with `.use()`. **Not designed for long-term storage.**
+An abstraction for TTL-based caching. Manages a set of named **Cache** drivers — each a **Cache** wrapping a raw storage **Adapter**. The active driver is swapped at runtime with `.use()`. With `local` or `indexed` drivers, values survive page reload but are still subject to TTL expiry on read. **Not designed as a primary data store.**
 _Avoid_: cache store (use "CacheManager" or "cache driver")
 
 **Driver**:
