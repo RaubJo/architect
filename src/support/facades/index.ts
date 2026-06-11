@@ -1,4 +1,5 @@
 export { Cache } from "./cache"
 export { Config } from "./config"
 export { Event } from "./event"
+export { Log } from "./log"
 export { Store } from "./store"

@@ -55,8 +55,21 @@ The ordered list of drivers a Manager tries when the preferred driver is unavail
 **Renderer**:
 A framework-specific adapter that mounts and unmounts the root component. Adapters are provided for React, Solid, Svelte, and Vue. Passed to `.withRenderer()`.
 
+**LogManager**:
+An abstraction over logging backends. Manages a set of named **Drivers** — each implementing the log **Contract** (`debug`, `info`, `warn`, `error`). The active driver is swapped at runtime with `.use()`. Built-in drivers: `console`, `null`, `stack`. Custom drivers are registered from a ServiceProvider's `boot()` hook via `manager.extend(name, factory)`. Drivers are resolved lazily on first use and then cached.
+_Avoid_: Logger (the class is `LogManager`), logging service
+
+**ConsoleLogger**:
+The built-in log driver that writes to the browser console using native methods (`console.debug`, `console.info`, `console.warn`, `console.error`). Respects a configured minimum level threshold — messages below the threshold are silently dropped. Configured via `logging.drivers.console.level` (default: `"debug"`).
+
+**StackLogger**:
+A built-in log driver that fans out each log call to an ordered list of other drivers. Errors thrown by any individual driver are swallowed so that a logging failure cannot crash the application. Configured via `logging.drivers.stack.drivers` (an array of driver names).
+
+**NullLogger**:
+A built-in log driver that discards all messages. Useful in tests to silence output without changing application wiring.
+
 **Facade**:
-A static proxy that forwards calls to a service resolved from the container. Usable from `boot()` hooks onward — not in `register()` (register/boot contract). Calling a facade before `.run()` throws. Built-in facades: `Config`, `Cache`, `Store`.
+A static proxy that forwards calls to a service resolved from the container. Usable from `boot()` hooks onward — not in `register()` (register/boot contract). Calling a facade before `.run()` throws. Built-in facades: `Config`, `Cache`, `Store`, `Log`.
 _Avoid_: static accessor, global service
 
 **Macro**:
@@ -70,7 +83,8 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 - A **BuiltinContainer** implements **ContainerContract**
 - A **Facade** resolves its backing service from the current **Application**'s **ContainerContract**
 - A **Macro** extends a **Facade** without modifying the underlying service
-- A **StorageManager** and **CacheManager** each manage a set of named **Drivers** with a **Fallback chain**
+- A **StorageManager**, **CacheManager**, and **LogManager** each manage a set of named **Drivers** with a **Fallback chain**
+- A **StackLogger** fans out log calls to multiple named **Drivers** — errors are swallowed per driver
 - An **Application** holds exactly one **Renderer**, which mounts one root component
 
 ## Example dialogue

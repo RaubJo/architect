@@ -3,6 +3,9 @@
 export type { Contract as CacheStore } from "./cache/contract"
 export { default as CacheManager } from "./cache/manager"
 export { CacheProvider } from "./cache/provider"
+export type { Contract as LogContract } from "./log/contract"
+export { default as LogManager } from "./log/manager"
+export { LogProvider } from "./log/provider"
 export { createConfig } from "./config/discovery"
 export { env } from "./config/env"
 export { ConfigProvider } from "./config/provider"
@@ -48,7 +51,8 @@ export { DeferrableServiceProvider, default as ServiceProvider } from "./support
 export { Str } from "./support/str"
 
 import { CacheProvider } from "./cache/provider"
+import { LogProvider } from "./log/provider"
 import { StoreProvider } from "./store/provider"
 import type ServiceProvider from "./support/service-provider"
 
-export const defaultProviders: ServiceProvider[] = [new StoreProvider(), new CacheProvider()]
+export const defaultProviders: ServiceProvider[] = [new StoreProvider(), new CacheProvider(), new LogProvider()]
