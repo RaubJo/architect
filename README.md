@@ -265,10 +265,9 @@ Resolution rules are:
 The built-in container supports:
 
 - `bind(...).to(...)`
-- `bind(...).toDynamicValue(...)`
 - `bind(...).toConstantValue(...)`
 - `singleton(identifier, concrete)`
-- `transient(identifier, concrete)`
+- `bind(identifier, concrete)`
 - `instance(identifier, value)`
 - `make(...)` and `get(...)`
 - `bound(...)` and `has(...)`
@@ -308,7 +307,7 @@ const { container } = Application.configure({
   .withServices(({ container }) => {
     container.singleton(Logger, Logger);
     container.instance("app.name", "Architect");
-    container.transient(Greeter, Greeter);
+    container.bind(Greeter, Greeter);
   })
   .run();
 

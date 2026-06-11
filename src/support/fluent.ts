@@ -1,9 +1,11 @@
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: Proxy in constructor handles runtime property access; interface merging is intentional for typed T["key"] access
 export class Fluent<T extends Record<string, unknown> = Record<string, unknown>> {
     protected attributes: Record<string, unknown>
 
     constructor(attributes: T = {} as T) {
         this.attributes = { ...attributes }
 
+        // biome-ignore lint/correctness/noConstructorReturn: Creating a proxy for magic methods: `get()`
         return new Proxy(this, {
             get(target, prop, receiver) {
                 if (typeof prop === "string" && !(prop in target)) {
@@ -50,6 +52,5 @@ export class Fluent<T extends Record<string, unknown> = Record<string, unknown>>
     }
 }
 
-// Interface merging gives property access on T — obj.user typed as T["user"]
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Fluent<T extends Record<string, unknown> = Record<string, unknown>> extends T {}

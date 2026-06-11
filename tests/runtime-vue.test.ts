@@ -34,6 +34,7 @@ mock.module("vue", () => ({
 
 let useService: <T>(identifier: ContainerIdentifier<T>) => T
 let containerKey: symbol
+let ContextProvider: { setup: (props: Record<string, unknown>, ctx: { slots: Record<string, unknown> }) => unknown }
 let VueRenderer: new () => {
     render: (context: { RootComponent: unknown; container: BuiltinContainer; rootElementId: string }) => () => void
 }
@@ -42,6 +43,7 @@ beforeAll(async () => {
     const runtime = await import("@/runtimes/vue")
     useService = runtime.useService
     containerKey = runtime.containerKey
+    ContextProvider = runtime.ContextProvider as typeof ContextProvider
 
     const renderer = await import("@/renderers/adapters/vue")
     VueRenderer = renderer.default
@@ -76,6 +78,32 @@ describe("Vue runtime and renderer", () => {
                 rootElementId: "root",
             }),
         ).toThrow("Missing mount node #root.")
+    })
+
+    test("ContextProvider setup throws when neither application nor container is provided", () => {
+        expect(() => ContextProvider.setup({}, { slots: {} })).toThrow(
+            "ContextProvider requires either `application` or `container`.",
+        )
+    })
+
+    test("ContextProvider setup with container returns a render function", () => {
+        const container = new BuiltinContainer()
+        const result = ContextProvider.setup({ container }, { slots: {} })
+        expect(typeof result).toBe("function")
+    })
+
+    test("ContextProvider setup with application calls run() and returns render function", () => {
+        const container = new BuiltinContainer()
+        let ran = false
+        const fakeApp = {
+            run: () => {
+                ran = true
+                return { container, stop: () => {} }
+            },
+        }
+        const result = ContextProvider.setup({ application: fakeApp }, { slots: {} })
+        expect(ran).toBe(true)
+        expect(typeof result).toBe("function")
     })
 
     test("renderer provides container, mounts, and unmounts", () => {

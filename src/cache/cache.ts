@@ -4,7 +4,7 @@ import type { Contract } from "./contract"
 type Envelope<T> = { v: T; e: number | null }
 
 export class Cache implements Contract {
-    constructor(private readonly adapter: Adapter) {}
+    constructor(protected readonly adapter: Adapter) {}
 
     async get(key: string): Promise<unknown>
     async get<T>(key: string): Promise<T | null>

@@ -1,7 +1,7 @@
 import { Collection } from "./collection"
 
 export class LazyCollection<T> implements Iterable<T> {
-    private constructor(private readonly source: () => Iterable<T>) {}
+    protected constructor(protected readonly source: () => Iterable<T>) {}
 
     static make<T>(source: (() => Iterable<T>) | Iterable<T>): LazyCollection<T> {
         if (typeof source === "function") {
@@ -105,37 +105,14 @@ export class LazyCollection<T> implements Iterable<T> {
     }
 
     takeWhile(callback: (item: T, index: number) => boolean): LazyCollection<T> {
-        const self = this
-        return new LazyCollection(function* () {
-            let i = 0
-            const iter = self[Symbol.iterator]()
-            while (true) {
-                const { done, value } = iter.next()
-                if (done) break
-                if (!callback(value, i++)) break
-                yield value
-            }
-        })
+        return this.takeUntil((item, i) => !callback(item, i))
     }
 
     skipUntil(valueOrCallback: T | ((item: T, index: number) => boolean)): LazyCollection<T> {
-        const self = this
-        return new LazyCollection(function* () {
-            let found = false
-            let i = 0
-            for (const item of self) {
-                if (!found) {
-                    const match =
-                        typeof valueOrCallback === "function"
-                            ? (valueOrCallback as (item: T, index: number) => boolean)(item, i++)
-                            : item === valueOrCallback
-                    if (match) found = true
-                    if (found) yield item
-                } else {
-                    yield item
-                }
-            }
-        })
+        if (typeof valueOrCallback === "function") {
+            return this.skipWhile((item, i) => !valueOrCallback(item, i))
+        }
+        return this.skipWhile((item) => item !== valueOrCallback)
     }
 
     skipWhile(callback: (item: T, index: number) => boolean): LazyCollection<T> {
@@ -193,7 +170,7 @@ export class LazyCollection<T> implements Iterable<T> {
         return new LazyCollection(function* () {
             const seen = new Set<unknown>()
             for (const item of self) {
-                const v = key ? (typeof key === "function" ? key(item) : (item[key] as unknown)) : item
+                const v = self.extractValue(item, key)
                 if (!seen.has(v)) {
                     seen.add(v)
                     yield item
@@ -259,14 +236,7 @@ export class LazyCollection<T> implements Iterable<T> {
 
     sum(key?: keyof T | ((item: T) => number)): number {
         let total = 0
-        for (const item of this) {
-            const v = key
-                ? typeof key === "function"
-                    ? key(item)
-                    : (item[key] as unknown as number)
-                : (item as unknown as number)
-            total += v
-        }
+        for (const item of this) total += this.extractValue(item, key) as number
         return total
     }
 
@@ -274,11 +244,7 @@ export class LazyCollection<T> implements Iterable<T> {
         let result: T | null = null
         let minVal: number | null = null
         for (const item of this) {
-            const v = key
-                ? typeof key === "function"
-                    ? key(item)
-                    : (item[key] as unknown as number)
-                : (item as unknown as number)
+            const v = this.extractValue(item, key) as number
             if (minVal === null || v < minVal) {
                 minVal = v
                 result = item
@@ -291,11 +257,7 @@ export class LazyCollection<T> implements Iterable<T> {
         let result: T | null = null
         let maxVal: number | null = null
         for (const item of this) {
-            const v = key
-                ? typeof key === "function"
-                    ? key(item)
-                    : (item[key] as unknown as number)
-                : (item as unknown as number)
+            const v = this.extractValue(item, key) as number
             if (maxVal === null || v > maxVal) {
                 maxVal = v
                 result = item
@@ -308,12 +270,7 @@ export class LazyCollection<T> implements Iterable<T> {
         let total = 0
         let count = 0
         for (const item of this) {
-            const v = key
-                ? typeof key === "function"
-                    ? key(item)
-                    : (item[key] as unknown as number)
-                : (item as unknown as number)
-            total += v
+            total += this.extractValue(item, key) as number
             count++
         }
         return count === 0 ? 0 : total / count
@@ -323,15 +280,13 @@ export class LazyCollection<T> implements Iterable<T> {
         return this.avg(key)
     }
 
-    contains(item: T | ((item: T) => boolean)): boolean {
-        if (typeof item === "function") {
-            for (const i of this) {
-                if ((item as (item: T) => boolean)(i)) return true
-            }
-            return false
-        }
-        for (const i of this) {
-            if (i === item) return true
+    contains(itemOrCallback: T | ((item: T) => boolean)): boolean {
+        const test =
+            typeof itemOrCallback === "function"
+                ? (itemOrCallback as (item: T) => boolean)
+                : (i: T) => i === itemOrCallback
+        for (const item of this) {
+            if (test(item)) return true
         }
         return false
     }
@@ -355,7 +310,7 @@ export class LazyCollection<T> implements Iterable<T> {
     groupBy<K extends string>(key: keyof T | ((item: T) => K)): Record<string, LazyCollection<T>> {
         const groups: Record<string, T[]> = {}
         for (const item of this) {
-            const k = String(typeof key === "function" ? key(item) : (item[key] as unknown))
+            const k = String(this.extractValue(item, key))
             if (!groups[k]) groups[k] = []
             groups[k].push(item)
         }
@@ -365,6 +320,15 @@ export class LazyCollection<T> implements Iterable<T> {
     toJson(): string {
         return JSON.stringify(this.all())
     }
+
+    // ── protected helpers ───────────────────────────────────────────────────────
+
+    protected extractValue(item: T, key?: keyof T | ((item: T) => unknown)): unknown {
+        if (!key) return item
+        return typeof key === "function" ? key(item) : item[key]
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
 
     isEmpty(): boolean {
         for (const _ of this) return false

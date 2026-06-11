@@ -3,6 +3,7 @@ import BuiltinContainer from "@/container/adapters/builtin"
 import type { EventSubscriber } from "@/events/bus"
 import { Bus } from "@/events/bus"
 import { Dispatchable } from "@/events/concerns/dispatchable"
+import { EventsProvider } from "@/events/provider"
 import { setCurrentApplicationContainer } from "@/foundation/current-application"
 import { clearFacadeCache } from "@/support/facades/facade"
 
@@ -308,5 +309,28 @@ describe("Dispatchable", () => {
         await OrderPlaced.dispatch(99)
         expect(calls).toHaveLength(1)
         expect((calls[0] as OrderPlaced).orderId).toBe(99)
+    })
+})
+
+describe("Bus wildcard unsubscribe", () => {
+    test("calling the returned unsubscribe removes the wildcard listener", async () => {
+        const bus = new Bus()
+        const calls: unknown[] = []
+        const unsub = bus.listen("*", (data) => calls.push(data))
+        await bus.dispatch("x", 1)
+        unsub()
+        await bus.dispatch("x", 2)
+        expect(calls).toEqual([1])
+    })
+})
+
+describe("EventsProvider", () => {
+    test("register binds a Bus singleton to 'events'", () => {
+        const container = new BuiltinContainer()
+        new EventsProvider().register({ container })
+        const bus1 = container.make("events")
+        const bus2 = container.make("events")
+        expect(bus1).toBeInstanceOf(Bus)
+        expect(bus1).toBe(bus2)
     })
 })

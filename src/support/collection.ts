@@ -102,7 +102,7 @@ export class Collection<T> {
         return this.items[idx - 1] ?? null
     }
 
-    private _findIndex(item: T | ((item: T, index: number) => boolean), strict = false): number {
+    protected _findIndex(item: T | ((item: T, index: number) => boolean), strict = false): number {
         if (typeof item === "function") {
             return this.items.findIndex(item as (item: T, index: number) => boolean)
         }
@@ -125,56 +125,26 @@ export class Collection<T> {
     }
 
     sum(key?: keyof T | ((item: T) => number)): number {
-        if (!key) {
-            return this.items.reduce((s, i) => s + (i as unknown as number), 0)
-        }
-        return this.items.reduce((s, i) => {
-            const v = typeof key === "function" ? key(i) : (i[key] as unknown as number)
-            return s + v
-        }, 0)
+        return this.items.reduce((s, i) => s + (this.extractValue(i, key) as number), 0)
     }
 
     min(key?: keyof T | ((item: T) => number)): T | null {
         if (this.items.length === 0) return null
-        return this.items.reduce((min, i) => {
-            const mv = key
-                ? typeof key === "function"
-                    ? key(min)
-                    : (min[key] as unknown as number)
-                : (min as unknown as number)
-            const iv = key
-                ? typeof key === "function"
-                    ? key(i)
-                    : (i[key] as unknown as number)
-                : (i as unknown as number)
-            return iv < mv ? i : min
-        })
+        return this.items.reduce((min, i) =>
+            (this.extractValue(i, key) as number) < (this.extractValue(min, key) as number) ? i : min,
+        )
     }
 
     max(key?: keyof T | ((item: T) => number)): T | null {
         if (this.items.length === 0) return null
-        return this.items.reduce((max, i) => {
-            const mv = key
-                ? typeof key === "function"
-                    ? key(max)
-                    : (max[key] as unknown as number)
-                : (max as unknown as number)
-            const iv = key
-                ? typeof key === "function"
-                    ? key(i)
-                    : (i[key] as unknown as number)
-                : (i as unknown as number)
-            return iv > mv ? i : max
-        })
+        return this.items.reduce((max, i) =>
+            (this.extractValue(i, key) as number) > (this.extractValue(max, key) as number) ? i : max,
+        )
     }
 
     median(key?: keyof T | ((item: T) => number)): number | null {
         if (this.items.length === 0) return null
-        const vals = this.items
-            .map((i) =>
-                key ? (typeof key === "function" ? key(i) : (i[key] as unknown as number)) : (i as unknown as number),
-            )
-            .sort((a, b) => a - b)
+        const vals = this.items.map((i) => this.extractValue(i, key) as number).sort((a, b) => a - b)
         const mid = Math.floor(vals.length / 2)
         return vals.length % 2 === 0 ? (vals[mid - 1] + vals[mid]) / 2 : vals[mid]
     }
@@ -183,15 +153,12 @@ export class Collection<T> {
         if (this.items.length === 0) return []
         const freq = new Map<unknown, number>()
         for (const item of this.items) {
-            const v = key ? (typeof key === "function" ? key(item) : (item[key] as unknown)) : item
+            const v = this.extractValue(item, key)
             freq.set(v, (freq.get(v) ?? 0) + 1)
         }
-        const max = Math.max(...freq.values())
-        const modalVals = new Set([...freq.entries()].filter(([, c]) => c === max).map(([v]) => v))
-        return this.items.filter((item) => {
-            const v = key ? (typeof key === "function" ? key(item) : (item[key] as unknown)) : item
-            return modalVals.has(v)
-        })
+        const maxFreq = Math.max(...freq.values())
+        const modalVals = new Set([...freq.entries()].filter(([, c]) => c === maxFreq).map(([v]) => v))
+        return this.items.filter((item) => modalVals.has(this.extractValue(item, key)))
     }
 
     percentage(callback: (item: T) => boolean, precision = 2): number {
@@ -378,11 +345,10 @@ export class Collection<T> {
     }
 
     unique(key?: keyof T | ((item: T) => unknown)): Collection<T> {
-        if (!key) return new Collection([...new Set(this.items)])
         const seen = new Set<unknown>()
         return new Collection(
             this.items.filter((item) => {
-                const val = typeof key === "function" ? key(item) : item[key]
+                const val = this.extractValue(item, key)
                 if (seen.has(val)) return false
                 seen.add(val)
                 return true
@@ -582,20 +548,21 @@ export class Collection<T> {
     // ── Chunking / grouping ───────────────────────────────────────────────────
 
     sortBy(key: keyof T | ((item: T) => unknown), direction: "asc" | "desc" = "asc"): Collection<T> {
-        const sorted = [...this.items].sort((a, b) => {
-            const av = (typeof key === "function" ? key(a) : a[key]) as string | number
-            const bv = (typeof key === "function" ? key(b) : b[key]) as string | number
-            if (av < bv) return direction === "asc" ? -1 : 1
-            if (av > bv) return direction === "asc" ? 1 : -1
-            return 0
-        })
-        return new Collection(sorted)
+        return new Collection(
+            [...this.items].sort((a, b) => {
+                const av = this.extractValue(a, key) as string | number
+                const bv = this.extractValue(b, key) as string | number
+                if (av < bv) return direction === "asc" ? -1 : 1
+                if (av > bv) return direction === "asc" ? 1 : -1
+                return 0
+            }),
+        )
     }
 
     groupBy<K extends string | number>(key: keyof T | ((item: T) => K)): Record<string, Collection<T>> {
         const groups: Record<string, T[]> = {}
         for (const item of this.items) {
-            const k = String(typeof key === "function" ? key(item) : item[key])
+            const k = String(this.extractValue(item, key))
             if (!groups[k]) groups[k] = []
             groups[k].push(item)
         }
@@ -649,19 +616,14 @@ export class Collection<T> {
     }
 
     duplicates(key?: keyof T | ((item: T) => unknown)): Collection<T> {
-        const seen = new Map<unknown, boolean>()
+        const seen = new Set<unknown>()
         const result: T[] = []
         for (const item of this.items) {
-            const v = key ? (typeof key === "function" ? key(item) : (item[key] as unknown)) : item
+            const v = this.extractValue(item, key)
             if (seen.has(v)) {
-                if (!seen.get(v)) {
-                    result.push(item)
-                    seen.set(v, true)
-                } else {
-                    result.push(item)
-                }
+                result.push(item)
             } else {
-                seen.set(v, false)
+                seen.add(v)
             }
         }
         return new Collection(result)
@@ -839,12 +801,10 @@ export class Collection<T> {
 
     whereNotBetween(key: keyof T, range: [unknown, unknown]): Collection<T> {
         const [min, max] = range
-        return new Collection(
-            this.items.filter((item) => {
-                const v = item[key] as never
-                return v < (min as never) || v > (max as never)
-            }),
-        )
+        return this.reject((item) => {
+            const v = item[key] as never
+            return v >= (min as never) && v <= (max as never)
+        })
     }
 
     whereIn(key: keyof T, values: unknown[]): Collection<T> {
@@ -893,9 +853,14 @@ export class Collection<T> {
         return new Collection(result)
     }
 
-    // ── Private helpers ───────────────────────────────────────────────────────
+    // ── protected helpers ───────────────────────────────────────────────────────
 
-    private _compareOp(itemVal: unknown, op: string, val: unknown): boolean {
+    protected extractValue(item: T, key?: keyof T | ((item: T) => unknown)): unknown {
+        if (!key) return item
+        return typeof key === "function" ? key(item) : item[key]
+    }
+
+    protected _compareOp(itemVal: unknown, op: string, val: unknown): boolean {
         switch (op) {
             case "===":
                 return itemVal === val

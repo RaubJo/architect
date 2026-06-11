@@ -2,7 +2,6 @@ import type {
     ContainerBindToSyntax,
     ContainerClass,
     ContainerConcrete,
-    ContainerContract,
     ContainerFactory,
     ContainerIdentifier,
 } from "../contract"
@@ -77,37 +76,18 @@ class BuiltinBindingFluent<T> {
         protected readonly identifier: ContainerIdentifier<T>,
     ) {}
 
-    to(concrete: ContainerClass<T>): {
+    to(concrete: ContainerConcrete<T>): {
         inSingletonScope: () => void
         inTransientScope: () => void
     } {
-        this.record = { kind: "class", concrete, scope: "singleton" }
-        this.container.setRecord(this.identifier, this.record)
-
-        return {
-            inSingletonScope: () => {
-                if (this.record && this.record.kind !== "constant") {
-                    this.record.scope = "singleton"
-                }
-            },
-            inTransientScope: () => {
-                if (this.record && this.record.kind !== "constant") {
-                    this.record.scope = "transient"
-                    delete this.record.cached
-                }
-            },
+        if (isClassConcrete(concrete)) {
+            this.record = { kind: "class", concrete, scope: "singleton" }
+        } else if (isFactoryConcrete(concrete)) {
+            this.record = { kind: "factory", concrete, scope: "singleton" }
+        } else {
+            this.record = { kind: "constant", value: concrete as T }
         }
-    }
 
-    toDynamicValue(concrete: (context: { container: ContainerContract }) => T): {
-        inSingletonScope: () => void
-        inTransientScope: () => void
-    } {
-        this.record = {
-            kind: "factory",
-            concrete: () => concrete({ container: this.container }),
-            scope: "singleton",
-        }
         this.container.setRecord(this.identifier, this.record)
 
         return {

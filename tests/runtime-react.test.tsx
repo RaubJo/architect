@@ -41,8 +41,8 @@ const reactModule = {
         }
         return { type, props: { ...(props ?? {}), children } }
     },
-    useEffect() {
-        return undefined
+    useEffect(callback: () => void | (() => void)) {
+        callback()
     },
     useMemo<T>(factory: () => T) {
         return factory()
@@ -67,7 +67,14 @@ mock.module("react/jsx-dev-runtime", () => ({
 }))
 
 let ApplicationProvider: (props: { container: BuiltinContainer; children?: unknown }) => unknown
+let ContextProvider: (props: {
+    application?: { run: () => { container: BuiltinContainer; stop: () => void } }
+    container?: BuiltinContainer
+    fallback?: unknown
+    children?: unknown
+}) => unknown
 let useService: <T>(identifier: ContainerIdentifier<T>) => T
+let useContainer: () => BuiltinContainer
 
 describe("React runtime", () => {
     beforeAll(async () => {
@@ -76,7 +83,9 @@ describe("React runtime", () => {
             container: BuiltinContainer
             children?: unknown
         }) => unknown
+        ContextProvider = runtime.ContextProvider as typeof ContextProvider
         useService = runtime.useService
+        useContainer = runtime.useContainer as typeof useContainer
     })
 
     test("ApplicationProvider + useService resolves from container", () => {
@@ -94,5 +103,42 @@ describe("React runtime", () => {
         forcedReactContextValue = undefined
         reactContextValues.clear()
         expect(() => useService("missing")).toThrow("You must use `useService` inside the Application Context.")
+    })
+
+    test("ContextProvider with container prop does not throw", () => {
+        const container = new BuiltinContainer()
+        expect(() => ContextProvider({ container, children: "child" })).not.toThrow()
+    })
+
+    test("ContextProvider throws when neither application nor container is provided", () => {
+        expect(() => ContextProvider({})).toThrow("ContextProvider requires either `application` or `container`.")
+    })
+
+    test("ContextProvider with application calls application.run() in effect", () => {
+        let ran = false
+        const innerContainer = new BuiltinContainer()
+        const fakeApp = {
+            run: () => {
+                ran = true
+                return { container: innerContainer, stop: () => {} }
+            },
+        }
+        // useEffect mock calls callback synchronously; useState is a no-op setter so runtime stays null → fallback rendered
+        reactContextValues.clear()
+        ContextProvider({ application: fakeApp, fallback: "loading" })
+        expect(ran).toBe(true)
+    })
+
+    test("useContainer returns the current container", () => {
+        const container = new BuiltinContainer()
+        forcedReactContextValue = container
+        expect(useContainer()).toBe(container)
+        forcedReactContextValue = undefined
+    })
+
+    test("useContainer throws when outside application context", () => {
+        forcedReactContextValue = undefined
+        reactContextValues.clear()
+        expect(() => useContainer()).toThrow("You must use `useContainer` inside the Application Context.")
     })
 })

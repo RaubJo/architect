@@ -3,7 +3,7 @@ import ServiceProvider from "../support/service-provider"
 import ConfigRepository from "./repository"
 
 export class ConfigProvider extends ServiceProvider {
-    private readonly repository: ConfigRepository
+    protected readonly repository: ConfigRepository
 
     constructor(repository: ConfigRepository) {
         super()

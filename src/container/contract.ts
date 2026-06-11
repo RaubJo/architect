@@ -11,10 +11,8 @@ export interface ContainerScopeSyntax {
 }
 
 export interface ContainerBindToSyntax<T> {
-    /** Bind an identifier to a concrete class. */
-    to(concrete: ContainerClass<T>): ContainerScopeSyntax
-    /** Bind an identifier to a dynamic factory callback. */
-    toDynamicValue(concrete: (context: { container: ContainerContract }) => T): ContainerScopeSyntax
+    /** Bind an identifier to a class, factory, or value concrete. */
+    to(concrete: ContainerConcrete<T>): ContainerScopeSyntax
     /** Bind an identifier to a constant shared value. */
     toConstantValue(value: T): void
 }

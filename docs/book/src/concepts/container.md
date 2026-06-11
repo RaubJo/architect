@@ -56,7 +56,7 @@ container.bind(MyService).to(MyServiceImpl).inTransientScope()
 container.bind("config.url").toConstantValue("https://api.example.com")
 
 // Bind to a factory that receives the container
-container.bind(MyService).toDynamicValue(({ container }) => {
+container.bind(MyService).to((container) => {
   const config = container.make(ApiConfig)
   return new MyService(config.url)
 })
@@ -87,7 +87,7 @@ When you bind a class, the container reads its constructor parameter types from 
 
 ```typescript
 class ApiClient {
-  constructor(private config: ApiConfig, private logger: Logger) {}
+  constructor(protected config: ApiConfig, protected logger: Logger) {}
 }
 
 container.singleton(ApiConfig, ApiConfig)
@@ -107,8 +107,8 @@ import { inject } from "@raubjo/architect-core"
 
 class ApiClient {
   constructor(
-    @inject("api.url") private url: string,
-    private logger: Logger,
+    @inject("api.url") protected url: string,
+    protected logger: Logger,
   ) {}
 }
 ```

@@ -366,4 +366,37 @@ describe("Arr", () => {
         expect(Object.keys(obj)).toEqual(["a", "z"])
         expect(obj.z).toEqual([1, 3])
     })
+
+    test("forget accepts an array of keys and removes each", () => {
+        const obj: Record<string, unknown> = { a: 1, b: 2, c: 3 }
+        Arr.forget(obj, ["a", "c"])
+        expect(obj).toEqual({ b: 2 })
+    })
+
+    test("forget silently returns early when an intermediate segment is not an object", () => {
+        const obj: Record<string, unknown> = { a: 1 }
+        Arr.forget(obj, "a.b.c")
+        expect(obj).toEqual({ a: 1 })
+    })
+
+    test("get returns fallback when an intermediate segment is not an object", () => {
+        const obj: Record<string, unknown> = { a: 1 }
+        expect(Arr.get(obj, "a.b")).toBeNull()
+        expect(Arr.get(obj, "a.b", "nope")).toBe("nope")
+    })
+
+    test("dot preserves array values as leaves and does not recurse into them", () => {
+        expect(Arr.dot({ tags: ["x", "y"], name: "z" })).toEqual({ tags: ["x", "y"], name: "z" })
+    })
+
+    test("sortDesc equal values without key hit the return-0 branch", () => {
+        expect(Arr.sortDesc([1, 1, 1])).toEqual([1, 1, 1])
+    })
+
+    test("sortRecursive mixed-type items hit the return-0 fallback in the outer sort", () => {
+        const result = Arr.sortRecursive([1, "a"])
+        expect(result).toHaveLength(2)
+        expect(result).toContain(1)
+        expect(result).toContain("a")
+    })
 })

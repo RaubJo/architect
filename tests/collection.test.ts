@@ -748,4 +748,50 @@ describe("Collection", () => {
         const result = new Collection([3, 1, 2]).sortKeys()
         expect(result.all()).toEqual([3, 1, 2])
     })
+
+    // ── _compareOp branch coverage ────────────────────────────────────────────
+
+    test('where "=" is a loose-equality alias for "=="', () => {
+        const c = new Collection([{ n: 1 }, { n: "1" }, { n: 2 }])
+        expect(c.where("n", "=", 1).count()).toBe(2)
+    })
+
+    test('where "<=" operator', () => {
+        const c = new Collection([{ n: 1 }, { n: 2 }, { n: 3 }])
+        expect(c.where("n", "<=", 2).pluck("n").all()).toEqual([1, 2])
+    })
+
+    test("where with unknown operator matches nothing (default case)", () => {
+        const c = new Collection([{ n: 1 }, { n: 2 }])
+        expect(c.where("n", "??" as string, 1).count()).toBe(0)
+    })
+
+    // ── search strict mode ────────────────────────────────────────────────────
+
+    test("search strict mode uses === not ==", () => {
+        const c = new Collection([1, 2, "2", 3])
+        expect(c.search(2, true)).toBe(1)
+        expect(c.search("2", true)).toBe(2)
+        expect(c.search(99, true)).toBe(false)
+    })
+
+    // ── sortBy comparator equal-value branch ──────────────────────────────────
+
+    test("sortBy equal values hit the return-0 branch in the comparator", () => {
+        const c = new Collection([{ n: 2 }, { n: 1 }, { n: 1 }])
+        expect(c.sortBy("n").pluck("n").all()).toEqual([1, 1, 2])
+        expect(c.sortBy("n", "desc").pluck("n").all()).toEqual([2, 1, 1])
+    })
+
+    // ── dot / undot edge cases ────────────────────────────────────────────────
+
+    test("dot preserves array-valued properties as leaves", () => {
+        const c = new Collection([{ meta: { tags: ["a", "b"], active: true } }])
+        expect(c.dot().all()).toEqual([{ "meta.tags": ["a", "b"], "meta.active": true }])
+    })
+
+    test("undot reuses existing intermediate objects when multiple paths share a prefix", () => {
+        const c = new Collection([{ "a.b.c": 1, "a.b.d": 2 }])
+        expect(c.undot().all()).toEqual([{ a: { b: { c: 1, d: 2 } } }])
+    })
 })

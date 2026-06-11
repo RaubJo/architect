@@ -1,21 +1,22 @@
-export type EventClass<T = unknown> = new (...args: any[]) => T
-export type EventIdentifier<T = unknown> = string | EventClass<T>
-export type Listener<T = unknown> = (event: T) => void | boolean | Promise<void | boolean>
-export type WildcardListener = (eventName: string, data: unknown) => void | Promise<void>
-export type Unsubscribe = () => void
+export type {
+    EventClass,
+    EventIdentifier,
+    Listener,
+    ListenerObject,
+    Unsubscribe,
+    WildcardListener,
+} from "./types"
 
-export interface ListenerObject<T = unknown> {
-    handle(event: T): void | boolean | Promise<void | boolean>
-}
+import type { EventClass, EventIdentifier, Listener, ListenerObject, Unsubscribe, WildcardListener } from "./types"
 
 export interface EventSubscriber {
     subscribe(bus: Bus): Record<string, Listener | string> | void
 }
 
 export class Bus {
-    private listeners = new Map<string, Listener[]>()
-    private wildcardListeners: WildcardListener[] = []
-    private pushedEvents = new Map<string, Record<string, unknown>[]>()
+    protected listeners = new Map<string, Listener[]>()
+    protected wildcardListeners: WildcardListener[] = []
+    protected pushedEvents = new Map<string, Record<string, unknown>[]>()
 
     listen<T>(
         event: EventIdentifier<T> | Array<EventIdentifier<T>>,
@@ -26,7 +27,7 @@ export class Bus {
         const unsubscribers: Unsubscribe[] = []
 
         for (const ev of events) {
-            const name = this.eventName(ev)
+            const name = this.resolveEventName(ev)
 
             if (name === "*") {
                 const wl: WildcardListener = (_name, data) => void normalized(data as T)
@@ -133,7 +134,7 @@ export class Bus {
     }
 
     forget(event: EventIdentifier): void {
-        this.listeners.delete(this.eventName(event))
+        this.listeners.delete(this.resolveEventName(event))
     }
 
     forgetPushed(): void {
@@ -141,34 +142,32 @@ export class Bus {
     }
 
     hasListeners(event: EventIdentifier): boolean {
-        const name = this.eventName(event)
+        const name = this.resolveEventName(event)
         return (this.listeners.get(name)?.length ?? 0) > 0 || this.wildcardListeners.length > 0
     }
 
-    private eventName(event: EventIdentifier): string {
+    protected resolveEventName(event: unknown): string {
         if (typeof event === "string") return event
-        // Prefer static label over constructor.name (minification-safe)
-        if ("label" in event && typeof (event as { label: unknown }).label === "string") {
-            return (event as { label: string }).label
+        if (typeof event === "function") {
+            // EventClass passed directly — prefer static label (minification-safe)
+            if ("label" in event && typeof event.label === "string") return event.label as string
+            return (event as EventClass).name
         }
-        return (event as EventClass).name
+        // Event instance — read label/name from its constructor
+        const ctor = (event as object)?.constructor
+        if (ctor && "label" in ctor && typeof (ctor as { label: unknown }).label === "string") {
+            return (ctor as { label: string }).label
+        }
+        return ctor?.name ?? ""
     }
 
-    private parseEventAndPayload<T>(event: T | string, payload?: unknown): [string, unknown] {
-        if (typeof event === "string") {
-            return [event, payload ?? {}]
-        }
-        // Static label lives on the constructor, not the instance — check there first
-        if (event && typeof event === "object") {
-            const ctor = (event as object).constructor
-            if (ctor && "label" in ctor && typeof (ctor as { label: unknown }).label === "string") {
-                return [(ctor as { label: string }).label, event]
-            }
-        }
-        return [(event as object).constructor.name, event]
+    protected parseEventAndPayload<T>(event: T | string, payload?: unknown): [string, unknown] {
+        const name = this.resolveEventName(event)
+        const data = typeof event === "string" ? (payload ?? {}) : event
+        return [name, data]
     }
 
-    private normalizeListener<T>(listener: Listener<T> | ListenerObject<T>): Listener<T> {
+    protected normalizeListener<T>(listener: Listener<T> | ListenerObject<T>): Listener<T> {
         if (typeof listener === "function") return listener
         return (event: T) => listener.handle(event)
     }

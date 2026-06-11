@@ -124,7 +124,7 @@ describe("BuiltinContainer adapter", () => {
         expect(container.make<number>("answer")).toBe(42)
     })
 
-    test("supports fluent dynamic and class registrations", () => {
+    test("supports fluent class, factory, and value registrations", () => {
         const container = new BuiltinContainer()
 
         class Demo {}
@@ -133,15 +133,17 @@ describe("BuiltinContainer adapter", () => {
         container.bind("demo.singleton").to(Demo).inSingletonScope()
         container
             .bind("value")
-            .toDynamicValue(({ container: ioc }) => ioc.make("demo"))
+            .to((ioc) => ioc.make("demo"))
             .inTransientScope()
         container
             .bind("value.singleton")
-            .toDynamicValue(({ container: ioc }) => ioc.make("demo.singleton"))
+            .to((ioc) => ioc.make("demo.singleton"))
             .inSingletonScope()
+        container.bind("raw").to(42)
 
         expect(container.make("value")).not.toBe(container.make("value"))
         expect(container.make("value.singleton")).toBe(container.make("value.singleton"))
+        expect(container.make<number>("raw")).toBe(42)
     })
 
     test("ignores scope changes after fluent binding is replaced with constant", () => {
@@ -156,7 +158,7 @@ describe("BuiltinContainer adapter", () => {
         classScopes.inSingletonScope()
 
         const dynamicBinding = container.bind("dynamic.binding")
-        const dynamicScopes = dynamicBinding.toDynamicValue(() => new Demo())
+        const dynamicScopes = dynamicBinding.to(() => new Demo())
         dynamicBinding.toConstantValue("dynamic.constant")
         dynamicScopes.inTransientScope()
         dynamicScopes.inSingletonScope()

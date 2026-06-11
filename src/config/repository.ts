@@ -34,46 +34,36 @@ function hasDataKey(value: unknown, key: string): value is Record<string, unknow
     return isPlainObject(value) && key in value
 }
 
-function dataSet(target: Record<string, unknown>, path: string, value: unknown): void {
+function dataTraverse(
+    target: Record<string, unknown>,
+    path: string,
+    onCreate: boolean,
+): [Record<string, unknown>, string] | null {
     const segments = path.split(".")
     let cursor: Record<string, unknown> = target
 
-    for (let i = 0; i < segments.length; i += 1) {
+    for (let i = 0; i < segments.length - 1; i += 1) {
         const segment = segments[i]
-        const isLast = i === segments.length - 1
-
-        if (isLast) {
-            cursor[segment] = value
-            return
-        }
 
         if (!isPlainObject(cursor[segment])) {
+            if (!onCreate) return null
             cursor[segment] = {}
         }
 
         cursor = cursor[segment] as Record<string, unknown>
     }
+
+    return [cursor, segments[segments.length - 1]]
+}
+
+function dataSet(target: Record<string, unknown>, path: string, value: unknown): void {
+    const result = dataTraverse(target, path, true)
+    if (result) result[0][result[1]] = value
 }
 
 function dataForget(target: Record<string, unknown>, path: string): void {
-    const segments = path.split(".")
-    let cursor: Record<string, unknown> = target
-
-    for (let i = 0; i < segments.length; i += 1) {
-        const segment = segments[i]
-        const isLast = i === segments.length - 1
-
-        if (isLast) {
-            delete cursor[segment]
-            return
-        }
-
-        if (!isPlainObject(cursor[segment])) {
-            return
-        }
-
-        cursor = cursor[segment] as Record<string, unknown>
-    }
+    const result = dataTraverse(target, path, false)
+    if (result) delete result[0][result[1]]
 }
 
 class ConfigRepository implements Contract {
