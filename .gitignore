@@ -6,3 +6,4 @@
 !.npmignore
 !.nvmrc
 !.github
+!.husky

@@ -1,11 +1,11 @@
-import { describe, expect, mock, test } from "bun:test"
+import { describe, expect, test } from "bun:test"
 import ConfigRepository from "@/config/repository"
+import BuiltinContainer from "@/container/adapters/builtin"
 import ConsoleLogger from "@/log/drivers/console"
 import NullLogger from "@/log/drivers/null"
 import StackLogger from "@/log/drivers/stack"
 import LogManager from "@/log/manager"
 import { LogProvider } from "@/log/provider"
-import BuiltinContainer from "@/container/adapters/builtin"
 
 describe("ConsoleLogger", () => {
     test("delegates to native console methods", () => {
@@ -90,8 +90,18 @@ describe("NullLogger", () => {
 describe("StackLogger", () => {
     test("fans out to all drivers in order", () => {
         const calls: string[] = []
-        const a = { debug: () => calls.push("a:debug"), info: () => calls.push("a:info"), warn: () => {}, error: () => {} }
-        const b = { debug: () => calls.push("b:debug"), info: () => calls.push("b:info"), warn: () => {}, error: () => {} }
+        const a = {
+            debug: () => calls.push("a:debug"),
+            info: () => calls.push("a:info"),
+            warn: () => {},
+            error: () => {},
+        }
+        const b = {
+            debug: () => calls.push("b:debug"),
+            info: () => calls.push("b:info"),
+            warn: () => {},
+            error: () => {},
+        }
         const stack = new StackLogger([a, b])
 
         stack.debug("msg")
@@ -102,10 +112,18 @@ describe("StackLogger", () => {
 
     test("swallows errors from individual drivers", () => {
         const throwing = {
-            debug: () => { throw new Error("boom") },
-            info: () => { throw new Error("boom") },
-            warn: () => { throw new Error("boom") },
-            error: () => { throw new Error("boom") },
+            debug: () => {
+                throw new Error("boom")
+            },
+            info: () => {
+                throw new Error("boom")
+            },
+            warn: () => {
+                throw new Error("boom")
+            },
+            error: () => {
+                throw new Error("boom")
+            },
         }
         const stack = new StackLogger([throwing])
 
@@ -122,9 +140,7 @@ describe("LogManager", () => {
     })
 
     test("respects logging.default config", () => {
-        const manager = LogManager.fromConfig(
-            new ConfigRepository({ logging: { default: "null" } }),
-        )
+        const manager = LogManager.fromConfig(new ConfigRepository({ logging: { default: "null" } }))
         expect(() => manager.error("silent")).not.toThrow()
     })
 

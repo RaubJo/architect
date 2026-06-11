@@ -3,8 +3,8 @@
 // Converts bun's lcov.info to Istanbul coverage-final.json for `fallow health --coverage`.
 // Uses the TypeScript AST to recover per-function coverage from line-hit data,
 // since bun's lcov reporter omits FN:/FNDA: lines.
-import { existsSync, readFileSync, writeFileSync } from "fs"
-import { resolve } from "path"
+import { existsSync, readFileSync, writeFileSync } from "node:fs"
+import { resolve } from "node:path"
 import ts from "typescript"
 
 const lcovPath = process.argv[2] ?? "coverage/lcov.info"
