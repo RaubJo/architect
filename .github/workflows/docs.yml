@@ -8,6 +8,9 @@ on:
       - docs/book/**
   workflow_dispatch:
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 permissions:
   contents: read
   pages: write
@@ -24,9 +27,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install mdBook
-        uses: peaceiris/actions-mdbook@v2
-        with:
-          mdbook-version: latest
+        run: |
+          curl -sSL https://github.com/rust-lang/mdBook/releases/latest/download/mdbook-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /usr/local/bin
 
       - name: Build book
         run: mdbook build docs/book
