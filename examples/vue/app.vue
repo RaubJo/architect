@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import { Config } from "@raubjo/architect-core";
-import { useService } from "@raubjo/architect-core/vue";
+import { Config } from "@raubjo/architect";
+import { useService } from "@raubjo/architect/vue";
 import CounterService from "./counter/service";
 import HeartbeatService from "./heartbeat/service";
 

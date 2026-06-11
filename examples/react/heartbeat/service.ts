@@ -1,4 +1,4 @@
-import { type Cleanup } from "@raubjo/architect-core";
+import { type Cleanup } from "@raubjo/architect";
 import { createStore } from "zustand/vanilla";
 import { useStore } from "zustand";
 

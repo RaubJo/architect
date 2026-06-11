@@ -2,7 +2,7 @@ import {
   ServiceProvider,
   type Cleanup,
   type ServiceProviderContext,
-} from "@raubjo/architect-core";
+} from "@raubjo/architect";
 import Service from "./service";
 
 export default class Heartbeat extends ServiceProvider {

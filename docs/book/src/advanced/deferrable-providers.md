@@ -5,7 +5,7 @@ A **DeferrableServiceProvider** declares which container bindings it provides vi
 ## Basic usage
 
 ```typescript
-import { DeferrableServiceProvider, type ServiceProviderContext } from "@raubjo/architect-core"
+import { DeferrableServiceProvider, type ServiceProviderContext } from "@raubjo/architect"
 
 export class ReportingProvider extends DeferrableServiceProvider {
   provides(): string[] {

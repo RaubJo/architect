@@ -103,7 +103,7 @@ const client = container.make(ApiClient)
 When a constructor parameter is typed as an interface or primitive, metadata can't infer the token. Use `@inject()` to specify it explicitly:
 
 ```typescript
-import { inject } from "@raubjo/architect-core"
+import { inject } from "@raubjo/architect"
 
 class ApiClient {
   constructor(

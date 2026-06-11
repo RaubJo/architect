@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { Application } from "@raubjo/architect-core";
-import { ContextProvider } from "@raubjo/architect-core/react";
+import { Application } from "@raubjo/architect";
+import { ContextProvider } from "@raubjo/architect/react";
 import ReactDOM from "react-dom/client";
 import { createElement } from "react";
 

@@ -1,4 +1,4 @@
-import { type Cleanup } from "@raubjo/architect-core";
+import { type Cleanup } from "@raubjo/architect";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 type State = {

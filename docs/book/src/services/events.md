@@ -5,7 +5,7 @@ The **Bus** is a pub/sub event bus with support for string events, class-based e
 Register it by including `EventsProvider` in your providers:
 
 ```typescript
-import { Application, EventsProvider } from "@raubjo/architect-core"
+import { Application, EventsProvider } from "@raubjo/architect"
 
 Application.configure()
   .withProviders([new EventsProvider()])
@@ -15,7 +15,7 @@ Application.configure()
 ## Listening
 
 ```typescript
-import { Event } from "@raubjo/architect-core/support/facades"
+import { Event } from "@raubjo/architect/support/facades"
 
 const off = Event.listen("user.created", (payload) => {
   console.log(payload)
@@ -80,7 +80,7 @@ class UserCreated {
 Make a class dispatch itself:
 
 ```typescript
-import { Dispatchable } from "@raubjo/architect-core"
+import { Dispatchable } from "@raubjo/architect"
 
 class UserCreated extends Dispatchable {
   constructor(public readonly id: number) {}
@@ -95,7 +95,7 @@ await UserCreated.dispatch(new UserCreated(42))
 Group related listeners into a subscriber class:
 
 ```typescript
-import { type EventSubscriber, type Bus } from "@raubjo/architect-core"
+import { type EventSubscriber, type Bus } from "@raubjo/architect"
 
 class UserSubscriber implements EventSubscriber {
   subscribe(bus: Bus) {
@@ -136,7 +136,7 @@ await Event.flush("analytics.track")
 ## Using Bus directly
 
 ```typescript
-import { Bus } from "@raubjo/architect-core"
+import { Bus } from "@raubjo/architect"
 
 boot({ container }) {
   const bus = container.make(Bus)

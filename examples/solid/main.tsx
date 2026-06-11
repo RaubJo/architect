@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { Application } from "@raubjo/architect-core";
-import { ContextProvider } from "@raubjo/architect-core/solid";
+import { Application } from "@raubjo/architect";
+import { ContextProvider } from "@raubjo/architect/solid";
 import { render } from "solid-js/web";
 import App from "./app";
 import CounterProvider from "./counter/provider";

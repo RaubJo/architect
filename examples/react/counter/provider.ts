@@ -1,7 +1,7 @@
 import {
   ServiceProvider,
   type ServiceProviderContext,
-} from "@raubjo/architect-core";
+} from "@raubjo/architect";
 import CounterService from "./service";
 
 export default class CounterProvider extends ServiceProvider {

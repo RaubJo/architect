@@ -5,7 +5,7 @@
 Register it by including `StoreProvider` in your providers (or use the built-in `defaultProviders`):
 
 ```typescript
-import { Application, defaultProviders } from "@raubjo/architect-core"
+import { Application, defaultProviders } from "@raubjo/architect"
 
 Application.configure().withProviders(defaultProviders).run()
 ```
@@ -13,7 +13,7 @@ Application.configure().withProviders(defaultProviders).run()
 ## Basic usage
 
 ```typescript
-import { Store } from "@raubjo/architect-core/support/facades"
+import { Store } from "@raubjo/architect/support/facades"
 
 await Store.set("theme", "dark")
 const theme = await Store.get<string>("theme")   // "dark" | null
@@ -60,7 +60,7 @@ Application.configure({
 ## Registering a custom driver
 
 ```typescript
-import StoreManager from "@raubjo/architect-core"
+import StoreManager from "@raubjo/architect"
 
 boot({ container }) {
   const store = container.make(StoreManager)
@@ -80,7 +80,7 @@ import {
   MemoryStoreAdapter,
   LocalStorageAdapter,
   IndexedDbAdapter,
-} from "@raubjo/architect-core"
+} from "@raubjo/architect"
 
 const memory = new MemoryStoreAdapter()
 const local = new LocalStorageAdapter(window.localStorage)

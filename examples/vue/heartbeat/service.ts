@@ -1,4 +1,4 @@
-import type { Cleanup } from "@raubjo/architect-core";
+import type { Cleanup } from "@raubjo/architect";
 
 type Status = "running" | "stopped";
 

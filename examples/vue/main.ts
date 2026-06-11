@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { Application } from "@raubjo/architect-core";
-import { ContextProvider } from "@raubjo/architect-core/vue";
+import { Application } from "@raubjo/architect";
+import { ContextProvider } from "@raubjo/architect/vue";
 import { createApp, h } from "vue";
 import App from "./app.vue";
 import CounterProvider from "./counter/provider";

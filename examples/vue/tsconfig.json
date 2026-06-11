@@ -7,8 +7,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["../../src/*"],
-      "@raubjo/architect-core": ["../../src/index.ts"],
-      "@raubjo/architect-core/*": ["../../src/*"]
+      "@raubjo/architect": ["../../src/index.ts"],
+      "@raubjo/architect/*": ["../../src/*"]
     },
     "types": ["vite/client"],
     "skipLibCheck": true,

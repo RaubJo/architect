@@ -5,7 +5,7 @@ A **ServiceProvider** is the unit of wiring — a class that encapsulates regist
 ## Basic structure
 
 ```typescript
-import { ServiceProvider, type ServiceProviderContext } from "@raubjo/architect-core"
+import { ServiceProvider, type ServiceProviderContext } from "@raubjo/architect"
 
 export class AnalyticsProvider extends ServiceProvider {
   register({ container }: ServiceProviderContext): void {

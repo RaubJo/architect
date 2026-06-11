@@ -1,6 +1,6 @@
-# @raubjo/architect-core
+# @raubjo/architect
 
-`@raubjo/architect-core` is a Laravel-inspired application container for frontend applications.
+`@raubjo/architect` is a Laravel-inspired application container for frontend applications.
 
 It gives you a predictable boot process, a shared dependency container, service providers, framework-specific runtime helpers, and small configuration/storage/cache primitives that can be used consistently across React, Solid, Svelte, and Vue projects.
 
@@ -38,7 +38,7 @@ In small frontend applications, service wiring usually starts in components, top
 - services need to be shared across framework components and non-UI code
 - you want clearer separation between business logic and rendering
 
-`@raubjo/architect-core` solves that by giving you:
+`@raubjo/architect` solves that by giving you:
 
 - a central application object
 - a container abstraction
@@ -68,13 +68,13 @@ The current codebase provides:
 ## Installation
 
 ```sh
-bun add @raubjo/architect-core reflect-metadata
+bun add @raubjo/architect reflect-metadata
 ```
 
 Framework integrations are imported from subpaths:
 
 ```ts
-import { ContextProvider, useService } from "@raubjo/architect-core/react";
+import { ContextProvider, useService } from "@raubjo/architect/react";
 ```
 
 Optional peer dependencies depend on the runtime you use:
@@ -97,8 +97,8 @@ This is the smallest useful application shape:
 
 ```ts
 import "reflect-metadata";
-import { Application, ServiceProvider, type ServiceProviderContext } from "@raubjo/architect-core";
-import { ContextProvider, useService } from "@raubjo/architect-core/react";
+import { Application, ServiceProvider, type ServiceProviderContext } from "@raubjo/architect";
+import { ContextProvider, useService } from "@raubjo/architect/react";
 import ReactDOM from "react-dom/client";
 import { createElement } from "react";
 
@@ -282,7 +282,7 @@ import "reflect-metadata";
 import {
   Application,
   injectDependency,
-} from "@raubjo/architect-core";
+} from "@raubjo/architect";
 
 class Logger {
   log(message: string) {
@@ -329,8 +329,8 @@ If you want to use Inversify, install `inversify` and register an adapter factor
 
 ```ts
 import "reflect-metadata";
-import { Application } from "@raubjo/architect-core";
-import InversifyContainer from "@raubjo/architect-core/container/adapters/inversify";
+import { Application } from "@raubjo/architect";
+import InversifyContainer from "@raubjo/architect/container/adapters/inversify";
 
 globalThis.__iocContainerFactoryRegistry = {
   inversify: () => new InversifyContainer(),
@@ -369,7 +369,7 @@ import {
   ServiceProvider,
   type Cleanup,
   type ServiceProviderContext,
-} from "@raubjo/architect-core";
+} from "@raubjo/architect";
 
 class HeartbeatService {
   protected intervalId: number | null = null;
@@ -424,7 +424,7 @@ Each supported framework has:
 
 ### React
 
-Import from `@raubjo/architect-core/react`:
+Import from `@raubjo/architect/react`:
 
 - `ContextProvider`
 - `ApplicationProvider`
@@ -434,7 +434,7 @@ Import from `@raubjo/architect-core/react`:
 `ContextProvider` runs the application and provides the container through React context, so you can decide where the application boundary lives in your component tree.
 
 ```ts
-import { useService } from "@raubjo/architect-core/react";
+import { useService } from "@raubjo/architect/react";
 
 function App() {
   const service = useService(MyService);
@@ -444,7 +444,7 @@ function App() {
 
 ### Solid
 
-Import from `@raubjo/architect-core/solid`:
+Import from `@raubjo/architect/solid`:
 
 - `ContextProvider`
 - `ApplicationProvider`
@@ -454,7 +454,7 @@ Import from `@raubjo/architect-core/solid`:
 `ContextProvider` runs the application and provides the container through Solid context.
 
 ```ts
-import { useService } from "@raubjo/architect-core/solid";
+import { useService } from "@raubjo/architect/solid";
 
 function App() {
   const service = useService(MyService);
@@ -464,7 +464,7 @@ function App() {
 
 ### Svelte
 
-Import from `@raubjo/architect-core/svelte`:
+Import from `@raubjo/architect/svelte`:
 
 - `Renderer`
 - `containerKey`
@@ -475,7 +475,7 @@ The Svelte renderer passes `container` as a prop to the root component. Inside t
 
 ```svelte
 <script lang="ts">
-  import { provideContainer, useService } from "@raubjo/architect-core/svelte";
+  import { provideContainer, useService } from "@raubjo/architect/svelte";
   import CounterService from "./counter/service";
 
   export let container: unknown;
@@ -487,7 +487,7 @@ The Svelte renderer passes `container` as a prop to the root component. Inside t
 
 ### Vue
 
-Import from `@raubjo/architect-core/vue`:
+Import from `@raubjo/architect/vue`:
 
 - `ContextProvider`
 - `Renderer`
@@ -497,7 +497,7 @@ Import from `@raubjo/architect-core/vue`:
 
 ```vue
 <script setup lang="ts">
-import { useService } from "@raubjo/architect-core/vue";
+import { useService } from "@raubjo/architect/vue";
 
 const service = useService(MyService);
 </script>
@@ -554,7 +554,7 @@ That data is cloned per application instance before it is wrapped in `ConfigRepo
 Example:
 
 ```ts
-import { ConfigRepository } from "@raubjo/architect-core";
+import { ConfigRepository } from "@raubjo/architect";
 
 const config = new ConfigRepository({
   app: {
@@ -694,7 +694,7 @@ Facade classes provide a static access pattern similar to Laravel:
 Example:
 
 ```ts
-import { Config, Cache, Store } from "@raubjo/architect-core";
+import { Config, Cache, Store } from "@raubjo/architect";
 
 const name = Config.get("app.name");
 await Cache.set("token", "abc");
@@ -717,7 +717,7 @@ This is not used automatically by `Application` today, but it is available if yo
 
 ### `loadConfig(...)`
 
-`@raubjo/architect-core/config/adapters/esm` exports `loadConfig(modules)`, which turns an ESM module map into a config object keyed by filename.
+`@raubjo/architect/config/adapters/esm` exports `loadConfig(modules)`, which turns an ESM module map into a config object keyed by filename.
 
 ### `Str`
 
@@ -763,20 +763,20 @@ Important root exports include:
 
 Important subpath exports include:
 
-- `@raubjo/architect-core/react`
-- `@raubjo/architect-core/solid`
-- `@raubjo/architect-core/svelte`
-- `@raubjo/architect-core/vue`
-- `@raubjo/architect-core/application`
-- `@raubjo/architect-core/container/contract`
-- `@raubjo/architect-core/container/adapters/inversify`
-- `@raubjo/architect-core/container/adapters/builtin`
-- `@raubjo/architect-core/config/adapters/esm`
-- `@raubjo/architect-core/config/env`
-- `@raubjo/architect-core/config/repository`
-- `@raubjo/architect-core/cache/manager`
-- `@raubjo/architect-core/storage/manager`
-- `@raubjo/architect-core/filesystem/filesystem`
+- `@raubjo/architect/react`
+- `@raubjo/architect/solid`
+- `@raubjo/architect/svelte`
+- `@raubjo/architect/vue`
+- `@raubjo/architect/application`
+- `@raubjo/architect/container/contract`
+- `@raubjo/architect/container/adapters/inversify`
+- `@raubjo/architect/container/adapters/builtin`
+- `@raubjo/architect/config/adapters/esm`
+- `@raubjo/architect/config/env`
+- `@raubjo/architect/config/repository`
+- `@raubjo/architect/cache/manager`
+- `@raubjo/architect/storage/manager`
+- `@raubjo/architect/filesystem/filesystem`
 - renderer and facade subpaths
 
 ## Examples

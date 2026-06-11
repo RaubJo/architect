@@ -5,7 +5,7 @@ Architect provides adapters for React, Vue, Solid, and Svelte. Each adapter inte
 ## React
 
 ```bash
-npm install @raubjo/architect-core react
+npm install @raubjo/architect react
 ```
 
 With JSX (`main.tsx`):
@@ -14,8 +14,8 @@ With JSX (`main.tsx`):
 import "reflect-metadata"
 import React from "react"
 import ReactDOM from "react-dom/client"
-import { Application } from "@raubjo/architect-core"
-import { ContextProvider } from "@raubjo/architect-core/react"
+import { Application } from "@raubjo/architect"
+import { ContextProvider } from "@raubjo/architect/react"
 import App from "./App"
 
 const app = Application.configure()
@@ -36,8 +36,8 @@ Without JSX (`main.ts`):
 import "reflect-metadata"
 import { createElement } from "react"
 import { createRoot } from "react-dom/client"
-import { Application } from "@raubjo/architect-core"
-import { ContextProvider } from "@raubjo/architect-core/react"
+import { Application } from "@raubjo/architect"
+import { ContextProvider } from "@raubjo/architect/react"
 import App from "./App"
 
 const app = Application.configure()
@@ -52,7 +52,7 @@ root.render(
 ### Resolving services in components
 
 ```tsx
-import { useService } from "@raubjo/architect-core/react"
+import { useService } from "@raubjo/architect/react"
 import { UserService } from "./services/user"
 
 function Profile() {
@@ -81,14 +81,14 @@ If you already have a container (e.g. in tests or SSR), pass it directly:
 ## Vue
 
 ```bash
-npm install @raubjo/architect-core vue
+npm install @raubjo/architect vue
 ```
 
 ```typescript
 import "reflect-metadata"
 import { createApp, createElement } from "vue"
-import { Application } from "@raubjo/architect-core"
-import { ContextProvider } from "@raubjo/architect-core/vue"
+import { Application } from "@raubjo/architect"
+import { ContextProvider } from "@raubjo/architect/vue"
 import App from "./App.vue"
 
 const application = Application.configure()
@@ -103,7 +103,7 @@ createApp(ContextProvider, { application })
 
 ```typescript
 import { inject } from "vue"
-import { containerKey } from "@raubjo/architect-core/vue"
+import { containerKey } from "@raubjo/architect/vue"
 import { UserService } from "./services/user"
 
 const container = inject(containerKey)!
@@ -113,14 +113,14 @@ const userService = container.make(UserService)
 ## Solid
 
 ```bash
-npm install @raubjo/architect-core solid-js
+npm install @raubjo/architect solid-js
 ```
 
 ```typescript
 import "reflect-metadata"
 import { render } from "solid-js/web"
-import { Application } from "@raubjo/architect-core"
-import { ContextProvider } from "@raubjo/architect-core/solid"
+import { Application } from "@raubjo/architect"
+import { ContextProvider } from "@raubjo/architect/solid"
 
 const application = Application.configure()
   .withProviders([new AppProvider()])
@@ -134,13 +134,13 @@ render(
 ## Svelte
 
 ```bash
-npm install @raubjo/architect-core svelte
+npm install @raubjo/architect svelte
 ```
 
 ```svelte
 <script lang="ts">
-  import { Application } from "@raubjo/architect-core"
-  import { ContextProvider } from "@raubjo/architect-core/svelte"
+  import { Application } from "@raubjo/architect"
+  import { ContextProvider } from "@raubjo/architect/svelte"
   import App from "./App.svelte"
 
   const application = Application.configure()

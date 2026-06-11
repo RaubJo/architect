@@ -5,7 +5,7 @@
 `LogProvider` is included in `defaultProviders`, so no extra setup is required for most apps:
 
 ```typescript
-import { Application, defaultProviders } from "@raubjo/architect-core"
+import { Application, defaultProviders } from "@raubjo/architect"
 
 Application.configure().withProviders(defaultProviders).run()
 ```
@@ -15,7 +15,7 @@ Application.configure().withProviders(defaultProviders).run()
 Use the `Log` facade from any `boot()` hook or service:
 
 ```typescript
-import { Log } from "@raubjo/architect-core/support/facades"
+import { Log } from "@raubjo/architect/support/facades"
 
 Log.debug("Fetching user", { userId: 42 })
 Log.info("User loaded")
@@ -83,7 +83,7 @@ Application.configure({
 Register custom drivers from a `ServiceProvider`'s `boot()` hook. The factory receives `ConfigRepository` and must return an object implementing the log `Contract`:
 
 ```typescript
-import { LogManager, type ServiceProviderContext } from "@raubjo/architect-core"
+import { LogManager, type ServiceProviderContext } from "@raubjo/architect"
 
 boot({ container }: ServiceProviderContext) {
   const manager = container.make(LogManager)
@@ -108,7 +108,7 @@ interface Contract {
 ## Switching drivers at runtime
 
 ```typescript
-import { Log } from "@raubjo/architect-core/support/facades"
+import { Log } from "@raubjo/architect/support/facades"
 
 Log.use("null")   // silence all output
 Log.use("stack")  // restore fan-out
@@ -117,7 +117,7 @@ Log.use("stack")  // restore fan-out
 ## Using LogManager directly
 
 ```typescript
-import { LogManager } from "@raubjo/architect-core"
+import { LogManager } from "@raubjo/architect"
 
 boot({ container }: ServiceProviderContext) {
   const log = container.make(LogManager)

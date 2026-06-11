@@ -1,6 +1,6 @@
 # Examples
 
-These are minimal examples showing how to bootstrap `@raubjo/architect-core` with each supported runtime.
+These are minimal examples showing how to bootstrap `@raubjo/architect` with each supported runtime.
 
 - `react`
 - `solid`

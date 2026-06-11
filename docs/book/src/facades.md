@@ -6,19 +6,19 @@ A **Facade** is a static proxy that forwards calls to a service resolved from th
 
 | Facade | Proxies | Import |
 |--------|---------|--------|
-| `Config` | `ConfigRepository` | `@raubjo/architect-core/support/facades` |
-| `Cache` | `CacheManager` | `@raubjo/architect-core/support/facades` |
-| `Store` | `StoreManager` | `@raubjo/architect-core/support/facades` |
-| `Event` | `Bus` | `@raubjo/architect-core/support/facades` |
+| `Config` | `ConfigRepository` | `@raubjo/architect/support/facades` |
+| `Cache` | `CacheManager` | `@raubjo/architect/support/facades` |
+| `Store` | `StoreManager` | `@raubjo/architect/support/facades` |
+| `Event` | `Bus` | `@raubjo/architect/support/facades` |
 
 ```typescript
-import { Config, Cache, Store, Event } from "@raubjo/architect-core/support/facades"
+import { Config, Cache, Store, Event } from "@raubjo/architect/support/facades"
 ```
 
 ## Creating a custom facade
 
 ```typescript
-import { createFacade } from "@raubjo/architect-core/facade"
+import { createFacade } from "@raubjo/architect/facade"
 import type MyService from "./my-service"
 
 export const MyFacade = createFacade<MyService>("my-service")
@@ -37,7 +37,7 @@ register({ container }) {
 A **Macro** is a named function added to a Facade at runtime. It takes precedence over instance methods of the same name.
 
 ```typescript
-import { Config } from "@raubjo/architect-core/facades"
+import { Config } from "@raubjo/architect/facades"
 
 Config.macro("required", (instance, key: string) => {
   const value = instance.get(key)
@@ -69,7 +69,7 @@ Facades cache the resolved service instance after first use. The cache is cleare
 If you need to force re-resolution (e.g. in tests):
 
 ```typescript
-import { clearFacadeCache } from "@raubjo/architect-core/facade"
+import { clearFacadeCache } from "@raubjo/architect/facade"
 
 clearFacadeCache()
 ```
