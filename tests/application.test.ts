@@ -111,11 +111,7 @@ describe("Application", () => {
         }
 
         class DemoProvider extends ServiceProvider {
-            register({
-                container,
-            }: {
-                container: { bind: (id: string) => { toConstantValue: (v: unknown) => void } }
-            }) {
+            register(container: { bind: (id: string) => { toConstantValue: (v: unknown) => void } }) {
                 calls.push("provider.register")
                 container.bind("demo").toConstantValue("value")
                 return () => calls.push("provider.register.cleanup")

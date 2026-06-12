@@ -1,8 +1,10 @@
-import type { Cleanup, ServiceProviderContext } from "../support/service-provider"
+import type { Container } from "../container/contract"
+import type { Cleanup } from "../support/service-provider"
 
 export type RootComponent = unknown
 
-export type RendererContext = ServiceProviderContext & {
+export type RendererContext = {
+    container: Container
     RootComponent: RootComponent
     rootElementId: string
 }

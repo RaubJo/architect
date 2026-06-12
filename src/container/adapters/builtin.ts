@@ -1,9 +1,10 @@
 import type {
-    ContainerBindToSyntax,
+    BindTo,
     ContainerClass,
     ContainerConcrete,
     ContainerFactory,
     ContainerIdentifier,
+    Container as Contract,
 } from "../contract"
 
 const INJECT_TOKENS_METADATA_KEY = "ioc:inject.tokens"
@@ -122,13 +123,13 @@ export function inject(identifier: ContainerIdentifier): ParameterDecorator {
     }
 }
 
-export default class BuiltinContainer implements ContainerContract {
+export default class BuiltinContainer implements Contract {
     protected bindings = new Map<ContainerIdentifier, BindingRecord>()
     protected resolving = new Set<ContainerIdentifier>()
 
-    bind<T>(identifier: ContainerIdentifier<T>): ContainerBindToSyntax<T>
+    bind<T>(identifier: ContainerIdentifier<T>): BindTo<T>
     bind<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
-    bind<T>(identifier: ContainerIdentifier<T>, concrete?: ContainerConcrete<T>): ContainerBindToSyntax<T> | this {
+    bind<T>(identifier: ContainerIdentifier<T>, concrete?: ContainerConcrete<T>): BindTo<T> | this {
         if (typeof concrete !== "undefined") {
             this.removeIfBound(identifier)
 

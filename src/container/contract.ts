@@ -1,23 +1,23 @@
-export type ContainerFactory<T> = (container: ContainerContract) => T
+export type ContainerFactory<T> = (container: Container) => T
 export type ContainerClass<T> = new (...args: any[]) => T
 export type ContainerIdentifier<T = unknown> = string | symbol | ContainerClass<T>
 export type ContainerConcrete<T> = ContainerClass<T> | ContainerFactory<T> | T
 
-export interface ContainerScopeSyntax {
+export interface Scope {
     /** Set singleton scope for this binding. */
     inSingletonScope(): void
     /** Set transient scope for this binding. */
     inTransientScope(): void
 }
 
-export interface ContainerBindToSyntax<T> {
+export interface BindTo<T> {
     /** Bind an identifier to a class, factory, or value concrete. */
-    to(concrete: ContainerConcrete<T>): ContainerScopeSyntax
+    to(concrete: ContainerConcrete<T>): Scope
     /** Bind an identifier to a constant shared value. */
     toConstantValue(value: T): void
 }
 
-export interface ContainerContract {
+export interface Container {
     /** Register a singleton binding using a class, factory, or value concrete. */
     singleton<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
     /** Register a binding using a class, factory, or value concrete. */

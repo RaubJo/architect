@@ -1,12 +1,12 @@
-import type { ContainerContract, ContainerIdentifier } from "../container/contract"
+import type { Container, ContainerIdentifier } from "../container/contract"
 
-let currentContainer: ContainerContract | null = null
+let currentContainer: Container | null = null
 
-export function setCurrentApplicationContainer(container: ContainerContract | null): void {
+export function setCurrentApplicationContainer(container: Container | null): void {
     currentContainer = container
 }
 
-export function getCurrentApplicationContainer(): ContainerContract | null {
+export function getCurrentApplicationContainer(): Container | null {
     return currentContainer
 }
 

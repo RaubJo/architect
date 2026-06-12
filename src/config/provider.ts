@@ -1,4 +1,4 @@
-import type { ServiceProviderContext } from "../support/service-provider"
+import type { Container } from "../container/contract"
 import ServiceProvider from "../support/service-provider"
 import ConfigRepository from "./repository"
 
@@ -10,7 +10,7 @@ export class ConfigProvider extends ServiceProvider {
         this.repository = repository
     }
 
-    register({ container }: ServiceProviderContext) {
+    register(container: Container) {
         container.instance("config", this.repository)
         container.instance(ConfigRepository, this.repository)
     }

@@ -1,11 +1,11 @@
 import { createComponent, createContext, type JSX, onCleanup, useContext } from "solid-js"
-import type { ContainerContract, ContainerIdentifier } from "../container/contract"
+import type { Container, ContainerIdentifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
-const ContainerContext = createContext<ContainerContract | null>(null)
+const ContainerContext = createContext<Container | null>(null)
 
 type ApplicationProviderProps = {
-    container: ContainerContract
+    container: Container
     children?: JSX.Element | (() => JSX.Element)
 }
 
@@ -18,7 +18,7 @@ export function ApplicationProvider(props: ApplicationProviderProps) {
 
 export type ContextProviderProps = {
     application?: Application
-    container?: ContainerContract
+    container?: Container
     children?: JSX.Element | (() => JSX.Element)
 }
 

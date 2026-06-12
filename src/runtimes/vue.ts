@@ -1,14 +1,14 @@
 import { defineComponent, type InjectionKey, inject, onUnmounted, provide } from "vue"
-import type { ContainerContract, ContainerIdentifier } from "../container/contract"
+import type { Container, ContainerIdentifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
-export const containerKey: InjectionKey<ContainerContract> = Symbol("application.container")
+export const containerKey: InjectionKey<Container> = Symbol("application.container")
 
 export const ContextProvider = defineComponent({
     name: "ArchitectContextProvider",
     props: {
         application: { type: Object as () => Application, required: false },
-        container: { type: Object as () => ContainerContract, required: false },
+        container: { type: Object as () => Container, required: false },
     },
     setup(props, { slots }) {
         if (!props.application && !props.container) {

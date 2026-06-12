@@ -327,7 +327,7 @@ describe("Bus wildcard unsubscribe", () => {
 describe("EventsProvider", () => {
     test("register binds a Bus singleton to 'events'", () => {
         const container = new BuiltinContainer()
-        new EventsProvider().register({ container })
+        new EventsProvider().register(container)
         const bus1 = container.make("events")
         const bus2 = container.make("events")
         expect(bus1).toBeInstanceOf(Bus)

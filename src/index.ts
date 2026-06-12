@@ -9,11 +9,11 @@ export { ConfigProvider } from "./config/provider"
 export { default as ConfigRepository } from "./config/repository"
 export { default as BuiltinContainer, inject } from "./container/adapters/builtin"
 export type {
-    ContainerClass,
+    Class as ContainerClass,
+    Container as ContainerContract,
     ContainerConcrete,
-    ContainerContract,
-    ContainerFactory,
     ContainerIdentifier,
+    Factory as ContainerFactory,
 } from "./container/contract"
 export type {
     EventIdentifier,
@@ -46,7 +46,7 @@ export { LazyCollection } from "./support/lazy-collection"
 export { default as Manager } from "./support/manager"
 export { Num } from "./support/num"
 export { send } from "./support/pipeline"
-export type { Cleanup, ServiceProviderContext } from "./support/service-provider"
+export type { Cleanup } from "./support/service-provider"
 export { DeferrableServiceProvider, default as ServiceProvider } from "./support/service-provider"
 export { Str } from "./support/str"
 

@@ -3,7 +3,7 @@ import { registerGlobalEnv } from "../config/env"
 import { ConfigProvider } from "../config/provider"
 import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
-import type { ContainerContract, ContainerIdentifier } from "../container/contract"
+import type { Container, ContainerIdentifier } from "../container/contract"
 import {
     type ContainerRuntimeOptions,
     createRuntimeContainer,
@@ -11,10 +11,11 @@ import {
 } from "../container/runtime"
 import { clearFacadeCache } from "../support/facades/facade"
 import type ServiceProvider from "../support/service-provider"
-import type { Cleanup, ServiceProviderContext } from "../support/service-provider"
+import type { Cleanup } from "../support/service-provider"
 import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "./current-application"
 
-type ApplicationRunContext = ServiceProviderContext & {
+type ApplicationRunContext = {
+    container: Container
     cleanupTasks: Cleanup[]
 }
 
@@ -79,7 +80,7 @@ export class Application {
         return this
     }
 
-    protected createContainer(): ContainerContract {
+    protected createContainer(): Container {
         return createRuntimeContainer(this.options.container)
     }
 
@@ -89,7 +90,7 @@ export class Application {
         }
     }
 
-    protected createStopHandler(container: ContainerContract, cleanupTasks: Cleanup[]): Cleanup {
+    protected createStopHandler(container: Container, cleanupTasks: Cleanup[]): Cleanup {
         const stop: Cleanup = () => {
             for (const cleanup of cleanupTasks.reverse()) {
                 cleanup()
@@ -117,11 +118,11 @@ export class Application {
         const context: ApplicationRunContext = { container, cleanupTasks: [] }
 
         for (const provider of providers) {
-            this.rememberCleanup(context.cleanupTasks, provider.register(context))
+            this.rememberCleanup(context.cleanupTasks, provider.register(context.container))
         }
 
         for (const provider of providers) {
-            this.rememberCleanup(context.cleanupTasks, provider.boot(context))
+            this.rememberCleanup(context.cleanupTasks, provider.boot(context.container))
         }
 
         const stop = this.createStopHandler(container, context.cleanupTasks)

@@ -216,7 +216,7 @@ describe("LogProvider", () => {
         container.instance("config", new ConfigRepository({}))
 
         const provider = new LogProvider()
-        provider.register({ container })
+        provider.register(container)
 
         const byString = container.make<LogManager>("log")
         const byClass = container.make(LogManager)

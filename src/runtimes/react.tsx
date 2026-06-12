@@ -1,11 +1,11 @@
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react"
-import type { ContainerContract, ContainerIdentifier } from "../container/contract"
+import type { Container, ContainerIdentifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
-const Context = createContext<ContainerContract | null>(null)
+const Context = createContext<Container | null>(null)
 
 type ApplicationProviderProps = {
-    container: ContainerContract
+    container: Container
     children?: ReactNode
 }
 
@@ -15,7 +15,7 @@ export function ApplicationProvider({ container, children }: ApplicationProvider
 
 export type ContextProviderProps = {
     application?: Application
-    container?: ContainerContract
+    container?: Container
     fallback?: ReactNode
     children?: ReactNode
 }
@@ -26,7 +26,7 @@ export function ContextProvider({ application, container, fallback = null, child
     }
 
     const externalRuntime = useMemo(() => (container ? { container, stop: () => {} } : null), [container])
-    const [runtime, setRuntime] = useState<{ container: ContainerContract; stop: () => void } | null>(externalRuntime)
+    const [runtime, setRuntime] = useState<{ container: Container; stop: () => void } | null>(externalRuntime)
 
     const stopRef = useRef<null | (() => void)>(null)
     const startedRef = useRef(false)
@@ -71,7 +71,7 @@ export function useService<T>(identifier: ContainerIdentifier<T>): T {
     return container.make<T>(identifier)
 }
 
-export function useContainer(): ContainerContract {
+export function useContainer(): Container {
     const container = useContext(Context)
     if (!container) {
         throw new Error("You must use `useContainer` inside the Application Context.")
