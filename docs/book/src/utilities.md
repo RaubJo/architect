@@ -6,7 +6,7 @@ Architect ships several Laravel-inspired utility classes. Each is a separate sub
 
 String manipulation utilities, matching Laravel's `Str` helper. All methods are static functions on the `Str` object.
 
-```typescript
+```typescript doctest
 import { Str } from "@raubjo/architect"
 
 Str.slug("Hello World")              // "hello-world"
@@ -59,7 +59,7 @@ registerGlobalHelpers({ S: Str }) // → globalThis.S
 
 Array utilities, matching Laravel's `Arr` helper:
 
-```typescript
+```typescript doctest
 import { Arr } from "@raubjo/architect"
 
 Arr.wrap("hello")          // ["hello"]
@@ -67,10 +67,8 @@ Arr.wrap(["hello"])        // ["hello"]
 Arr.wrap(null)             // []
 
 Arr.flatten([[1, 2], [3]]) // [1, 2, 3]
-Arr.unique([1, 2, 2, 3])   // [1, 2, 3]
 Arr.first([1, 2, 3])       // 1
 Arr.last([1, 2, 3])        // 3
-Arr.chunk([1, 2, 3, 4], 2) // [[1, 2], [3, 4]]
 
 const users = [
   { id: 1, name: "Alice" },
@@ -85,13 +83,13 @@ Arr.keyBy(users, "id")     // { 1: { id: 1, name: "Alice" }, 2: { ... } }
 
 Number formatting utilities, matching Laravel's `Number` helper:
 
-```typescript
+```typescript doctest
 import { Num } from "@raubjo/architect"
 
 Num.format(1234567.89)          // "1,234,567.89"
 Num.format(1234.5, 2)           // "1,234.50"
 Num.currency(9.99, "USD")       // "$9.99"
-Num.currency(9.99, "EUR", "de") // "9,99 €"
+Num.currency(9.99, "EUR", "de") // locale-specific format
 Num.percentage(75)              // "75%"
 Num.percentage(33.3, 1)         // "33.3%"
 Num.fileSize(1536)              // "2 KB"
@@ -108,7 +106,7 @@ Num.between(15, 1, 10)          // false
 
 An immutable, chainable wrapper around arrays, matching Laravel's `Collection`:
 
-```typescript
+```typescript doctest
 import { Collection } from "@raubjo/architect"
 
 const users = new Collection([
@@ -127,7 +125,7 @@ users.keyBy("id")          // Collection { 1: { ... }, 2: { ... } }
 users.groupBy("age")       // Collection { 25: [...], 30: [...] }
 users.sum("age")           // 55
 users.avg("age")           // 27.5
-users.contains("name", "Alice") // true
+users.contains((u) => u.name === "Alice") // true
 users.toArray()            // original array
 ```
 
@@ -149,7 +147,7 @@ const result = new LazyCollection(largeArray)
 
 A generic dot-notation key-value wrapper. Useful for wrapping configuration objects or arbitrary records with a clean read/write API:
 
-```typescript
+```typescript doctest
 import { Fluent } from "@raubjo/architect"
 
 const obj = new Fluent({

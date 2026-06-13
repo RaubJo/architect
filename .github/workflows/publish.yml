@@ -1,5 +1,8 @@
 name: Publish
 
+permissions:
+  id-token: write
+
 on:
   push:
     branches:
@@ -51,6 +54,6 @@ jobs:
 
       - name: Publish
         if: steps.version.outputs.changed == 'true'
-        run: npm publish
+        run: npm publish --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

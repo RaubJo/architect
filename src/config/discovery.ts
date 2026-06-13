@@ -70,7 +70,7 @@ function configPatternForBasePath(basePath: string): string {
     return basePath.endsWith("/") ? `${basePath}config/**/*.ts` : `${basePath}/config/**/*.ts`
 }
 
-export class EsmConfigLoader implements ConfigLoader {
+class EsmConfigLoader implements ConfigLoader {
     load(basePath: string, staticItems: ConfigItems = {}): ConfigItems {
         const shouldLoadEsm = Object.keys(staticItems).length === 0
 
@@ -90,7 +90,7 @@ function createConfigRepository(
     return new ConfigRepository(items)
 }
 
-export const ConfigFactory = {
+const ConfigFactory = {
     create: createConfigRepository,
 }
 
