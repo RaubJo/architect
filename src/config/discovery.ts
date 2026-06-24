@@ -94,6 +94,6 @@ const ConfigFactory = {
     create: createConfigRepository,
 }
 
-export function createConfig(basePath: string, staticItems: ConfigItems = {}): ConfigRepository {
-    return ConfigFactory.create(basePath, staticItems)
+export function createConfig(basePath: string, staticItems: ConfigItems = {}, loader?: ConfigLoader): ConfigRepository {
+    return ConfigFactory.create(basePath, staticItems, loader)
 }

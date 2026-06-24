@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test"
 import type { ConfigLoader } from "../../src/config/discovery"
-import { ConfigFactory, createConfig, EsmConfigLoader } from "../../src/config/discovery"
+import { createConfig } from "../../src/config/discovery"
 import { ConfigRepository } from "../../src/config/repository"
 
 describe("Config Discovery", () => {
@@ -25,17 +25,11 @@ describe("Config Discovery", () => {
             },
         }
 
-        const config = ConfigFactory.create("/app", { app: { name: "TestApp" } }, loader)
+        const config = createConfig("/app", { app: { name: "TestApp" } }, loader)
 
         expect(config).toBeInstanceOf(ConfigRepository)
         expect(config.get("app.name")).toBe("TestApp")
         expect(config.get("loader.basePath")).toBe("/app")
-    })
-
-    it("should allow direct loader usage", () => {
-        const loader = new EsmConfigLoader()
-
-        expect(loader.load("./", { direct: true })).toEqual({ direct: true })
     })
 
     it("cloneItems falls back to JSON when structuredClone is unavailable", () => {
@@ -57,8 +51,7 @@ describe("Config Discovery", () => {
             return {}
         }
         try {
-            const loader = new EsmConfigLoader()
-            loader.load("/app")
+            createConfig("/app")
             expect(capturedPattern).toBe("/app/config/**/*.ts")
         } finally {
             ;(globalThis as { __iocConfigGlobForTests?: unknown }).__iocConfigGlobForTests = origGlob

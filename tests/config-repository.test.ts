@@ -56,19 +56,4 @@ describe("ConfigRepository", () => {
             "app.locale": "en",
         })
     })
-
-    test("supports offset-style helpers", () => {
-        const repository = new ConfigRepository({
-            app: { name: "IOC Application" },
-        })
-
-        expect(repository.offsetExists("app.name")).toBe(true)
-        expect(repository.offsetGet("app.name")).toBe("IOC Application")
-
-        repository.offsetSet("app.name", "Changed")
-        expect(repository.offsetGet("app.name")).toBe("Changed")
-
-        repository.offsetUnset("app.name")
-        expect(repository.offsetExists("app.name")).toBe(false)
-    })
 })

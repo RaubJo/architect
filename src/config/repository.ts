@@ -140,24 +140,6 @@ class ConfigRepository implements Contract {
     all(): ConfigItems {
         return this.items
     }
-
-    offsetExists(key: string): boolean {
-        return this.has(key)
-    }
-
-    offsetGet(key: string): unknown
-    offsetGet<T>(key: string): T | null
-    offsetGet<T = unknown>(key: string): T | null {
-        return this.get<T>(key) as T | null
-    }
-
-    offsetSet(key: string, value: unknown): void {
-        this.set(key, value)
-    }
-
-    offsetUnset(key: string): void {
-        dataForget(this.items, key)
-    }
 }
 
 export { ConfigRepository }

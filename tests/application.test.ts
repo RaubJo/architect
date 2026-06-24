@@ -85,7 +85,6 @@ describe("Application", () => {
         ;(globalThis as { window?: unknown; document?: unknown }).window = undefined
         ;(globalThis as { window?: unknown; document?: unknown }).document = undefined
         ;(globalThis as { __iocConfigGlobForTests?: unknown }).__iocConfigGlobForTests = undefined
-        Application.clearConfigCache()
     })
 
     test("make throws when container is not initialized", () => {
@@ -143,16 +142,6 @@ describe("Application", () => {
         ])
 
         expect(() => Application.make("demo")).toThrow("Application container is not available. Call run() first.")
-    })
-
-    test("exposes helper behavior used for config discovery", () => {
-        expect(applicationTestingHelpers.fileNameWithoutExtension("/src/config/app.ts")).toBe("app")
-        expect(applicationTestingHelpers.normalizeBasePath("./")).toBe("")
-        expect(applicationTestingHelpers.normalizeBasePath("./src")).toBe("src")
-        expect(applicationTestingHelpers.isPathInConfigDirectories("/src/config/app.ts", "./")).toBe(true)
-        expect(applicationTestingHelpers.isPathInConfigDirectories("/workspace/src/config/app.ts", "/workspace")).toBe(
-            true,
-        )
     })
 
     test("does not load config modules implicitly", () => {
@@ -222,18 +211,18 @@ describe("Application", () => {
     test("configure options are merged with defaults", () => {
         expect(applicationTestingHelpers.mergeConfigureOptions()).toEqual({
             basePath: "./",
-            container: { adapter: "builtin", factory: null },
+            container: { factory: null },
             config: {},
         })
 
         expect(
             applicationTestingHelpers.mergeConfigureOptions({
                 basePath: "./src",
-                container: { adapter: "builtin" },
+                container: {},
             }),
         ).toEqual({
             basePath: "./src",
-            container: { adapter: "builtin", factory: null },
+            container: { factory: null },
             config: {},
         })
     })

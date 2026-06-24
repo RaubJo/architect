@@ -54,8 +54,6 @@ export class Application {
         return createConfig(this.options.basePath, this.options.config)
     }
 
-    static clearConfigCache(_basePath?: string): void {}
-
     static configure(basePath?: string): Application
     static configure(options?: ApplicationConfigureOptions): Application
     static configure(basePathOrOptions: string | ApplicationConfigureOptions = "./") {

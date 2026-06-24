@@ -1,7 +1,6 @@
 import type { ConfigItems } from "../config/repository"
 import type { ContainerRuntimeOptions } from "../container/runtime"
 import { mergeContainerRuntimeOptions } from "../container/runtime"
-import { localAdapterTestingHelpers } from "../filesystem/adapters/local_test.helpers"
 
 type ApplicationConfigureOptions = {
     basePath?: string
@@ -17,7 +16,4 @@ function mergeConfigureOptions(options: ApplicationConfigureOptions = {}) {
     }
 }
 
-export const applicationTestingHelpers = {
-    ...localAdapterTestingHelpers,
-    mergeConfigureOptions,
-}
+export const applicationTestingHelpers = { mergeConfigureOptions }

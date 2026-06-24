@@ -9,11 +9,11 @@ export { ConfigProvider } from "./config/provider"
 export { default as ConfigRepository } from "./config/repository"
 export { default as BuiltinContainer, inject } from "./container/adapters/builtin"
 export type {
-    Class as ContainerClass,
     Container as ContainerContract,
+    ContainerClass,
     ContainerConcrete,
+    ContainerFactory,
     ContainerIdentifier,
-    Factory as ContainerFactory,
 } from "./container/contract"
 export type {
     EventIdentifier,

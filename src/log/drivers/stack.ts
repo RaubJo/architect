@@ -3,30 +3,18 @@ import type { Contract } from "../contract"
 export default class StackLogger implements Contract {
     constructor(protected drivers: Contract[]) {}
 
-    /**
-     * {@inheritDoc}
-     */
     debug(message: string, context?: Record<string, unknown>): void {
         this.dispatch("debug", message, context)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     info(message: string, context?: Record<string, unknown>): void {
         this.dispatch("info", message, context)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     warn(message: string, context?: Record<string, unknown>): void {
         this.dispatch("warn", message, context)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     error(message: string, context?: Record<string, unknown>): void {
         this.dispatch("error", message, context)
     }

@@ -7,5 +7,3 @@ export interface Adapter {
     clear(): Promise<void>
     keys(): Promise<string[]>
 }
-
-export type Contract = Adapter

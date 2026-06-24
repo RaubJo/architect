@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import { registerGlobalHelpers } from "@/support/globals"
+import { registerGlobalHelpers } from "../src/index"
 
 describe("registerGlobalHelpers", () => {
     test("sets new keys on globalThis", () => {

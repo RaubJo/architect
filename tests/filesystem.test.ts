@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { createConfig } from "@/config/discovery"
-import { localAdapterTestingHelpers } from "@/filesystem/adapters/local_test.helpers"
 
 describe("createConfig discovery", () => {
     afterEach(() => {
@@ -64,30 +63,5 @@ describe("createConfig discovery", () => {
     test("returns empty config when no glob implementation is available", () => {
         const config = createConfig("./", {})
         expect(config.all()).toEqual({})
-    })
-
-    describe("helper functions", () => {
-        test("fileNameWithoutExtension handles various paths", () => {
-            expect(localAdapterTestingHelpers.fileNameWithoutExtension("/src/config/app.ts")).toBe("app")
-            expect(localAdapterTestingHelpers.fileNameWithoutExtension("app.ts")).toBe("app")
-            expect(localAdapterTestingHelpers.fileNameWithoutExtension("/path/to/config")).toBe("config")
-        })
-
-        test("normalizeBasePath handles edge cases", () => {
-            expect(localAdapterTestingHelpers.normalizeBasePath("./")).toBe("")
-            expect(localAdapterTestingHelpers.normalizeBasePath("./src")).toBe("src")
-            expect(localAdapterTestingHelpers.normalizeBasePath("")).toBe("")
-            expect(localAdapterTestingHelpers.normalizeBasePath("/")).toBe("")
-            expect(localAdapterTestingHelpers.normalizeBasePath("src/config")).toBe("src/config")
-        })
-
-        test("isPathInConfigDirectories detects config paths", () => {
-            expect(localAdapterTestingHelpers.isPathInConfigDirectories("/src/config/app.ts", "./")).toBe(true)
-            expect(
-                localAdapterTestingHelpers.isPathInConfigDirectories("/workspace/src/config/app.ts", "/workspace"),
-            ).toBe(true)
-            expect(localAdapterTestingHelpers.isPathInConfigDirectories("./src/config/app.ts", "./")).toBe(true)
-            expect(localAdapterTestingHelpers.isPathInConfigDirectories("/tmp/elsewhere/conf/app.ts", "./")).toBe(false)
-        })
     })
 })

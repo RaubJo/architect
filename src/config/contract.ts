@@ -39,25 +39,4 @@ export interface Contract {
      * Get all configuration items
      */
     all(): Record<string, unknown>
-
-    /**
-     * Check if a configuration key exists (offset-style)
-     */
-    offsetExists(key: string): boolean
-
-    /**
-     * Get a configuration value by offset (offset-style)
-     */
-    offsetGet(key: string): unknown
-    offsetGet<T>(key: string): T | null
-
-    /**
-     * Set a configuration value by offset (offset-style)
-     */
-    offsetSet(key: string, value: unknown): void
-
-    /**
-     * Remove a configuration key (offset-style)
-     */
-    offsetUnset(key: string): void
 }

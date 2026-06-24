@@ -678,5 +678,3 @@ export function registerGlobalStr(): void {
         globalScope.Str = Str
     }
 }
-
-export const strTestingHelpers = { splitWords, normalizeForSlug }

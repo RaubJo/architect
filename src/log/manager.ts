@@ -6,30 +6,18 @@ import NullLogger from "./drivers/null"
 import StackLogger from "./drivers/stack"
 
 export default class LogManager extends Manager<Contract, Contract> implements Contract {
-    /**
-     * {@inheritDoc}
-     */
     debug(message: string, context?: Record<string, unknown>): void {
         this.resolve(this.active).debug(message, context)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     info(message: string, context?: Record<string, unknown>): void {
         this.resolve(this.active).info(message, context)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     warn(message: string, context?: Record<string, unknown>): void {
         this.resolve(this.active).warn(message, context)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     error(message: string, context?: Record<string, unknown>): void {
         this.resolve(this.active).error(message, context)
     }

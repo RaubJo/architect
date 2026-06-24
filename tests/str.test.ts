@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { registerGlobalStr, Str, strTestingHelpers } from "@/support/str"
+import { registerGlobalStr, Str } from "@/support/str"
 
 describe("Str helper", () => {
     const originalGlobalStr = (globalThis as { Str?: unknown }).Str
@@ -59,12 +59,6 @@ describe("Str helper", () => {
         ;(globalThis as { Str?: unknown }).Str = custom
         registerGlobalStr()
         expect((globalThis as { Str?: unknown }).Str).toBe(custom)
-    })
-
-    test("exposes helper internals", () => {
-        expect(strTestingHelpers.splitWords("HelloWorld_test-value")).toEqual(["Hello", "World", "test", "value"])
-        expect(strTestingHelpers.splitWords("")).toEqual([])
-        expect(strTestingHelpers.normalizeForSlug("Héllo Wörld")).toBe("hello-world")
     })
 
     // ── after / afterLast ─────────────────────────────────────────────────────

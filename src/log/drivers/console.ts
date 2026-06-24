@@ -10,30 +10,18 @@ export default class ConsoleLogger implements Contract {
         this.threshold = LEVELS.indexOf(level)
     }
 
-    /**
-     * {@inheritDoc}
-     */
     debug(message: string, context?: Record<string, unknown>): void {
         if (this.passes(0)) console.debug(message, ...this.spread(context))
     }
 
-    /**
-     * {@inheritDoc}
-     */
     info(message: string, context?: Record<string, unknown>): void {
         if (this.passes(1)) console.info(message, ...this.spread(context))
     }
 
-    /**
-     * {@inheritDoc}
-     */
     warn(message: string, context?: Record<string, unknown>): void {
         if (this.passes(2)) console.warn(message, ...this.spread(context))
     }
 
-    /**
-     * {@inheritDoc}
-     */
     error(message: string, context?: Record<string, unknown>): void {
         if (this.passes(3)) console.error(message, ...this.spread(context))
     }

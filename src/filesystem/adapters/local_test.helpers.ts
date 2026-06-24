@@ -41,9 +41,3 @@ function matchesConfigDirectory(normalizedPath: string, trimmedPath: string, tar
         normalizedPath.endsWith(`/${target.slice(0, -1)}`)
     )
 }
-
-export const localAdapterTestingHelpers = {
-    fileNameWithoutExtension,
-    normalizeBasePath,
-    isPathInConfigDirectories,
-}
