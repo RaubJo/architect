@@ -61,11 +61,6 @@ function dataSet(target: Record<string, unknown>, path: string, value: unknown):
     if (result) result[0][result[1]] = value
 }
 
-function dataForget(target: Record<string, unknown>, path: string): void {
-    const result = dataTraverse(target, path, false)
-    if (result) delete result[0][result[1]]
-}
-
 class ConfigRepository implements Contract {
     protected items: ConfigItems
 
