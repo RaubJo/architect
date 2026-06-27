@@ -130,6 +130,16 @@ describe("StackLogger", () => {
         expect(() => stack.info("msg")).not.toThrow()
         expect(() => stack.error("msg")).not.toThrow()
     })
+
+    test("warn and error fan out to all drivers", () => {
+        const calls: string[] = []
+        const a = { debug: () => {}, info: () => {}, warn: () => calls.push("a:warn"), error: () => calls.push("a:error") }
+        const b = { debug: () => {}, info: () => {}, warn: () => calls.push("b:warn"), error: () => calls.push("b:error") }
+        const stack = new StackLogger([a, b])
+        stack.warn("msg")
+        stack.error("msg")
+        expect(calls).toEqual(["a:warn", "b:warn", "a:error", "b:error"])
+    })
 })
 
 describe("LogManager", () => {
@@ -207,6 +217,25 @@ describe("LogManager", () => {
 
         manager.info("hello")
         expect(calls).toEqual(["info:hello"])
+    })
+
+    test("warn and error delegate to the active driver", () => {
+        const calls: string[] = []
+        const manager = LogManager.fromConfig(new ConfigRepository({ logging: { default: "spy" } }))
+        manager.extend("spy", (_cfg) => ({
+            debug: () => {},
+            info: () => {},
+            warn: (msg: string) => calls.push(`warn:${msg}`),
+            error: (msg: string) => calls.push(`error:${msg}`),
+        }))
+        manager.warn("w")
+        manager.error("e")
+        expect(calls).toEqual(["warn:w", "error:e"])
+    })
+
+    test("throws with 'Log driver' message for unknown driver", () => {
+        const manager = LogManager.fromConfig(new ConfigRepository({ logging: { default: "ghost" } }))
+        expect(() => manager.debug("msg")).toThrow("Log driver [ghost] is not defined.")
     })
 })
 

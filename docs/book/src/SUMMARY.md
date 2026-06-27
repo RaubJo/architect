@@ -12,6 +12,7 @@
   - [Store](./services/store.md)
   - [Events](./services/events.md)
   - [Logging](./services/log.md)
+  - [Scheduler](./services/scheduler.md)
 - [Facades](./facades.md)
 - [Framework Adapters](./adapters.md)
 - [Utilities](./utilities.md)

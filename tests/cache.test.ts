@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
 import { Cache } from "@/cache/cache"
 import CacheManager from "@/cache/manager"
+import { CacheProvider } from "@/cache/provider"
 import ConfigRepository from "@/config/repository"
+import BuiltinContainer from "@/container/adapters/builtin"
 import MemoryStoreAdapter from "@/store/adapters/memory"
 
 describe("CacheManager", () => {
@@ -165,5 +167,17 @@ describe("Cache", () => {
         await manager.set("dead", "no", 0)
         expect(await manager.get<string>("live")).toBe("yes")
         expect(await manager.get("dead")).toBeNull()
+    })
+})
+
+describe("CacheProvider", () => {
+    test("register binds CacheManager as singleton under 'cache' and CacheManager class", () => {
+        const container = new BuiltinContainer()
+        container.instance("config", new ConfigRepository({}))
+        new CacheProvider().register(container)
+        const byString = container.make<CacheManager>("cache")
+        const byClass = container.make(CacheManager)
+        expect(byString).toBeInstanceOf(CacheManager)
+        expect(byString).toBe(byClass)
     })
 })

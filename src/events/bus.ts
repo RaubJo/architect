@@ -1,3 +1,4 @@
+// ponytail: types and Bus kept together — EventSubscriber references Bus, splitting creates a circular dep
 export type EventClass<T = unknown> = new (...args: any[]) => T
 export type EventIdentifier<T = unknown> = string | EventClass<T>
 export type Listener<T = unknown> = (event: T) => void | boolean | Promise<void | boolean>

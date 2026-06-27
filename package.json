@@ -17,7 +17,6 @@
         "test:coverage": "bun test --coverage --coverage-reporter=lcov --coverage-dir=coverage && node scripts/lcov-to-istanbul.js",
         "fallow": "npm run test:coverage && npx fallow health --coverage coverage/coverage-final.json",
         "fix": "biome check --fix && fallow fix",
-        "sandcastle": "bun .sandcastle/main.ts",
         "version:major": "npm verison major",
         "version:minor": "npm verison minor",
         "version:patch": "npm verison patch",

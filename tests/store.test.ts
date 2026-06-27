@@ -1,9 +1,11 @@
 import { describe, expect, test } from "bun:test"
 import ConfigRepository from "@/config/repository"
+import BuiltinContainer from "@/container/adapters/builtin"
 import IndexedDbAdapter from "@/store/adapters/indexed-db"
 import LocalStorageAdapter from "@/store/adapters/local-storage"
 import MemoryStoreAdapter from "@/store/adapters/memory"
 import StoreManager from "@/store/manager"
+import { StoreProvider } from "@/store/provider"
 
 class FakeWebStorage implements Storage {
     protected data = new Map<string, string>()
@@ -310,5 +312,17 @@ describe("Store adapters and manager", () => {
             ;(globalThis as { window?: unknown }).window = originalWindow
             ;(globalThis as { indexedDB?: unknown }).indexedDB = originalIndexedDb
         }
+    })
+})
+
+describe("StoreProvider", () => {
+    test("register binds StoreManager as singleton under 'store'", () => {
+        const container = new BuiltinContainer()
+        container.instance("config", new ConfigRepository({}))
+        new StoreProvider().register(container)
+        const s1 = container.make<StoreManager>("store")
+        const s2 = container.make<StoreManager>("store")
+        expect(s1).toBeInstanceOf(StoreManager)
+        expect(s1).toBe(s2)
     })
 })
