@@ -111,6 +111,7 @@ export class Application {
 
         setCurrentApplicationContainer(container)
         clearFacadeCache()
+        container.instance("app", container)
 
         const providers = [new ConfigProvider(this.getConfigItems()), ...this.providers]
         const context: ApplicationRunContext = { container, cleanupTasks: [] }

@@ -133,8 +133,18 @@ describe("StackLogger", () => {
 
     test("warn and error fan out to all drivers", () => {
         const calls: string[] = []
-        const a = { debug: () => {}, info: () => {}, warn: () => calls.push("a:warn"), error: () => calls.push("a:error") }
-        const b = { debug: () => {}, info: () => {}, warn: () => calls.push("b:warn"), error: () => calls.push("b:error") }
+        const a = {
+            debug: () => {},
+            info: () => {},
+            warn: () => calls.push("a:warn"),
+            error: () => calls.push("a:error"),
+        }
+        const b = {
+            debug: () => {},
+            info: () => {},
+            warn: () => calls.push("b:warn"),
+            error: () => calls.push("b:error"),
+        }
         const stack = new StackLogger([a, b])
         stack.warn("msg")
         stack.error("msg")

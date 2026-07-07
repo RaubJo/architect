@@ -1,3 +1,4 @@
+export { App } from "./app"
 export { Cache } from "./cache"
 export { Config } from "./config"
 export { Event } from "./event"

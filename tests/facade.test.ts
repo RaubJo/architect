@@ -6,6 +6,7 @@ import type { ContainerContract } from "@/container/contract"
 import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "@/foundation/current-application"
 import MemoryStoreAdapter from "@/store/adapters/memory"
 import StoreManager from "@/store/manager"
+import App from "@/support/facades/app"
 import Cache from "@/support/facades/cache"
 import Config from "@/support/facades/config"
 import { clearFacadeCache, createFacade, flushAllMacros } from "@/support/facades/facade"
@@ -67,6 +68,16 @@ describe("Proxy-based facade (createFacade)", () => {
         expect(Config.all()).toMatchObject({
             app: { name: "Changed" },
         })
+    })
+
+    test("App delegates container methods to the current container", () => {
+        const container = new BuiltinContainer()
+        container.bind("app").toConstantValue(container)
+        container.singleton("thing", () => "resolved")
+        setContainer(container)
+
+        expect(App.make("thing")).toBe("resolved")
+        expect(App.bound("thing")).toBe(true)
     })
 
     test("Cache delegates async methods to CacheManager", async () => {

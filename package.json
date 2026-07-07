@@ -1,6 +1,6 @@
 {
     "name": "@raubjo/architect",
-    "version": "0.6.0",
+    "version": "0.6.1",
     "homepage": "https://raubjo.github.io/architect/",
     "repository": {
         "type": "git",
@@ -37,6 +37,7 @@
         "./cache/manager": "./src/cache/manager.ts",
         "./cache/cache": "./src/cache/cache.ts",
         "./cache/provider": "./src/cache/provider.ts",
+        "./facades/app": "./src/support/facades/app.ts",
         "./facades/cache": "./src/support/facades/cache.ts",
         "./facades/event": "./src/support/facades/event.ts",
         "./facades/log": "./src/support/facades/log.ts",

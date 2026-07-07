@@ -134,11 +134,19 @@ export default class BuiltinContainer implements Contract {
             this.removeIfBound(identifier)
 
             if (isClassConcrete(concrete)) {
-                this.bindings.set(identifier, {
-                    kind: "class",
-                    concrete,
-                    scope: "transient",
-                })
+                if (identifier !== concrete) {
+                    this.bindings.set(identifier, {
+                        kind: "factory",
+                        concrete: (c) => c.make(concrete) as T,
+                        scope: "transient",
+                    })
+                } else {
+                    this.bindings.set(identifier, {
+                        kind: "class",
+                        concrete,
+                        scope: "transient",
+                    })
+                }
                 return this
             }
 
@@ -213,7 +221,14 @@ export default class BuiltinContainer implements Contract {
         throw new Error(`Container binding [${String(identifier)}] is not registered.`)
     }
 
-    get<T>(identifier: ContainerIdentifier<T>): T {
+    get<T>(identifier: ContainerIdentifier<T>): T
+    get<T extends readonly ContainerIdentifier[]>(
+        identifiers: [...T],
+    ): { [K in keyof T]: T[K] extends ContainerIdentifier<infer U> ? U : never }
+    get<T>(identifier: ContainerIdentifier<T> | ContainerIdentifier[]): unknown {
+        if (Array.isArray(identifier)) {
+            return identifier.map((id) => this.make(id))
+        }
         return this.make(identifier)
     }
 

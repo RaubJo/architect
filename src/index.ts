@@ -51,7 +51,6 @@ export { Num } from "./support/num"
 export { send } from "./support/pipeline"
 export type { Cleanup } from "./support/service-provider"
 export { DeferrableServiceProvider, default as ServiceProvider } from "./support/service-provider"
-export { Str } from "./support/str"
 
 import { CacheProvider } from "./cache/provider"
 import { LogProvider } from "./log/provider"

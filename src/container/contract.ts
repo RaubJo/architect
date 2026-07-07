@@ -28,6 +28,10 @@ export interface Container {
     make<T>(identifier: ContainerIdentifier<T>): T
     /** Compatibility alias for make(). */
     get<T>(identifier: ContainerIdentifier<T>): T
+    /** Resolve multiple identifiers at once; class keys infer their instance type, string/symbol keys resolve to unknown. */
+    get<T extends readonly ContainerIdentifier[]>(
+        identifiers: [...T],
+    ): { [K in keyof T]: T[K] extends ContainerIdentifier<infer U> ? U : never }
     /** Determine if an identifier is currently bound. */
     bound(identifier: ContainerIdentifier): boolean
     /** Alias for bound(). */

@@ -107,6 +107,27 @@ describe("BuiltinContainer adapter", () => {
         expect(container.make<Counter>("transient.counter")).not.toBe(container.make("transient.counter"))
     })
 
+    test("bind(string, Class) aliases to the class singleton when Class is already registered", () => {
+        class Service {}
+        const container = new BuiltinContainer()
+        container.singleton(Service, () => new Service())
+        container.bind("storage", Service)
+
+        const a = container.make<Service>("storage")
+        const b = container.make<Service>("storage")
+        expect(a).toBeInstanceOf(Service)
+        expect(a).toBe(b)
+        expect(a).toBe(container.make(Service))
+    })
+
+    test("bind(string, Class) still creates new instances when Class is not registered", () => {
+        class Transient {}
+        const container = new BuiltinContainer()
+        container.bind("t", Transient)
+
+        expect(container.make<Transient>("t")).not.toBe(container.make("t"))
+    })
+
     test("supports singleton/transient with non-function concrete values", () => {
         const container = new BuiltinContainer()
         container.singleton("singleton.value", 7)
