@@ -4,7 +4,7 @@
     "homepage": "https://raubjo.github.io/architect/",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/raubjo/architect.git"
+        "url": "https://github.com/raubjo/architect"
     },
     "private": false,
     "license": "MIT",
