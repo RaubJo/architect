@@ -12,7 +12,22 @@ function normalizeChildren(children: unknown[]): unknown {
     return children.length === 1 ? children[0] : children
 }
 
+class MockComponent {
+    props: Record<string, unknown>
+    state: unknown
+    context: unknown
+
+    constructor(props: Record<string, unknown>) {
+        this.props = props
+    }
+
+    setState(next: object) {
+        this.state = { ...(this.state as object), ...next }
+    }
+}
+
 const reactModule = {
+    Component: MockComponent,
     createContext<T>(defaultValue: T) {
         const context = {
             _default: defaultValue,
@@ -34,10 +49,21 @@ const reactModule = {
     },
     createElement(type: unknown, props?: Record<string, unknown>, ...children: unknown[]) {
         if (typeof type === "function") {
-            return type({
+            const fullProps = {
                 ...(props ?? {}),
                 children: normalizeChildren(children),
-            })
+            }
+            if ((type as { prototype?: { render?: unknown } }).prototype?.render) {
+                const instance = new (
+                    type as new (
+                        props: Record<string, unknown>,
+                    ) => {
+                        render(): unknown
+                    }
+                )(fullProps)
+                return instance.render()
+            }
+            return (type as (props: Record<string, unknown>) => unknown)(fullProps)
         }
         return { type, props: { ...(props ?? {}), children } }
     },
@@ -154,5 +180,49 @@ describe("React runtime", () => {
         forcedReactContextValue = undefined
         reactContextValues.clear()
         expect(() => useContainer()).toThrow("You must use `useContainer` inside the Application Context.")
+    })
+
+    test("ErrorBoundary renders children until an error is caught, then the fallback", async () => {
+        const { ErrorBoundary } = await import("@/runtimes/react")
+        const boundary = new ErrorBoundary({ fallback: (error: unknown) => `caught: ${error}`, children: "child" })
+
+        expect(boundary.render()).toBe("child")
+
+        boundary.state = ErrorBoundary.getDerivedStateFromError("boom")
+        expect(boundary.render()).toBe("caught: boom")
+    })
+
+    test("ErrorBoundary dispatches caught errors on the container's event bus", async () => {
+        const { ErrorBoundary } = await import("@/runtimes/react")
+        const { Bus } = await import("@/events/bus")
+        const { default: ArchitectError } = await import("@/errors/error")
+
+        const container = new BuiltinContainer()
+        const bus = new Bus()
+        container.singleton("events", () => bus)
+
+        const seen: InstanceType<typeof ArchitectError>[] = []
+        bus.listen("error", (payload: InstanceType<typeof ArchitectError>) => {
+            seen.push(payload)
+        })
+
+        const boundary = new ErrorBoundary({})
+        boundary.context = container
+        const error = new Error("boom")
+        boundary.componentDidCatch(error, { componentStack: "" })
+
+        await Bun.sleep(0)
+        expect(seen).toHaveLength(1)
+        expect(seen[0]).toBeInstanceOf(ArchitectError)
+        expect(seen[0].cause).toBe(error)
+        expect(seen[0].source).toBe("react")
+        expect(seen[0].errorInfo).toEqual({ componentStack: "" })
+    })
+
+    test("ErrorBoundary tolerates a container without an events binding", async () => {
+        const { ErrorBoundary } = await import("@/runtimes/react")
+        const boundary = new ErrorBoundary({})
+        boundary.context = new BuiltinContainer()
+        expect(() => boundary.componentDidCatch(new Error("boom"), { componentStack: "" })).not.toThrow()
     })
 })

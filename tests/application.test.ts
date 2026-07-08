@@ -16,7 +16,22 @@ function normalizeChildren(children: unknown[]): unknown {
     return children.length === 1 ? children[0] : children
 }
 
+class MockReactComponent {
+    props: Record<string, unknown>
+    state: unknown
+    context: unknown
+
+    constructor(props: Record<string, unknown>) {
+        this.props = props
+    }
+
+    setState(next: object) {
+        this.state = { ...(this.state as object), ...next }
+    }
+}
+
 const reactModule = {
+    Component: MockReactComponent,
     createContext<T>(defaultValue: T) {
         const context = {
             _default: defaultValue,
@@ -35,10 +50,21 @@ const reactModule = {
     },
     createElement(type: unknown, props?: Record<string, unknown>, ...children: unknown[]) {
         if (typeof type === "function") {
-            return type({
+            const fullProps = {
                 ...(props ?? {}),
                 children: normalizeChildren(children),
-            })
+            }
+            if ((type as { prototype?: { render?: unknown } }).prototype?.render) {
+                const instance = new (
+                    type as new (
+                        props: Record<string, unknown>,
+                    ) => {
+                        render(): unknown
+                    }
+                )(fullProps)
+                return instance.render()
+            }
+            return (type as (props: Record<string, unknown>) => unknown)(fullProps)
         }
         return { type, props: { ...(props ?? {}), children } }
     },

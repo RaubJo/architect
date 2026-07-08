@@ -15,6 +15,9 @@ export type {
     ContainerFactory,
     ContainerIdentifier,
 } from "./container/contract"
+export type { Source as ErrorSource } from "./errors/error"
+export { default as ArchitectError } from "./errors/error"
+export { ErrorsProvider } from "./errors/provider"
 export type {
     EventIdentifier,
     EventSubscriber,
@@ -56,8 +59,14 @@ export { Signal } from "./support/signal"
 export { Str } from "./support/str"
 
 import { CacheProvider } from "./cache/provider"
+import { ErrorsProvider } from "./errors/provider"
 import { LogProvider } from "./log/provider"
 import { StoreProvider } from "./store/provider"
 import type ServiceProvider from "./support/service-provider"
 
-export const defaultProviders: ServiceProvider[] = [new StoreProvider(), new CacheProvider(), new LogProvider()]
+export const defaultProviders: ServiceProvider[] = [
+    new StoreProvider(),
+    new CacheProvider(),
+    new LogProvider(),
+    new ErrorsProvider(),
+]

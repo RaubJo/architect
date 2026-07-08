@@ -1,5 +1,7 @@
 import {
+    Component,
     createContext,
+    type ErrorInfo,
     type ReactNode,
     useContext,
     useEffect,
@@ -9,28 +11,75 @@ import {
     useSyncExternalStore,
 } from "react"
 import type { Container, ContainerIdentifier } from "../container/contract"
+import ArchitectError from "../errors/error"
+import type { Bus } from "../events/bus"
 import type { Application } from "../foundation/application"
 import type { Signal } from "../support/signal"
 
 const Context = createContext<Container | null>(null)
 
-type ApplicationProviderProps = {
-    container: Container
+export type ErrorBoundaryProps = {
+    fallback?: ReactNode | ((error: unknown) => ReactNode)
     children?: ReactNode
 }
 
-export function ApplicationProvider({ container, children }: ApplicationProviderProps) {
-    return <Context.Provider value={container}>{children}</Context.Provider>
+type ErrorBoundaryState = { failed: boolean; error: unknown }
+
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+    static contextType = Context
+    declare context: Container | null
+
+    state: ErrorBoundaryState = { failed: false, error: null }
+
+    static getDerivedStateFromError(error: unknown): ErrorBoundaryState {
+        return { failed: true, error }
+    }
+
+    componentDidCatch(error: unknown, errorInfo: ErrorInfo) {
+        if (this.context?.bound("events")) {
+            void this.context.make<Bus>("events").dispatch(new ArchitectError(error, "react", errorInfo))
+        }
+    }
+
+    render() {
+        if (this.state.failed) {
+            const { fallback } = this.props
+            return typeof fallback === "function" ? fallback(this.state.error) : (fallback ?? null)
+        }
+
+        return this.props.children
+    }
+}
+
+type ApplicationProviderProps = {
+    container: Container
+    errorFallback?: ErrorBoundaryProps["fallback"]
+    children?: ReactNode
+}
+
+export function ApplicationProvider({ container, errorFallback, children }: ApplicationProviderProps) {
+    return (
+        <Context.Provider value={container}>
+            <ErrorBoundary fallback={errorFallback}>{children}</ErrorBoundary>
+        </Context.Provider>
+    )
 }
 
 export type ContextProviderProps = {
     application?: Application
     container?: Container
     fallback?: ReactNode
+    errorFallback?: ErrorBoundaryProps["fallback"]
     children?: ReactNode
 }
 
-export function ContextProvider({ application, container, fallback = null, children }: ContextProviderProps) {
+export function ContextProvider({
+    application,
+    container,
+    fallback = null,
+    errorFallback,
+    children,
+}: ContextProviderProps) {
     if (!application && !container) {
         throw new Error("ContextProvider requires either `application` or `container`.")
     }
@@ -47,13 +96,13 @@ export function ContextProvider({ application, container, fallback = null, child
             return
         }
 
-        if (startedRef.current) {
+        if (startedRef.current || !application) {
             return
         }
 
         startedRef.current = true
 
-        const running = application?.run()
+        const running = application.run()
         stopRef.current = running.stop
         setRuntime(running)
 
@@ -69,7 +118,11 @@ export function ContextProvider({ application, container, fallback = null, child
         return <>{fallback}</>
     }
 
-    return <ApplicationProvider container={runtime.container}>{children}</ApplicationProvider>
+    return (
+        <ApplicationProvider container={runtime.container} errorFallback={errorFallback}>
+            {children}
+        </ApplicationProvider>
+    )
 }
 
 export function useService<T>(identifier: ContainerIdentifier<T>): T {
