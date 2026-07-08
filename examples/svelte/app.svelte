@@ -1,37 +1,39 @@
 <script lang="ts">
-  import { onDestroy } from "svelte";
-  import { Config } from "@raubjo/architect";
-  import { provideContainer, useService } from "@raubjo/architect/svelte";
-  import CounterService from "./counter/service";
-  import HeartbeatService from "./heartbeat/service";
+    import { onDestroy } from "svelte";
+    import { Config } from "@raubjo/architect/support/facades";
+    import { provideContainer, useService } from "@raubjo/architect/svelte";
+    import CounterService from "./counter/service";
+    import HeartbeatService from "./heartbeat/service";
 
-  export let container: unknown;
+    export let container: unknown;
 
-  provideContainer(container as never);
-  const counter = useService(CounterService);
-  const heartbeat = useService(HeartbeatService);
-  let value = counter.current();
-  let ticks = heartbeat.ticks();
-  let status = heartbeat.status();
+    provideContainer(container as never);
 
-  const syncId = window.setInterval(() => {
-    ticks = heartbeat.ticks();
-    status = heartbeat.status();
-  }, 200);
+    const counter = useService(CounterService);
+    const heartbeat = useService(HeartbeatService);
 
-  function increment() {
-    counter.increment();
-    value = counter.current();
-  }
+    let value = counter.current();
+    let ticks = heartbeat.ticks();
+    let status = heartbeat.status();
 
-  function toggle() {
-    heartbeat.toggle();
-    status = heartbeat.status();
-  }
+    const syncId = window.setInterval(() => {
+        ticks = heartbeat.ticks();
+        status = heartbeat.status();
+    }, 200);
 
-  onDestroy(() => {
-    window.clearInterval(syncId);
-  });
+    function increment() {
+        counter.increment();
+        value = counter.current();
+    }
+
+    function toggle() {
+        heartbeat.toggle();
+        status = heartbeat.status();
+    }
+
+    onDestroy(() => {
+        window.clearInterval(syncId);
+    });
 </script>
 
 <h1>{String(Config.get("app.name"))}</h1>

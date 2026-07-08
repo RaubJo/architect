@@ -53,6 +53,10 @@ const reactModule = {
     useState<T>(value: T) {
         return [value, () => undefined] as const
     },
+    useSyncExternalStore<T>(subscribe: (onChange: () => void) => () => void, getSnapshot: () => T) {
+        subscribe(() => undefined)
+        return getSnapshot()
+    },
 }
 
 mock.module("react", () => reactModule)
@@ -75,6 +79,7 @@ let ContextProvider: (props: {
 }) => unknown
 let useService: <T>(identifier: ContainerIdentifier<T>) => T
 let useContainer: () => BuiltinContainer
+let useSignal: <T>(signal: import("@/support/signal").Signal<T>) => T
 
 describe("React runtime", () => {
     beforeAll(async () => {
@@ -86,6 +91,15 @@ describe("React runtime", () => {
         ContextProvider = runtime.ContextProvider as typeof ContextProvider
         useService = runtime.useService
         useContainer = runtime.useContainer as typeof useContainer
+        useSignal = runtime.useSignal
+    })
+
+    test("useSignal reads the current signal value and subscribes to changes", async () => {
+        const { Signal } = await import("@/support/signal")
+        const signal = new Signal(1)
+        expect(useSignal(signal)).toBe(1)
+        signal.set(2)
+        expect(useSignal(signal)).toBe(2)
     })
 
     test("ApplicationProvider + useService resolves from container", () => {

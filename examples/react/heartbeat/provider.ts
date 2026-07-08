@@ -1,16 +1,16 @@
 import {
   ServiceProvider,
   type Cleanup,
-  type ServiceProviderContext,
+  ContainerContract as Container
 } from "@raubjo/architect";
 import Service from "./service";
 
 export default class Heartbeat extends ServiceProvider {
-  register({ container }: ServiceProviderContext): void {
+  register(container: Container): void {
     container.singleton(Service, Service)
   }
 
-  boot({ container }: ServiceProviderContext): Cleanup {
+  boot(container: Container): Cleanup {
     return container.get(Service).start();
   }
 }

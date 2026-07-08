@@ -30,6 +30,7 @@
         "./svelte": "./src/svelte.ts",
         "./vue": "./src/vue.ts",
         "./application": "./src/foundation/application.ts",
+        "./facades": "./src/support/facades/index.ts",
         "./container/contract": "./src/container/contract.ts",
         "./container/adapters/builtin": "./src/container/adapters/builtin.ts",
         "./config/env": "./src/config/env.ts",
@@ -81,6 +82,7 @@
         "./pipeline": "./src/support/pipeline.ts",
         "./service-provider": "./src/support/service-provider.ts",
         "./manager": "./src/support/manager.ts",
+        "./signal": "./src/support/signal.ts",
         "./facade": "./src/support/facades/facade.ts"
     },
     "peerDependencies": {

@@ -1,6 +1,16 @@
-import { createContext, type ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react"
+import {
+    createContext,
+    type ReactNode,
+    useContext,
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+    useSyncExternalStore,
+} from "react"
 import type { Container, ContainerIdentifier } from "../container/contract"
 import type { Application } from "../foundation/application"
+import type { Signal } from "../support/signal"
 
 const Context = createContext<Container | null>(null)
 
@@ -78,4 +88,11 @@ export function useContainer(): Container {
     }
 
     return container
+}
+
+export function useSignal<T>(signal: Signal<T>): T {
+    return useSyncExternalStore(
+        (onChange) => signal.subscribe(onChange),
+        () => signal.get(),
+    )
 }

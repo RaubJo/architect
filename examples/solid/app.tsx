@@ -1,5 +1,5 @@
 import { createSignal, onCleanup } from "solid-js";
-import { Config } from "@raubjo/architect";
+import { Config } from "@raubjo/architect/support/facades";
 import { useService } from "@raubjo/architect/solid";
 import CounterService from "./counter/service";
 import HeartbeatService from "./heartbeat/service";

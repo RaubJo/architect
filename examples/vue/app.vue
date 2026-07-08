@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from "vue";
-import { Config } from "@raubjo/architect";
+import { Config } from "@raubjo/architect/support/facades";
 import { useService } from "@raubjo/architect/vue";
 import CounterService from "./counter/service";
 import HeartbeatService from "./heartbeat/service";
 
 const counter = useService(CounterService);
 const heartbeat = useService(HeartbeatService);
+
 const value = ref(counter.current());
 const ticks = ref(heartbeat.ticks());
 const status = ref(heartbeat.status());

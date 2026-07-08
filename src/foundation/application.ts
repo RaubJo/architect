@@ -3,7 +3,7 @@ import { registerGlobalEnv } from "../config/env"
 import { ConfigProvider } from "../config/provider"
 import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
-import type { Container, ContainerIdentifier } from "../container/contract"
+import type { Container as Contract, ContainerIdentifier } from "../container/contract"
 import {
     type ContainerRuntimeOptions,
     createRuntimeContainer,
@@ -15,7 +15,7 @@ import type { Cleanup } from "../support/service-provider"
 import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "./current-application"
 
 type ApplicationRunContext = {
-    container: Container
+    container: Contract
     cleanupTasks: Cleanup[]
 }
 
@@ -78,7 +78,7 @@ export class Application {
         return this
     }
 
-    protected createContainer(): Container {
+    protected createContainer(): Contract {
         return createRuntimeContainer(this.options.container)
     }
 
@@ -88,7 +88,7 @@ export class Application {
         }
     }
 
-    protected createStopHandler(container: Container, cleanupTasks: Cleanup[]): Cleanup {
+    protected createStopHandler(container: Contract, cleanupTasks: Cleanup[]): Cleanup {
         const stop: Cleanup = () => {
             for (const cleanup of cleanupTasks.reverse()) {
                 cleanup()

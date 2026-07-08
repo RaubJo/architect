@@ -1,11 +1,10 @@
-import {
-  ServiceProvider,
-  type ServiceProviderContext,
-} from "@raubjo/architect";
+import { ServiceProvider, ContainerContract as Container } from "@raubjo/architect";
 import CounterService from "./service";
 
 export default class CounterProvider extends ServiceProvider {
-  register({ container }: ServiceProviderContext): void {
-    container.singleton(CounterService, CounterService);
-  }
+
+    register(container: Container): void {
+        container.singleton(CounterService, CounterService);
+    }
+
 }

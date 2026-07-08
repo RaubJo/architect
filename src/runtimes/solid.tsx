@@ -12,7 +12,9 @@ type ApplicationProviderProps = {
 export function ApplicationProvider(props: ApplicationProviderProps) {
     return createComponent(ContainerContext.Provider, {
         value: props.container,
-        children: props.children as never,
+        get children() {
+            return props.children as never
+        },
     })
 }
 
@@ -24,7 +26,12 @@ export type ContextProviderProps = {
 
 export function ContextProvider(props: ContextProviderProps) {
     if (props.container) {
-        return createComponent(ApplicationProvider, { container: props.container, children: props.children as never })
+        return createComponent(ApplicationProvider, {
+            container: props.container,
+            get children() {
+                return props.children as never
+            },
+        })
     }
 
     if (!props.application) {
@@ -34,7 +41,12 @@ export function ContextProvider(props: ContextProviderProps) {
     const runtime = props.application.run()
     onCleanup(() => runtime.stop())
 
-    return createComponent(ApplicationProvider, { container: runtime.container, children: props.children as never })
+    return createComponent(ApplicationProvider, {
+        container: runtime.container,
+        get children() {
+            return props.children as never
+        },
+    })
 }
 
 export function useService<T>(identifier: ContainerIdentifier<T>): T {

@@ -1,9 +1,16 @@
-import { describe, expect, test } from "bun:test"
-import { readdirSync, readFileSync } from "node:fs"
-import { tmpdir } from "node:os"
+import { afterAll, describe, expect, test } from "bun:test"
+import { readdirSync, readFileSync, rmSync } from "node:fs"
 import { join } from "node:path"
 
 const BOOK_DIR = join(import.meta.dir, "../docs/book/src")
+// ponytail: must live inside the repo, not os.tmpdir() — otherwise the bare
+// "@raubjo/architect" import can't climb to the local node_modules/self-reference
+// and Bun silently falls back to a stale globally-cached published version.
+const DOCTEST_TMP_DIR = join(import.meta.dir, "../.doctest-tmp")
+
+afterAll(() => {
+    rmSync(DOCTEST_TMP_DIR, { recursive: true, force: true })
+})
 
 // Matches a trailing // comment whose value is a JSON literal (string, number, boolean, null, array, object)
 const ASSERTION_RE = /^(\s*)(.+?)\s+\/\/ ((?:"[^"]*"|'[^']*'|-?\d+(?:\.\d+)?|true|false|null|\[.*?\]|\{.*?\}))$/gm
@@ -42,7 +49,7 @@ for (const { name, content } of files) {
         for (const { code, index } of blocks) {
             test(`block ${index}`, async () => {
                 const source = transformAssertions(code)
-                const tmp = join(tmpdir(), `doctest-${Date.now()}-${index}.ts`)
+                const tmp = join(DOCTEST_TMP_DIR, `doctest-${Date.now()}-${index}.ts`)
                 await Bun.write(tmp, source)
 
                 const result = Bun.spawnSync(["bun", "run", tmp], {

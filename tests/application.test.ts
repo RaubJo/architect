@@ -46,6 +46,10 @@ const reactModule = {
     useMemo: <T>(factory: () => T) => factory(),
     useRef: <T>(value: T) => ({ current: value }),
     useState: <T>(value: T) => [value, () => undefined] as const,
+    useSyncExternalStore: <T>(subscribe: (onChange: () => void) => () => void, getSnapshot: () => T) => {
+        subscribe(() => undefined)
+        return getSnapshot()
+    },
 }
 
 const reactDomState = {

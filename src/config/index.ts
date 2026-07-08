@@ -1,5 +1,0 @@
-export type { Contract as ConfigContract } from "./contract"
-export { createConfig } from "./discovery"
-export { env, registerGlobalEnv } from "./env"
-export type { ConfigItems } from "./repository"
-export { ConfigRepository } from "./repository"

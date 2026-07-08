@@ -7,11 +7,9 @@ import { createElement } from "react";
 import App from "./app";
 import Counter from "./counter/provider";
 import Heartbeat from "./heartbeat/provider";
+import Menus from "./menu/provider";
 
 const application = Application.configure({
-        container: {
-            adapter: "builtin"
-        },
         config: {
             app: {
                 name: "Simple React"
@@ -21,6 +19,7 @@ const application = Application.configure({
     .withProviders([
         new Counter(),
         new Heartbeat(),
+        new Menus(),
     ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);
