@@ -3,7 +3,7 @@ import { registerGlobalEnv } from "../config/env"
 import { ConfigProvider } from "../config/provider"
 import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
-import type { Container as Contract, ContainerIdentifier } from "../container/contract"
+import type { ContainerIdentifier, Container as Contract } from "../container/contract"
 import {
     type ContainerRuntimeOptions,
     createRuntimeContainer,
