@@ -10,11 +10,15 @@ import {
     useState,
     useSyncExternalStore,
 } from "react"
-import type { Container, ContainerIdentifier } from "../container/contract"
+import { useProxy } from "valtio/utils"
+import { proxy } from "valtio/vanilla"
+import type { Container, Identifier } from "../container/contract"
 import ArchitectError from "../errors/error"
 import type { Bus } from "../events/bus"
 import type { Application } from "../foundation/application"
 import type { Signal } from "../support/signal"
+
+const dummyReactive = proxy({})
 
 const Context = createContext<Container | null>(null)
 
@@ -125,13 +129,17 @@ export function ContextProvider({
     )
 }
 
-export function useService<T>(identifier: ContainerIdentifier<T>): T {
+export function useService<T>(identifier: Identifier<T>): T {
     const container = useContext(Context)
     if (!container) {
         throw new Error("You must use `useService` inside the Application Context.")
     }
 
-    return container.make<T>(identifier)
+    const service = container.make<T>(identifier)
+    const reactive = container.tagged(identifier).includes("reactive")
+    const proxied = useProxy(reactive ? (service as object) : dummyReactive)
+
+    return (reactive ? proxied : service) as T
 }
 
 export function useContainer(): Container {

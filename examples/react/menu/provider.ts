@@ -3,9 +3,10 @@ import Service from "./service";
 
 export default class Menus extends ServiceProvider {
 
-  register(container: Container): void 
+  register(container: Container): void
   {
-    container.singleton(Service, Service.make);
+    container.singleton(Service, Service);
+    container.tag(Service, "reactive");
   }
-  
+
 }

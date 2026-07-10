@@ -28,6 +28,15 @@ The principle that each ServiceProvider is the sole owner of registration, booti
 The interface all container implementations must satisfy. Exposes `bind()`, `singleton()`, `transient()`, `instance()`, `make()`, `bound()`, and `flush()`.
 _Avoid_: IoC container, DI container (use "container")
 
+**Tag**:
+A label attached to one or more bindings via `container.tag(identifiers, ...tags)`, independent of when those bindings are registered — tagging can happen before or after `bind()`/`singleton()`/`instance()`. A tag with no registered transform (see **extendTag**) is just an inert label, usable for grouped resolution: `container.get(tagName)` returns an object keyed by each tagged identifier's string form.
+
+**extendTag**:
+Registers a transform run on a tagged binding's resolved value the first time it resolves — applied once and cached alongside the binding (a singleton/constant binding's transformed value is reused on every later `make()`; a transient binding's transform re-runs on every resolution, matching transient's meaning). Same shape as **Driver** registration via `Manager.extend()`.
+
+**ReactiveProvider**:
+A built-in, opt-in **ServiceProvider** that calls `container.extendTag("reactive", proxy)`, wrapping any binding tagged `"reactive"` in a Valtio proxy on resolution. Added via `.withProviders([new ReactiveProvider()])`. Requires the `valtio` package (an optional peer dependency — not bundled). The React runtime's `useService` checks `container.tagged(identifier)` and transparently subscribes to reactive bindings; untagged bindings are returned unchanged.
+
 **BuiltinContainer**:
 The only shipped container implementation. Resolves constructor dependencies via TypeScript `design:paramtypes` reflection metadata and optional `@inject` decorators. Requires `emitDecoratorMetadata: true` in tsconfig.
 
@@ -86,6 +95,7 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 - A **StorageManager**, **CacheManager**, and **LogManager** each manage a set of named **Drivers** with a **Fallback chain**
 - A **StackLogger** fans out log calls to multiple named **Drivers** — errors are swallowed per driver
 - An **Application** holds exactly one **Renderer**, which mounts one root component
+- A **ReactiveProvider** is a **ServiceProvider** that registers an **extendTag** transform for the `"reactive"` **Tag**
 
 ## Example dialogue
 

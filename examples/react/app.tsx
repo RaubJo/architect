@@ -1,21 +1,11 @@
 import { ReactNode, useState } from "react";
-import { useProxy } from "valtio/utils";
 
 import { Config  } from "@raubjo/architect/support/facades";
 import { useService } from "@raubjo/architect/react";
-import { ContainerIdentifier } from "@/index";
 
 import CounterService from "./counter/service";
 import Heartbeat from "./heartbeat/service";
 import Menu from "./menu/service";
-
-/**
- * Special hook to get a react-ready service class. 
- */
-function useReactiveService<T>(service: ContainerIdentifier<T>): T
-{
-    return useProxy(useService<T>(service) as object) as T
-}
 
 export default function App() {
 
@@ -25,9 +15,10 @@ export default function App() {
   const heartbeat = useService<Heartbeat>(Heartbeat);
 
   /**
-   * Wrap the service in a Valtio proxy which allows reactive access to class attributes.
+   * Menu is tagged "reactive" in its provider, so useService transparently
+   * wires up Valtio-backed re-rendering — same call as any other service.
    */
-  const menus = useReactiveService<Menu>(Menu);
+  const menus = useService<Menu>(Menu);
 
   /**
    * Mutate and then read the value as a form of updating UI state.

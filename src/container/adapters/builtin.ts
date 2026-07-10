@@ -1,11 +1,4 @@
-import type {
-    BindTo,
-    ContainerClass,
-    ContainerConcrete,
-    ContainerFactory,
-    ContainerIdentifier,
-    Container as Contract,
-} from "../contract"
+import type { BindTo, Class, Concrete, Container as Contract, Factory, Identifier } from "../contract"
 
 const INJECT_TOKENS_METADATA_KEY = "ioc:inject.tokens"
 
@@ -15,16 +8,17 @@ type BindingRecord<T = unknown> =
     | {
           kind: "constant"
           value: T
+          transformed?: T
       }
     | {
           kind: "class"
-          concrete: ContainerClass<T>
+          concrete: Class<T>
           scope: Scope
           cached?: T
       }
     | {
           kind: "factory"
-          concrete: ContainerFactory<T>
+          concrete: Factory<T>
           scope: Scope
           cached?: T
       }
@@ -36,20 +30,20 @@ type MetadataReflect = typeof Reflect & {
 
 const metadataReflect = Reflect as MetadataReflect
 
-function isClassConcrete<T>(value: ContainerConcrete<T>): value is ContainerClass<T> {
+function isClassConcrete<T>(value: Concrete<T>): value is Class<T> {
     return typeof value === "function" && Object.hasOwn(value, "prototype")
 }
 
-function isFactoryConcrete<T>(value: ContainerConcrete<T>): value is ContainerFactory<T> {
+function isFactoryConcrete<T>(value: Concrete<T>): value is Factory<T> {
     return typeof value === "function" && !isClassConcrete(value)
 }
 
-function readInjectTokens(target: object): Map<number, ContainerIdentifier> {
+function readInjectTokens(target: object): Map<number, Identifier> {
     const metadata = metadataReflect.getMetadata?.(INJECT_TOKENS_METADATA_KEY, target) as
-        | Record<number, ContainerIdentifier>
+        | Record<number, Identifier>
         | undefined
 
-    const tokens = new Map<number, ContainerIdentifier>()
+    const tokens = new Map<number, Identifier>()
     if (!metadata) {
         return tokens
     }
@@ -61,11 +55,9 @@ function readInjectTokens(target: object): Map<number, ContainerIdentifier> {
     return tokens
 }
 
-function readConstructorParamTypes(target: object): Array<ContainerIdentifier | undefined> {
+function readConstructorParamTypes(target: object): Array<Identifier | undefined> {
     return (
-        (metadataReflect.getMetadata?.("design:paramtypes", target) as
-            | Array<ContainerIdentifier | undefined>
-            | undefined) ?? []
+        (metadataReflect.getMetadata?.("design:paramtypes", target) as Array<Identifier | undefined> | undefined) ?? []
     )
 }
 
@@ -74,10 +66,10 @@ class BuiltinBindingFluent<T> {
 
     constructor(
         protected readonly container: BuiltinContainer,
-        protected readonly identifier: ContainerIdentifier<T>,
+        protected readonly identifier: Identifier<T>,
     ) {}
 
-    to(concrete: ContainerConcrete<T>): {
+    to(concrete: Concrete<T>): {
         inSingletonScope: () => void
         inTransientScope: () => void
     } {
@@ -112,11 +104,11 @@ class BuiltinBindingFluent<T> {
     }
 }
 
-export function inject(identifier: ContainerIdentifier): ParameterDecorator {
+export function inject(identifier: Identifier): ParameterDecorator {
     return (target, _propertyKey, parameterIndex) => {
         const existing =
             (metadataReflect.getMetadata?.(INJECT_TOKENS_METADATA_KEY, target) as
-                | Record<number, ContainerIdentifier>
+                | Record<number, Identifier>
                 | undefined) ?? {}
         existing[parameterIndex] = identifier
         metadataReflect.defineMetadata?.(INJECT_TOKENS_METADATA_KEY, existing, target)
@@ -124,12 +116,15 @@ export function inject(identifier: ContainerIdentifier): ParameterDecorator {
 }
 
 export default class BuiltinContainer implements Contract {
-    protected bindings = new Map<ContainerIdentifier, BindingRecord>()
-    protected resolving = new Set<ContainerIdentifier>()
+    protected bindings = new Map<Identifier, BindingRecord>()
+    protected resolving = new Set<Identifier>()
+    protected identifierTags = new Map<Identifier, Set<string>>()
+    protected tagIndex = new Map<string, Set<Identifier>>()
+    protected tagTransforms = new Map<string, (value: unknown, container: Contract) => unknown>()
 
-    bind<T>(identifier: ContainerIdentifier<T>): BindTo<T>
-    bind<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
-    bind<T>(identifier: ContainerIdentifier<T>, concrete?: ContainerConcrete<T>): BindTo<T> | this {
+    bind<T>(identifier: Identifier<T>): BindTo<T>
+    bind<T>(identifier: Identifier<T>, concrete: Concrete<T>): this
+    bind<T>(identifier: Identifier<T>, concrete?: Concrete<T>): BindTo<T> | this {
         if (typeof concrete !== "undefined") {
             this.removeIfBound(identifier)
 
@@ -174,7 +169,7 @@ export default class BuiltinContainer implements Contract {
         return new BuiltinBindingFluent<T>(this, identifier)
     }
 
-    singleton<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this {
+    singleton<T>(identifier: Identifier<T>, concrete: Concrete<T>): this {
         this.removeIfBound(identifier)
 
         if (isClassConcrete(concrete)) {
@@ -202,51 +197,92 @@ export default class BuiltinContainer implements Contract {
         return this
     }
 
-    instance<T>(identifier: ContainerIdentifier<T>, value: T): this {
+    instance<T>(identifier: Identifier<T>, value: T): this {
         this.removeIfBound(identifier)
         this.bindings.set(identifier, { kind: "constant", value })
         return this
     }
 
-    make<T>(identifier: ContainerIdentifier<T>): T {
+    make<T>(identifier: Identifier<T>): T {
         const record = this.bindings.get(identifier)
         if (record) {
             return this.resolveRecord(record, identifier) as T
         }
 
         if (typeof identifier === "function") {
-            return this.resolveClass(identifier as ContainerClass<T>)
+            return this.resolveClass(identifier as Class<T>)
         }
 
         throw new Error(`Container binding [${String(identifier)}] is not registered.`)
     }
 
-    get<T>(identifier: ContainerIdentifier<T>): T
-    get<T extends readonly ContainerIdentifier[]>(
+    get<T>(identifier: Identifier<T>): T
+    get<T extends readonly Identifier[]>(
         identifiers: [...T],
-    ): { [K in keyof T]: T[K] extends ContainerIdentifier<infer U> ? U : never }
-    get<T>(identifier: ContainerIdentifier<T> | ContainerIdentifier[]): unknown {
+    ): { [K in keyof T]: T[K] extends Identifier<infer U> ? U : never }
+    get<T>(identifier: Identifier<T> | Identifier[]): unknown {
         if (Array.isArray(identifier)) {
             return identifier.map((id) => this.make(id))
         }
+
+        const taggedIds =
+            typeof identifier === "string" && !this.bindings.has(identifier) ? this.tagIndex.get(identifier) : undefined
+        if (taggedIds) {
+            const group: Record<string, unknown> = {}
+            for (const id of taggedIds) {
+                group[String(id)] = this.make(id)
+            }
+            return group
+        }
+
         return this.make(identifier)
     }
 
-    bound(identifier: ContainerIdentifier): boolean {
+    bound(identifier: Identifier): boolean {
         return this.bindings.has(identifier)
     }
 
-    has(identifier: ContainerIdentifier): boolean {
+    has(identifier: Identifier): boolean {
         return this.bound(identifier)
     }
 
-    unbind(identifier: ContainerIdentifier): void {
+    tag(identifiers: Identifier | Identifier[], ...tags: string[]): this {
+        const ids = Array.isArray(identifiers) ? identifiers : [identifiers]
+
+        for (const id of ids) {
+            const existing = this.identifierTags.get(id) ?? new Set<string>()
+            for (const tag of tags) {
+                existing.add(tag)
+
+                const group = this.tagIndex.get(tag) ?? new Set<Identifier>()
+                group.add(id)
+                this.tagIndex.set(tag, group)
+            }
+            this.identifierTags.set(id, existing)
+        }
+
+        return this
+    }
+
+    tagged(identifier: Identifier): readonly string[] {
+        return [...(this.identifierTags.get(identifier) ?? [])]
+    }
+
+    extendTag<T>(tag: string, transform: (value: T, container: Contract) => T): this {
+        this.tagTransforms.set(tag, transform as (value: unknown, container: Contract) => unknown)
+        return this
+    }
+
+    unbind(identifier: Identifier): void {
         this.bindings.delete(identifier)
+        this.untagIdentifier(identifier)
     }
 
     unbindAll(): void {
         this.bindings.clear()
         this.resolving.clear()
+        this.identifierTags.clear()
+        this.tagIndex.clear()
     }
 
     flush(): void {
@@ -257,16 +293,48 @@ export default class BuiltinContainer implements Contract {
         return this.bindings
     }
 
-    setRecord<T>(identifier: ContainerIdentifier<T>, record: BindingRecord<T>): void {
+    setRecord<T>(identifier: Identifier<T>, record: BindingRecord<T>): void {
         this.bindings.set(identifier, record as BindingRecord)
     }
 
-    protected removeIfBound(identifier: ContainerIdentifier): void {
+    protected removeIfBound(identifier: Identifier): void {
         this.bindings.delete(identifier)
     }
 
-    protected resolveRecord<T>(record: BindingRecord<T>, _identifier: ContainerIdentifier): T {
+    protected untagIdentifier(identifier: Identifier): void {
+        const tags = this.identifierTags.get(identifier)
+        if (!tags) {
+            return
+        }
+
+        for (const tag of tags) {
+            this.tagIndex.get(tag)?.delete(identifier)
+        }
+        this.identifierTags.delete(identifier)
+    }
+
+    protected applyTagTransforms<T>(tags: Set<string> | undefined, value: T): T {
+        if (!tags?.size) {
+            return value
+        }
+
+        let result = value
+        for (const tag of tags) {
+            const transform = this.tagTransforms.get(tag)
+            if (transform) {
+                result = transform(result, this) as T
+            }
+        }
+        return result
+    }
+
+    protected resolveRecord<T>(record: BindingRecord<T>, identifier: Identifier): T {
         if (record.kind === "constant") {
+            const tags = this.identifierTags.get(identifier)
+            if (tags?.size) {
+                record.transformed ??= this.applyTagTransforms(tags, record.value)
+                return record.transformed
+            }
             return record.value
         }
 
@@ -275,12 +343,13 @@ export default class BuiltinContainer implements Contract {
         }
 
         const resolved = this.resolveConcrete(record)
+        const value = this.applyTagTransforms(this.identifierTags.get(identifier), resolved)
 
         if (record.scope === "singleton") {
-            record.cached = resolved
+            record.cached = value
         }
 
-        return resolved
+        return value
     }
 
     protected resolveConcrete<T>(record: Exclude<BindingRecord<T>, { kind: "constant" }>): T {
@@ -300,7 +369,7 @@ export default class BuiltinContainer implements Contract {
         )
     }
 
-    protected resolveClass<T>(concrete: ContainerClass<T>): T {
+    protected resolveClass<T>(concrete: Class<T>): T {
         this.assertNotResolving(concrete)
         this.resolving.add(concrete)
 
@@ -317,16 +386,16 @@ export default class BuiltinContainer implements Contract {
         }
     }
 
-    protected assertNotResolving(concrete: ContainerClass<unknown>): void {
+    protected assertNotResolving(concrete: Class<unknown>): void {
         if (this.resolving.has(concrete)) {
             throw new Error(`Circular dependency detected while resolving [${concrete.name || "anonymous"}].`)
         }
     }
 
     protected resolveParameter(
-        concrete: ContainerClass<unknown>,
-        injectTokens: Map<number, ContainerIdentifier>,
-        designType: ContainerIdentifier | undefined,
+        concrete: Class<unknown>,
+        injectTokens: Map<number, Identifier>,
+        designType: Identifier | undefined,
         index: number,
     ): unknown {
         const token = injectTokens.get(index) ?? designType

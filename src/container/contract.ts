@@ -1,7 +1,7 @@
-export type ContainerFactory<T> = (container: Container) => T
-export type ContainerClass<T> = new (...args: any[]) => T
-export type ContainerIdentifier<T = unknown> = string | symbol | ContainerClass<T>
-export type ContainerConcrete<T> = ContainerClass<T> | ContainerFactory<T> | T
+export type Factory<T> = (container: Container) => T
+export type Class<T> = new (...args: any[]) => T
+export type Identifier<T = unknown> = string | symbol | Class<T>
+export type Concrete<T> = Class<T> | Factory<T> | T
 
 export interface Scope {
     /** Set singleton scope for this binding. */
@@ -12,32 +12,38 @@ export interface Scope {
 
 export interface BindTo<T> {
     /** Bind an identifier to a class, factory, or value concrete. */
-    to(concrete: ContainerConcrete<T>): Scope
+    to(concrete: Concrete<T>): Scope
     /** Bind an identifier to a constant shared value. */
     toConstantValue(value: T): void
 }
 
 export interface Container {
     /** Register a singleton binding using a class, factory, or value concrete. */
-    singleton<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
+    singleton<T>(identifier: Identifier<T>, concrete: Concrete<T>): this
     /** Register a binding using a class, factory, or value concrete. */
-    bind<T>(identifier: ContainerIdentifier<T>, concrete: ContainerConcrete<T>): this
+    bind<T>(identifier: Identifier<T>, concrete: Concrete<T>): this
     /** Register an existing instance as a shared binding. */
-    instance<T>(identifier: ContainerIdentifier<T>, value: T): this
+    instance<T>(identifier: Identifier<T>, value: T): this
     /** Resolve an instance from the container. */
-    make<T>(identifier: ContainerIdentifier<T>): T
+    make<T>(identifier: Identifier<T>): T
     /** Compatibility alias for make(). */
-    get<T>(identifier: ContainerIdentifier<T>): T
+    get<T>(identifier: Identifier<T>): T
     /** Resolve multiple identifiers at once; class keys infer their instance type, string/symbol keys resolve to unknown. */
-    get<T extends readonly ContainerIdentifier[]>(
+    get<T extends readonly Identifier[]>(
         identifiers: [...T],
-    ): { [K in keyof T]: T[K] extends ContainerIdentifier<infer U> ? U : never }
+    ): { [K in keyof T]: T[K] extends Identifier<infer U> ? U : never }
     /** Determine if an identifier is currently bound. */
-    bound(identifier: ContainerIdentifier): boolean
+    bound(identifier: Identifier): boolean
     /** Alias for bound(). */
-    has(identifier: ContainerIdentifier): boolean
+    has(identifier: Identifier): boolean
+    /** Attach one or more tags to one or more identifiers, independent of binding order. */
+    tag(identifiers: Identifier | Identifier[], ...tags: string[]): this
+    /** List the tags attached to an identifier. */
+    tagged(identifier: Identifier): readonly string[]
+    /** Register a transform applied to a tagged binding's resolved value, once, before it is cached/returned. */
+    extendTag<T>(tag: string, transform: (value: T, container: Container) => T): this
     /** Remove a specific binding by identifier. */
-    unbind(identifier: ContainerIdentifier): void
+    unbind(identifier: Identifier): void
     /** Remove all bindings from the container. */
     unbindAll(): void
     /** Clear all bindings. */

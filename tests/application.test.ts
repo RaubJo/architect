@@ -69,6 +69,9 @@ const reactModule = {
         return { type, props: { ...(props ?? {}), children } }
     },
     useEffect: () => undefined,
+    useLayoutEffect: (callback: () => void | (() => void)) => callback(),
+    useCallback: <T>(callback: T) => callback,
+    useDebugValue: () => undefined,
     useMemo: <T>(factory: () => T) => factory(),
     useRef: <T>(value: T) => ({ current: value }),
     useState: <T>(value: T) => [value, () => undefined] as const,

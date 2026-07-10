@@ -260,4 +260,109 @@ describe("BuiltinContainer adapter", () => {
         const container = new BuiltinContainer()
         expect(container.getRawContainer()).toBeTruthy()
     })
+
+    test("tags a single identifier and reports it via tagged()", () => {
+        const container = new BuiltinContainer()
+        container.instance("service", { name: "svc" })
+        container.tag("service", "stuff")
+
+        expect(container.tagged("service")).toEqual(["stuff"])
+        expect(container.tagged("missing")).toEqual([])
+    })
+
+    test("tags multiple identifiers in one call, before or after binding", () => {
+        const container = new BuiltinContainer()
+        container.tag(["cpu", "memory"], "reports")
+        container.instance("cpu", "cpu-report")
+        container.instance("memory", "memory-report")
+
+        expect(container.tagged("cpu")).toEqual(["reports"])
+        expect(container.tagged("memory")).toEqual(["reports"])
+    })
+
+    test("applies an extendTag transform once and caches it for singleton/constant bindings", () => {
+        const container = new BuiltinContainer()
+        let calls = 0
+        container.extendTag("wrap", (value: { name: string }) => {
+            calls++
+            return { wrapped: value }
+        })
+
+        container.instance("constant", { name: "const" })
+        container.tag("constant", "wrap")
+
+        class Singleton {
+            name = "singleton"
+        }
+        container.singleton(Singleton, Singleton)
+        container.tag(Singleton, "wrap")
+
+        const first = container.make<{ wrapped: { name: string } }>("constant")
+        const second = container.make<{ wrapped: { name: string } }>("constant")
+        expect(first).toBe(second)
+        expect(first.wrapped.name).toBe("const")
+
+        const singletonFirst = container.make<{ wrapped: Singleton }>(Singleton)
+        const singletonSecond = container.make<{ wrapped: Singleton }>(Singleton)
+        expect(singletonFirst).toBe(singletonSecond)
+
+        expect(calls).toBe(2)
+    })
+
+    test("re-applies an extendTag transform on every resolution for transient bindings", () => {
+        const container = new BuiltinContainer()
+        container.extendTag("wrap", (value: object) => ({ wrapped: value }))
+
+        class Transient {}
+        container.bind(Transient, Transient)
+        container.tag(Transient, "wrap")
+
+        const first = container.make<{ wrapped: Transient }>(Transient)
+        const second = container.make<{ wrapped: Transient }>(Transient)
+        expect(first).not.toBe(second)
+        expect(first.wrapped).not.toBe(second.wrapped)
+    })
+
+    test("tags with no registered transform pass values through unchanged", () => {
+        const container = new BuiltinContainer()
+        container.instance("service", { name: "svc" })
+        container.tag("service", "stuff")
+
+        expect(container.make("service")).toEqual({ name: "svc" })
+    })
+
+    test("get() resolves a tag group keyed by identifier", () => {
+        const container = new BuiltinContainer()
+        container.instance("service", "service-value")
+        container.instance("other", "other-value")
+        container.tag(["service", "other"], "stuff")
+
+        expect(container.get("stuff")).toEqual({ service: "service-value", other: "other-value" })
+    })
+
+    test("get() prefers a bound identifier over a same-named tag", () => {
+        const container = new BuiltinContainer()
+        container.instance("member", "member-value")
+        container.instance("stuff", "direct-value")
+        container.tag("member", "stuff")
+
+        expect(container.get("stuff")).toBe("direct-value")
+    })
+
+    test("get() throws for a string that is neither a binding nor a tag", () => {
+        const container = new BuiltinContainer()
+        expect(() => container.get("unknown")).toThrow("Container binding [unknown] is not registered.")
+    })
+
+    test("unbind() removes an identifier from both tag indexes", () => {
+        const container = new BuiltinContainer()
+        container.instance("service", "value")
+        container.instance("other", "other-value")
+        container.tag(["service", "other"], "stuff")
+
+        container.unbind("service")
+
+        expect(container.tagged("service")).toEqual([])
+        expect(container.get("stuff")).toEqual({ other: "other-value" })
+    })
 })

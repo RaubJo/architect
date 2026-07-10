@@ -1,5 +1,5 @@
 import { createComponent, createContext, type JSX, onCleanup, useContext } from "solid-js"
-import type { Container, ContainerIdentifier } from "../container/contract"
+import type { Container, Identifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
 const ContainerContext = createContext<Container | null>(null)
@@ -49,7 +49,7 @@ export function ContextProvider(props: ContextProviderProps) {
     })
 }
 
-export function useService<T>(identifier: ContainerIdentifier<T>): T {
+export function useService<T>(identifier: Identifier<T>): T {
     const container = useContext(ContainerContext)
     if (!container) {
         throw new Error("Application container is not available in Solid context.")

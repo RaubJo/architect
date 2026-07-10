@@ -70,6 +70,13 @@ const reactModule = {
     useEffect(callback: () => void | (() => void)) {
         callback()
     },
+    useLayoutEffect(callback: () => void | (() => void)) {
+        callback()
+    },
+    useCallback<T>(callback: T) {
+        return callback
+    },
+    useDebugValue() {},
     useMemo<T>(factory: () => T) {
         return factory()
     },
@@ -136,6 +143,40 @@ describe("React runtime", () => {
         ApplicationProvider({ container, children: null })
         forcedReactContextValue = container
         expect(useService<string>(token)).toBe("resolved")
+        forcedReactContextValue = undefined
+    })
+
+    test("useService auto-wraps a binding tagged 'reactive' via ReactiveProvider", async () => {
+        const { default: ReactiveProvider } = await import("@/reactive/provider")
+        const container = new BuiltinContainer()
+        new ReactiveProvider().register(container)
+
+        class Menu {
+            open = false
+        }
+        container.singleton(Menu, Menu)
+        container.tag(Menu, "reactive")
+
+        forcedReactContextValue = container
+        const menu = useService<Menu>(Menu)
+        expect(menu.open).toBe(false)
+
+        menu.open = true
+        expect(menu.open).toBe(true)
+
+        forcedReactContextValue = undefined
+    })
+
+    test("useService leaves untagged bindings unwrapped", () => {
+        const container = new BuiltinContainer()
+
+        class Counter {
+            value = 0
+        }
+        container.singleton(Counter, Counter)
+
+        forcedReactContextValue = container
+        expect(useService<Counter>(Counter)).toBeInstanceOf(Counter)
         forcedReactContextValue = undefined
     })
 

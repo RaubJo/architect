@@ -5,12 +5,14 @@ import { fileURLToPath, URL } from "node:url";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "valtio"],
     alias: {
       "@": fileURLToPath(new URL("../../src", import.meta.url)),
       "@raubjo/architect": fileURLToPath(new URL("../../src", import.meta.url)),
       react: fileURLToPath(new URL("./node_modules/react", import.meta.url)),
       "react-dom": fileURLToPath(new URL("./node_modules/react-dom", import.meta.url)),
+      valtio: fileURLToPath(new URL("./node_modules/valtio", import.meta.url)),
+      "valtio/": fileURLToPath(new URL("./node_modules/valtio/", import.meta.url)),
     },
   },
 });

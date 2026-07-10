@@ -1,4 +1,4 @@
-import type { Container, ContainerIdentifier } from "../container/contract"
+import type { Container, Identifier } from "../container/contract"
 
 let currentContainer: Container | null = null
 
@@ -10,7 +10,7 @@ export function getCurrentApplicationContainer(): Container | null {
     return currentContainer
 }
 
-export function makeFromCurrentApplication<T>(identifier: ContainerIdentifier<T>): T {
+export function makeFromCurrentApplication<T>(identifier: Identifier<T>): T {
     const container = getCurrentApplicationContainer()
     if (!container) {
         throw new Error("Application container is not available. Call run() first.")

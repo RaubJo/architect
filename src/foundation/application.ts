@@ -3,7 +3,7 @@ import { registerGlobalEnv } from "../config/env"
 import { ConfigProvider } from "../config/provider"
 import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
-import type { ContainerIdentifier, Container as Contract } from "../container/contract"
+import type { Container as Contract, Identifier } from "../container/contract"
 import {
     type ContainerRuntimeOptions,
     createRuntimeContainer,
@@ -64,7 +64,7 @@ export class Application {
         return new Application(mergeConfigureOptions(basePathOrOptions))
     }
 
-    static make<T>(identifier: ContainerIdentifier<T>): T {
+    static make<T>(identifier: Identifier<T>): T {
         const container = getCurrentApplicationContainer()
         if (!container) {
             throw new Error("Application container is not available. Call run() first.")

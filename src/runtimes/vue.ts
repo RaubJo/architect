@@ -1,5 +1,5 @@
 import { defineComponent, type InjectionKey, inject, onUnmounted, provide } from "vue"
-import type { Container, ContainerIdentifier } from "../container/contract"
+import type { Container, Identifier } from "../container/contract"
 import type { Application } from "../foundation/application"
 
 export const containerKey: InjectionKey<Container> = Symbol("application.container")
@@ -24,7 +24,7 @@ export const ContextProvider = defineComponent({
     },
 })
 
-export function useService<T>(identifier: ContainerIdentifier<T>): T {
+export function useService<T>(identifier: Identifier<T>): T {
     const container = inject(containerKey, null)
     if (!container) {
         throw new Error("Application container is not available in Vue context.")
