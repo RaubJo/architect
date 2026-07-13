@@ -1,7 +1,7 @@
 import type { Contract } from "./contract"
 
 export type ConfigItems = Record<string, unknown>
-export type ConfigDefaults = Record<string | number, unknown>
+export type Defaults = Record<string | number, unknown>
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -95,7 +95,7 @@ class ConfigRepository implements Contract {
         return dataGet(this.items, key, defaultValue) as T | null
     }
 
-    getMany(keys: string[] | ConfigDefaults): Record<string, unknown> {
+    getMany(keys: string[] | Defaults): Record<string, unknown> {
         const results: Record<string, unknown> = {}
 
         if (Array.isArray(keys)) {

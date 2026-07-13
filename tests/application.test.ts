@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, mock, test } from "bun:test"
 import ConfigRepository from "@/config/repository"
 import BuiltinContainer from "@/container/adapters/builtin"
-import { Application } from "@/foundation/application"
+import { Application, make, setContainer } from "@/foundation/application"
 import { applicationTestingHelpers } from "@/foundation/application_test.helpers"
-import { makeFromCurrentApplication, setCurrentApplicationContainer } from "@/foundation/current-application"
 import { defaultProviders } from "@/index"
 import ServiceProvider from "@/support/service-provider"
 
@@ -125,11 +124,9 @@ describe("Application", () => {
     })
 
     test("current application helper throws when container is not initialized", () => {
-        setCurrentApplicationContainer(null)
+        setContainer(null)
 
-        expect(() => makeFromCurrentApplication("config")).toThrow(
-            "Application container is not available. Call run() first.",
-        )
+        expect(() => make("config")).toThrow("Application container is not available. Call run() first.")
     })
 
     test("run executes lifecycle and cleanup in reverse order", () => {

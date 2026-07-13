@@ -4,21 +4,19 @@ import type { EventSubscriber } from "@/events/bus"
 import { Bus } from "@/events/bus"
 import { Dispatchable } from "@/events/concerns/dispatchable"
 import { EventsProvider } from "@/events/provider"
-import { setCurrentApplicationContainer } from "@/foundation/current-application"
-import { clearFacadeCache } from "@/support/facades/facade"
+import { setContainer } from "@/foundation/application"
 
 function makeContainer(bus: Bus) {
     const container = new BuiltinContainer()
     container.bind("events").toConstantValue(bus)
-    setCurrentApplicationContainer(container)
+    setContainer(container)
     return container
 }
 
 function reset() {
     const container = (globalThis as { __currentContainer?: BuiltinContainer }).__currentContainer
     container?.flush()
-    setCurrentApplicationContainer(null)
-    clearFacadeCache()
+    setContainer(null)
 }
 
 describe("Bus.listen / dispatch", () => {

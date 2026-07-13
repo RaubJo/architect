@@ -1,21 +1,17 @@
 import BuiltinContainer from "./adapters/builtin"
 import type { Container } from "./contract"
 
-export type ContainerRuntimeOptions = {
-    factory?: (() => Container) | null
-}
-
-export type ResolvedContainerRuntimeOptions = {
+export type RuntimeOptions = {
     factory: (() => Container) | null
 }
 
-export function mergeContainerRuntimeOptions(options: ContainerRuntimeOptions = {}): ResolvedContainerRuntimeOptions {
+export function mergeRuntimeOptions(options: Partial<RuntimeOptions> = {}): RuntimeOptions {
     return {
         factory: options.factory ?? null,
     }
 }
 
-export function createRuntimeContainer(options: ResolvedContainerRuntimeOptions): Container {
+export function createRuntimeContainer(options: RuntimeOptions): Container {
     if (typeof options.factory === "function") {
         return options.factory()
     }

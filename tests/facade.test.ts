@@ -2,28 +2,21 @@ import { afterEach, describe, expect, test } from "bun:test"
 import CacheManager from "@/cache/manager"
 import ConfigRepository from "@/config/repository"
 import BuiltinContainer from "@/container/adapters/builtin"
-import type { ContainerContract } from "@/container/contract"
-import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "@/foundation/current-application"
+import { getContainer, setContainer } from "@/foundation/application"
 import MemoryStoreAdapter from "@/store/adapters/memory"
 import StoreManager from "@/store/manager"
 import App from "@/support/facades/app"
 import Cache from "@/support/facades/cache"
 import Config from "@/support/facades/config"
-import { clearFacadeCache, createFacade, flushAllMacros } from "@/support/facades/facade"
+import { createFacade, flushAllMacros } from "@/support/facades/facade"
 import Store from "@/support/facades/store"
 
-// Helper to inject a fake container for facade tests.
-function setContainer(container: ContainerContract) {
-    setCurrentApplicationContainer(container)
-}
-
 function resetContainer() {
-    const container = getCurrentApplicationContainer()
+    const container = getContainer()
     if (container && typeof container.flush === "function") {
         container.flush()
     }
-    setCurrentApplicationContainer(null)
-    clearFacadeCache()
+    setContainer(null)
     flushAllMacros()
 }
 
@@ -149,7 +142,7 @@ describe("Proxy-based facade (createFacade)", () => {
         expect("value" in Plain).toBe(true)
     })
 
-    test("clearFacadeCache clears resolved instances", () => {
+    test("facade resolves fresh from the container on every call", () => {
         const container = new BuiltinContainer()
         const repository = new ConfigRepository({ app: { name: "First" } })
         container.bind("config").toConstantValue(repository)
@@ -160,12 +153,7 @@ describe("Proxy-based facade (createFacade)", () => {
         container.unbind("config")
         container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "Second" } }))
 
-        // Facade caches the first instance.
-        expect(Config.get("app.name")).toBe("First")
-
-        clearFacadeCache()
-
-        // After clearing, it resolves the new instance.
+        // No facade-level cache to go stale - the rebind is reflected immediately.
         expect(Config.get("app.name")).toBe("Second")
     })
 
@@ -287,23 +275,6 @@ describe("Facade macros", () => {
         expect(result).toBe("fallback")
     })
 
-    test("macros survive facade cache clear", () => {
-        const container = new BuiltinContainer()
-        container.bind("config").toConstantValue(new ConfigRepository({ app: { v: 1 } }))
-        setContainer(container)
-
-        Config.macro("double", (instance, ...args) => {
-            const key = args[0] as string
-            return (instance.get<number>(key) ?? 0) * 2
-        })
-
-        expect(Config.double("app.v")).toBe(2)
-
-        clearFacadeCache()
-
-        expect(Config.double("app.v")).toBe(2)
-    })
-
     test("flushAllMacros clears all facade macros", () => {
         Config.macro("configMacro", () => {})
         Cache.macro("cacheMacro", () => {})
@@ -315,32 +286,6 @@ describe("Facade macros", () => {
 
         expect(Config.hasMacro("configMacro")).toBe(false)
         expect(Cache.hasMacro("cacheMacro")).toBe(false)
-    })
-
-    test("clearResolvedInstance can be called on the proxy", () => {
-        // Call the method directly - it clears from the internal Map.
-        Config.clearResolvedInstance("config")
-        expect(true).toBe(true)
-    })
-
-    test("clearResolvedInstances can be called on the proxy", () => {
-        const container = new BuiltinContainer()
-        container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }))
-        setContainer(container)
-
-        // Call the method to cover the line.
-        Config.clearResolvedInstances()
-        expect(true).toBe(true)
-    })
-
-    test("clearResolvedInstances can be called on the proxy", () => {
-        const container = new BuiltinContainer()
-        container.bind("config").toConstantValue(new ConfigRepository({ app: { name: "test" } }))
-        setContainer(container)
-
-        // Call the method to cover the line.
-        Config.clearResolvedInstances()
-        expect(true).toBe(true)
     })
 
     test("has() proxy trap detects facade properties and macros", () => {

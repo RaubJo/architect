@@ -1,17 +1,17 @@
 import type { ConfigItems } from "../config/repository"
-import type { ContainerRuntimeOptions } from "../container/runtime"
-import { mergeContainerRuntimeOptions } from "../container/runtime"
+import type { RuntimeOptions } from "../container/runtime"
+import { mergeRuntimeOptions } from "../container/runtime"
 
 type ApplicationConfigureOptions = {
     basePath?: string
-    container?: ContainerRuntimeOptions
+    container?: RuntimeOptions
     config?: ConfigItems
 }
 
 function mergeConfigureOptions(options: ApplicationConfigureOptions = {}) {
     return {
         basePath: options.basePath ?? "./",
-        container: mergeContainerRuntimeOptions(options.container),
+        container: mergeRuntimeOptions(options.container),
         config: options.config ?? {},
     }
 }

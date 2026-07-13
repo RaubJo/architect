@@ -1,12 +1,7 @@
-import { makeFromCurrentApplication } from "../../foundation/current-application"
+import { make } from "../../foundation/application"
 
 // Module-level state shared by all facades.
 const macroRegistry = new Map<string, Map<string, (...args: unknown[]) => unknown>>()
-const resolvedInstances = new Map<string, unknown>()
-
-export function clearFacadeCache(): void {
-    resolvedInstances.clear()
-}
 
 export function flushAllMacros(): void {
     macroRegistry.clear()
@@ -27,8 +22,6 @@ export interface FacadeInstance<T = unknown> {
     macro(name: string, fn: (instance: T, ...args: unknown[]) => unknown): void
     hasMacro(name: string): boolean
     flushMacros(): void
-    clearResolvedInstance(name: string): void
-    clearResolvedInstances(): void
     callFacadeMethod(method: string, ...args: unknown[]): unknown
     callFacadeMethod<R = unknown>(method: string, ...args: unknown[]): R
     use(...args: unknown[]): unknown
@@ -58,22 +51,14 @@ export function createFacade<T = any>(accessor: string): FacadeInstance<T> {
             getMacros(accessor).clear()
         },
 
-        clearResolvedInstance(name: string): void {
-            resolvedInstances.delete(name)
-        },
-
-        clearResolvedInstances(): void {
-            resolvedInstances.clear()
-        },
-
         callFacadeMethod<R = unknown>(method: string, ...args: unknown[]): R {
             const macro = getMacros(accessor).get(method)
             if (macro) {
-                const instance = resolveInstance<T>(accessor)
+                const instance = make<T>(accessor)
                 return macro(instance, ...args) as R
             }
 
-            const instance = resolveInstance<Record<string, (...a: unknown[]) => unknown>>(accessor)
+            const instance = make<Record<string, (...a: unknown[]) => unknown>>(accessor)
             const callable = instance[method]
             if (typeof callable !== "function") {
                 throw new Error(`Method [${method}] does not exist on resolved facade instance.`)
@@ -84,7 +69,7 @@ export function createFacade<T = any>(accessor: string): FacadeInstance<T> {
 
         // use() returns the proxy instead of the instance's return value so callers can chain.
         use(...args: unknown[]): unknown {
-            const instance = resolveInstance<Record<string, (...a: unknown[]) => unknown>>(accessor)
+            const instance = make<Record<string, (...a: unknown[]) => unknown>>(accessor)
             if (typeof instance.use === "function") {
                 instance.use(...args)
             }
@@ -106,12 +91,12 @@ export function createFacade<T = any>(accessor: string): FacadeInstance<T> {
             const macro = macros.get(name)
             if (macro) {
                 return (...args: unknown[]) => {
-                    const instance = resolveInstance<T>(accessor)
+                    const instance = make<T>(accessor)
                     return macro(instance, ...args)
                 }
             }
 
-            const instance = resolveInstance<Record<string, unknown>>(accessor)
+            const instance = make<Record<string, unknown>>(accessor)
             const value = instance[prop as keyof typeof instance]
 
             if (typeof value === "function") {
@@ -127,20 +112,10 @@ export function createFacade<T = any>(accessor: string): FacadeInstance<T> {
             if (prop in target) return true
             const name = String(prop)
             if (getMacros(accessor).has(name)) return true
-            const instance = resolveInstance<Record<string, unknown>>(accessor)
+            const instance = make<Record<string, unknown>>(accessor)
             return name in instance
         },
     })
 
     return proxy as FacadeInstance<T>
-}
-
-function resolveInstance<T>(accessor: string): T {
-    if (resolvedInstances.has(accessor)) {
-        return resolvedInstances.get(accessor) as T
-    }
-
-    const instance = makeFromCurrentApplication<T>(accessor)
-    resolvedInstances.set(accessor, instance)
-    return instance
 }

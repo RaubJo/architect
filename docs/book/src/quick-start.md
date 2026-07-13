@@ -2,7 +2,7 @@
 
 This example wires up two services and mounts a React app. The same pattern applies to any framework.
 
-```typescript
+```typescript doctest
 import "reflect-metadata"
 import { Application, ServiceProvider } from "@raubjo/architect"
 import { ContextProvider } from "@raubjo/architect/react"
@@ -11,24 +11,29 @@ import { createElement } from "react"
 import App from "./App"
 
 class ApiServiceProvider extends ServiceProvider {
-  register({ container }) {
+  register(container) {
     container.singleton(ApiClient, ApiClient)
   }
 
-  boot({ container }) {
+  boot(container) {
     const client = container.make(ApiClient)
     client.connect()
 
-    return () => client.disconnect()
+    return () => { client.disconnect() } 
   }
 }
 
 const application = Application.configure({
   config: { api: { url: "https://api.example.com" } },
-}).withProviders([new ApiServiceProvider()])
+})
+.withProviders([new ApiServiceProvider()])
+```
+
+```typescript
 
 const root = createRoot(document.getElementById("root")!)
 root.render(createElement(ContextProvider, { application }, createElement(App)))
+
 ```
 
 The **Lifecycle** runs in this order every time:

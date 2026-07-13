@@ -4,15 +4,28 @@ import { ConfigProvider } from "../config/provider"
 import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
 import type { Container as Contract, Identifier } from "../container/contract"
-import {
-    type ContainerRuntimeOptions,
-    createRuntimeContainer,
-    mergeContainerRuntimeOptions,
-} from "../container/runtime"
-import { clearFacadeCache } from "../support/facades/facade"
+import { createRuntimeContainer, mergeRuntimeOptions, type RuntimeOptions } from "../container/runtime"
 import type ServiceProvider from "../support/service-provider"
 import type { Cleanup } from "../support/service-provider"
-import { getCurrentApplicationContainer, setCurrentApplicationContainer } from "./current-application"
+
+let current: Contract | null = null
+
+export function setContainer(container: Contract | null): void {
+    current = container
+}
+
+export function getContainer(): Contract | null {
+    return current
+}
+
+export function make<T>(identifier: Identifier<T>): T {
+    const container = getContainer()
+    if (!container) {
+        throw new Error("Application container is not available. Call run() first.")
+    }
+
+    return container.make<T>(identifier)
+}
 
 type ApplicationRunContext = {
     container: Contract
@@ -21,13 +34,13 @@ type ApplicationRunContext = {
 
 export type ApplicationConfigureOptions = {
     basePath?: string
-    container?: ContainerRuntimeOptions
+    container?: RuntimeOptions
     config?: ConfigItems
 }
 
 type ApplicationResolvedOptions = {
     basePath: string
-    container: ReturnType<typeof mergeContainerRuntimeOptions>
+    container: ReturnType<typeof mergeRuntimeOptions>
     config: ConfigItems
 }
 
@@ -36,7 +49,7 @@ registerGlobalEnv()
 function mergeConfigureOptions(options: ApplicationConfigureOptions = {}): ApplicationResolvedOptions {
     return {
         basePath: options.basePath ?? "./",
-        container: mergeContainerRuntimeOptions(options.container),
+        container: mergeRuntimeOptions(options.container),
         config: options.config ?? {},
     }
 }
@@ -65,12 +78,7 @@ export class Application {
     }
 
     static make<T>(identifier: Identifier<T>): T {
-        const container = getCurrentApplicationContainer()
-        if (!container) {
-            throw new Error("Application container is not available. Call run() first.")
-        }
-
-        return container.make<T>(identifier)
+        return make<T>(identifier)
     }
 
     withProviders(providers: ServiceProvider[]) {
@@ -94,12 +102,10 @@ export class Application {
                 cleanup()
             }
 
-            clearFacadeCache()
-
             container.flush()
 
-            if (getCurrentApplicationContainer() === container) {
-                setCurrentApplicationContainer(null)
+            if (getContainer() === container) {
+                setContainer(null)
             }
         }
 
@@ -109,8 +115,7 @@ export class Application {
     run() {
         const container = this.createContainer()
 
-        setCurrentApplicationContainer(container)
-        clearFacadeCache()
+        setContainer(container)
         container.instance("app", container)
 
         const providers = [new ConfigProvider(this.getConfigItems()), ...this.providers]
