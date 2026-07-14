@@ -5,8 +5,7 @@ import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
 import type { Container as Contract, Identifier } from "../container/contract"
 import { createRuntimeContainer, mergeRuntimeOptions, type RuntimeOptions } from "../container/runtime"
-import type ServiceProvider from "../support/service-provider"
-import type { Cleanup } from "../support/service-provider"
+import ServiceProvider, { type Cleanup } from "../support/service-provider"
 
 let current: Contract | null = null
 
@@ -46,6 +45,10 @@ type ApplicationResolvedOptions = {
 
 registerGlobalEnv()
 
+function isClass(value: unknown): value is new () => unknown {
+    return typeof value === "function" && /^class\s/.test(Function.prototype.toString.call(value))
+}
+
 function mergeConfigureOptions(options: ApplicationConfigureOptions = {}): ApplicationResolvedOptions {
     return {
         basePath: options.basePath ?? "./",
@@ -83,6 +86,36 @@ export class Application {
 
     withProviders(providers: ServiceProvider[]) {
         this.providers.push(...providers)
+        return this
+    }
+
+    use(provider: ServiceProvider | (new () => ServiceProvider)): this
+    use(config: ConfigItems): this
+    use(value: ServiceProvider | (new () => ServiceProvider) | ConfigItems) {
+        if (typeof value === "function") {
+            if (!isClass(value)) {
+                throw new Error(
+                    "Application.use() cannot accept a plain function; pass a class, an instance, or a config object.",
+                )
+            }
+
+            const resolved = new value()
+
+            if (resolved instanceof ServiceProvider) {
+                this.providers.push(resolved)
+                return this
+            }
+
+            Object.assign(this.options.config, resolved)
+            return this
+        }
+
+        if (value instanceof ServiceProvider) {
+            this.providers.push(value)
+            return this
+        }
+
+        Object.assign(this.options.config, value)
         return this
     }
 

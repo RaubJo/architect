@@ -238,6 +238,71 @@ describe("Application", () => {
         expect(config.get<string>("app.name")).toBe("From configure()")
     })
 
+    test("use registers a provider instance", () => {
+        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
+            addEventListener: () => {},
+        }
+
+        class DemoProvider extends ServiceProvider {
+            register(container: { bind: (id: string) => { toConstantValue: (v: unknown) => void } }) {
+                container.bind("demo").toConstantValue("value")
+            }
+        }
+
+        const running = Application.configure("./").use(new DemoProvider()).run()
+
+        expect(running.container.get<string>("demo")).toBe("value")
+    })
+
+    test("use registers a provider class", () => {
+        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
+            addEventListener: () => {},
+        }
+
+        class DemoProvider extends ServiceProvider {
+            register(container: { bind: (id: string) => { toConstantValue: (v: unknown) => void } }) {
+                container.bind("demo").toConstantValue("value")
+            }
+        }
+
+        const running = Application.configure("./").use(DemoProvider).run()
+
+        expect(running.container.get<string>("demo")).toBe("value")
+    })
+
+    test("use merges a config object", () => {
+        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
+            addEventListener: () => {},
+        }
+
+        const running = Application.configure("./")
+            .use({ app: { name: "From use()" } })
+            .run()
+
+        const config = running.container.get(ConfigRepository)
+        expect(config.get<string>("app.name")).toBe("From use()")
+    })
+
+    test("use is chainable alongside withProviders", () => {
+        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
+            addEventListener: () => {},
+        }
+
+        class DemoProvider extends ServiceProvider {
+            register(container: { bind: (id: string) => { toConstantValue: (v: unknown) => void } }) {
+                container.bind("demo").toConstantValue("value")
+            }
+        }
+
+        const running = Application.configure("./")
+            .use({ app: { name: "From use()" } })
+            .use(new DemoProvider())
+            .run()
+
+        expect(running.container.get<string>("demo")).toBe("value")
+        expect(running.container.get(ConfigRepository).get<string>("app.name")).toBe("From use()")
+    })
+
     test("configure options are merged with defaults", () => {
         expect(applicationTestingHelpers.mergeConfigureOptions()).toEqual({
             basePath: "./",
