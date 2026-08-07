@@ -1,7 +1,6 @@
 import "reflect-metadata";
 import { Application } from "@raubjo/architect";
 import { ContextProvider } from "@raubjo/architect/react";
-import ReactiveProvider from "@raubjo/architect/reactive";
 import ReactDOM from "react-dom/client";
 import { createElement } from "react";
 
@@ -21,7 +20,6 @@ const application = Application.configure({
         new Counter(),
         new Heartbeat(),
         new Menus(),
-        new ReactiveProvider(),
     ]);
 
 const root = ReactDOM.createRoot(document.getElementById("root")!);

@@ -1,3 +1,4 @@
+import { getVersion, proxy } from "valtio/vanilla"
 import type { BindTo, Class, Concrete, Container as Contract, Factory, Identifier } from "../contract"
 
 const INJECT_TOKENS_METADATA_KEY = "ioc:inject.tokens"
@@ -194,6 +195,29 @@ export default class BuiltinContainer implements Contract {
             kind: "constant",
             value: concrete as T,
         })
+        return this
+    }
+
+    reactive<T extends object>(identifier: Identifier<T>, concrete: Concrete<T>): this {
+        this.removeIfBound(identifier)
+
+        const resolve: Factory<T> = isClassConcrete(concrete)
+            ? identifier === concrete
+                ? () => this.resolveClass(concrete)
+                : (c) => c.make(concrete) as T
+            : isFactoryConcrete(concrete)
+              ? concrete
+              : () => concrete as T
+
+        this.bindings.set(identifier, {
+            kind: "factory",
+            concrete: (c) => {
+                const value = resolve(c) as object
+                return (getVersion(value) !== undefined ? value : proxy(value)) as T
+            },
+            scope: "singleton",
+        })
+        this.tag(identifier, "reactive")
         return this
     }
 

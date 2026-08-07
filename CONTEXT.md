@@ -34,8 +34,8 @@ A label attached to one or more bindings via `container.tag(identifiers, ...tags
 **extendTag**:
 Registers a transform run on a tagged binding's resolved value the first time it resolves — applied once and cached alongside the binding (a singleton/constant binding's transformed value is reused on every later `make()`; a transient binding's transform re-runs on every resolution, matching transient's meaning). Same shape as **Driver** registration via `Manager.extend()`.
 
-**ReactiveProvider**:
-A built-in, opt-in **ServiceProvider** that calls `container.extendTag("reactive", proxy)`, wrapping any binding tagged `"reactive"` in a Valtio proxy on resolution. Added via `.withProviders([new ReactiveProvider()])`. Requires the `valtio` package (an optional peer dependency — not bundled). The React runtime's `useService` checks `container.tagged(identifier)` and transparently subscribes to reactive bindings; untagged bindings are returned unchanged.
+**reactive() / "reactive" tag**:
+`container.reactive(identifier, concrete)` registers a singleton and guarantees its resolved value is a Valtio proxy, tagging the identifier `"reactive"`. This is the one place the container's "you get back exactly what you registered" rule bends on purpose — it's an explicit, named opt-in, not a silent hook any provider can attach. **Reactive bindings are always singletons** — there is no transient `reactive()`, since a fresh proxy per resolution would defeat sharing reactive state across consumers; the scope isn't a parameter. It detects Valtio proxies (via `getVersion()`) and wraps whatever isn't one already — a plain object/class or an already-proxied value both work, no config needed either way. The React runtime's `useService` checks `container.tagged(identifier).includes("reactive")` and, if present, runs the resolved value through Valtio's `useProxy`; untagged bindings (via plain `bind`/`singleton`) are returned unchanged. `valtio` is a regular dependency of the package (not an optional peer) — `reactive()` is always available.
 
 **BuiltinContainer**:
 The only shipped container implementation. Resolves constructor dependencies via TypeScript `design:paramtypes` reflection metadata and optional `@inject` decorators. Requires `emitDecoratorMetadata: true` in tsconfig.
@@ -95,7 +95,6 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 - A **StorageManager**, **CacheManager**, and **LogManager** each manage a set of named **Drivers** with a **Fallback chain**
 - A **StackLogger** fans out log calls to multiple named **Drivers** — errors are swallowed per driver
 - An **Application** holds exactly one **Renderer**, which mounts one root component
-- A **ReactiveProvider** is a **ServiceProvider** that registers an **extendTag** transform for the `"reactive"` **Tag**
 
 ## Example dialogue
 

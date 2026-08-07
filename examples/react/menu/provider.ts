@@ -5,8 +5,7 @@ export default class Menus extends ServiceProvider {
 
   register(container: Container): void
   {
-    container.singleton(Service, Service);
-    container.tag(Service, "reactive");
+    container.reactive(Service, Service);
   }
 
 }

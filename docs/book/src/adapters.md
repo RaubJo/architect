@@ -61,6 +61,20 @@ function Profile() {
 }
 ```
 
+### Reactive services
+
+Bindings registered with `container.reactive(...)` (see [Container](./concepts/container.md#reactive)) are automatically subscribed to — `useService` detects the `"reactive"` tag and wraps the result in Valtio's `useProxy`, so the component re-renders on mutation with no extra code:
+
+```tsx
+// provider
+container.reactive(Menu, Menu)
+
+// component — mutating menu re-renders this component, same call as any other service
+const menu = useService(Menu)
+```
+
+Services registered with `bind`/`singleton` are returned as-is; use component state, signals, or another framework mechanism for those.
+
 ### Using an existing container
 
 If you already have a container (e.g. in tests or SSR), pass it directly:

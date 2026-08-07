@@ -36,6 +36,12 @@ export interface Container {
     bound(identifier: Identifier): boolean
     /** Alias for bound(). */
     has(identifier: Identifier): boolean
+    /**
+     * Register a singleton whose resolved value is guaranteed to be a Valtio proxy — the
+     * intentional way to opt a binding into reactive state. Also tags the identifier "reactive"
+     * so consumers (e.g. the React runtime's `useService`) can detect it without re-checking types.
+     */
+    reactive<T extends object>(identifier: Identifier<T>, concrete: Concrete<T>): this
     /** Attach one or more tags to one or more identifiers, independent of binding order. */
     tag(identifiers: Identifier | Identifier[], ...tags: string[]): this
     /** List the tags attached to an identifier. */

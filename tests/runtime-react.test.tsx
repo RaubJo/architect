@@ -146,16 +146,13 @@ describe("React runtime", () => {
         forcedReactContextValue = undefined
     })
 
-    test("useService auto-wraps a binding tagged 'reactive' via ReactiveProvider", async () => {
-        const { default: ReactiveProvider } = await import("@/reactive/provider")
+    test("useService auto-wraps a container.reactive() binding in useProxy", () => {
         const container = new BuiltinContainer()
-        new ReactiveProvider().register(container)
 
         class Menu {
             open = false
         }
-        container.singleton(Menu, Menu)
-        container.tag(Menu, "reactive")
+        container.reactive(Menu, Menu)
 
         forcedReactContextValue = container
         const menu = useService<Menu>(Menu)

@@ -43,6 +43,19 @@ Registers an existing value directly. Use this for configuration objects, third-
 container.instance(ApiConfig, { url: "https://api.example.com", timeout: 5000 })
 ```
 
+### Reactive
+
+Registers a singleton whose resolved value is guaranteed to be a [Valtio](https://valtio.dev) proxy, and tags the binding `"reactive"`. This is the only binding kind the container is allowed to modify — and only once, going in: the concrete is wrapped the moment it's built into the singleton, not re-touched on later `make()` calls. Every other binding kind returns exactly what you registered.
+
+```typescript
+container.reactive(Menu, Menu)
+container.reactive("cart", { items: [] })
+```
+
+- **Always a singleton.** There is no transient `reactive()` — a fresh proxy per resolution would defeat sharing reactive state across everything that resolves it.
+- The container detects Valtio proxies on the way in and wraps whatever isn't one already — pass a plain class, object, or factory, or an already-proxied value.
+- `valtio` is a regular dependency of the package, not an optional peer.
+
 ### Fluent binding
 
 The fluent API gives you more control over scope and factory behaviour:

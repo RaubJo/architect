@@ -323,6 +323,53 @@ describe("BuiltinContainer adapter", () => {
         expect(first.wrapped).not.toBe(second.wrapped)
     })
 
+    test("reactive() registers a singleton tagged 'reactive'", () => {
+        const container = new BuiltinContainer()
+
+        class Menu {
+            open = false
+        }
+        container.reactive(Menu, Menu)
+
+        expect(container.tagged(Menu)).toEqual(["reactive"])
+        expect(container.make(Menu)).toBe(container.make(Menu))
+    })
+
+    test("reactive() guarantees the resolved value is a Valtio proxy", async () => {
+        const { subscribe } = await import("valtio/vanilla")
+        const container = new BuiltinContainer()
+
+        class Menu {
+            open = false
+        }
+        container.reactive(Menu, Menu)
+
+        const menu = container.make<Menu>(Menu)
+        const seen: boolean[] = []
+        subscribe(menu, () => seen.push(menu.open), true)
+        menu.open = true
+
+        expect(seen).toEqual([true])
+    })
+
+    test("reactive() reuses a value that is already a Valtio proxy instead of double-wrapping", async () => {
+        const { proxy } = await import("valtio/vanilla")
+        const container = new BuiltinContainer()
+        const already = proxy({ count: 0 })
+
+        container.reactive("state", already)
+
+        expect(container.make("state")).toBe(already)
+    })
+
+    test("reactive() works with factory and plain-value concretes too", () => {
+        const container = new BuiltinContainer()
+        container.reactive("state", { count: 0 })
+
+        expect(container.make("state")).toEqual({ count: 0 })
+        expect(container.make("state")).toBe(container.make("state"))
+    })
+
     test("tags with no registered transform pass values through unchanged", () => {
         const container = new BuiltinContainer()
         container.instance("service", { name: "svc" })

@@ -176,17 +176,20 @@ Framework code should usually call `useService(...)` or consume already-register
 
 ### 4. Reactivity is your service’s responsibility
 
-`useService(...)` resolves an object from the container. It does not automatically subscribe a component to changes inside that object.
+`useService(...)` resolves an object from the container. It does not automatically subscribe a component to changes inside that object — unless the binding was registered with `container.reactive(...)` instead of `bind`/`singleton`.
 
-If a service exposes mutable state, you still need a framework-appropriate reactive mechanism such as:
+`container.reactive(identifier, concrete)` registers a Valtio-backed singleton:
 
-- component state
-- signals
-- framework stores
-- subscriptions
-- Zustand or another state library
+- It detects Valtio proxies and wraps whatever isn't one already — pass a plain class/object/factory or an already-proxied value, no config needed either way.
+- **Reactive bindings are always singletons.** There's no transient variant — a fresh proxy per resolution would defeat sharing state across every component that resolves it.
+- The React runtime's `useService(...)` checks whether a binding is tagged `"reactive"` and, if so, subscribes to it via Valtio's `useProxy` automatically. Untagged bindings are returned as-is — for those, or in non-React runtimes, you still need a framework-appropriate reactive mechanism such as:
+    - component state
+    - signals
+    - framework stores
+    - subscriptions
+    - Zustand or another state library
 
-The examples in this repository show both simple imperative services and services that expose reactive state mechanisms.
+The examples in this repository show both simple imperative services and `container.reactive(...)` services.
 
 ## Application lifecycle
 

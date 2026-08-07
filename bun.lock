@@ -4,6 +4,9 @@
   "workspaces": {
     "": {
       "name": "@raubjo/architect",
+      "dependencies": {
+        "valtio": "^2.1.7",
+      },
       "devDependencies": {
         "@types/react": "^19.2.14",
         "@types/react-dom": "^19.2.3",
@@ -11,7 +14,6 @@
         "fallow": "^2.67.0",
         "husky": "^9.1.7",
         "solid-js": "^1.9.12",
-        "valtio": "^2.1.7",
         "vue": "^3.5.34",
       },
       "peerDependencies": {
@@ -20,7 +22,6 @@
         "reflect-metadata": "^0.2.2",
         "solid-js": "^1.9.0",
         "svelte": "",
-        "valtio": "^2.1.7",
         "vue": "^3.0.0",
       },
       "optionalPeers": [
@@ -28,7 +29,6 @@
         "react-dom",
         "solid-js",
         "svelte",
-        "valtio",
         "vue",
       ],
     },
