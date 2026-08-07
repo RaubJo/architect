@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { Application } from "@/foundation/application"
-import { DeferrableServiceProvider } from "@/support/service-provider"
+import ServiceProvider, { DeferrableServiceProvider } from "@/support/service-provider"
 
 function stubWindow() {
     ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
@@ -170,8 +170,7 @@ describe("DeferrableServiceProvider", () => {
         expect(calls).toEqual(["register", "boot"])
     })
 
-    test("destroy() still runs for a provider that was never triggered", () => {
-        stubWindow()
+    test("destroy() does not run for a provider that was never triggered", () => {
         let destroyed = false
         let beforeUnload: (() => void) | undefined
 
@@ -198,6 +197,79 @@ describe("DeferrableServiceProvider", () => {
         Application.configure("./").withProviders([new ReportingProvider()]).run()
 
         expect(() => beforeUnload?.()).not.toThrow()
+        expect(destroyed).toBe(false)
+    })
+
+    test("destroy() does run for a deferred provider that was triggered before shutdown", () => {
+        let destroyed = false
+        let beforeUnload: (() => void) | undefined
+
+        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
+            addEventListener: (_event, cb) => {
+                beforeUnload = cb
+            },
+        }
+
+        class ReportingProvider extends DeferrableServiceProvider {
+            provides() {
+                return ["reporting"]
+            }
+
+            register(container: import("@/container/contract").Container) {
+                container.singleton("reporting", Reporting)
+            }
+
+            destroy() {
+                destroyed = true
+            }
+        }
+
+        const running = Application.configure("./").withProviders([new ReportingProvider()]).run()
+        running.container.make("reporting")
+
+        beforeUnload?.()
+
         expect(destroyed).toBe(true)
+    })
+
+    test("destroy() runs in reverse boot order — a deferred provider triggered mid-session destroys before earlier eager providers", () => {
+        let beforeUnload: (() => void) | undefined
+        ;(globalThis as { window: { addEventListener: (event: string, cb: () => void) => void } }).window = {
+            addEventListener: (_event, cb) => {
+                beforeUnload = cb
+            },
+        }
+
+        const order: string[] = []
+
+        class EagerProvider extends ServiceProvider {
+            destroy() {
+                order.push("eager")
+            }
+        }
+
+        class ReportingProvider extends DeferrableServiceProvider {
+            provides() {
+                return ["reporting"]
+            }
+
+            register(container: import("@/container/contract").Container) {
+                container.singleton("reporting", Reporting)
+            }
+
+            destroy() {
+                order.push("deferred")
+            }
+        }
+
+        const running = Application.configure("./").withProviders([new EagerProvider(), new ReportingProvider()]).run()
+
+        // Trigger the deferred provider well after the eager ones already booted.
+        running.container.make("reporting")
+
+        beforeUnload?.()
+
+        // Deferred booted last (at trigger time), so it's torn down first.
+        expect(order).toEqual(["deferred", "eager"])
     })
 })

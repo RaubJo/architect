@@ -86,7 +86,6 @@
         "./facade": "./src/support/facades/facade.ts"
     },
     "dependencies": {
-        "reflect-metadata": "^0.2.2",
         "valtio": "^2.1.7"
     },
     "peerDependencies": {
@@ -120,6 +119,7 @@
         "fallow": "^2.67.0",
         "husky": "^9.1.7",
         "solid-js": "^1.9.12",
+        "typescript": "^5.9.3",
         "vue": "^3.5.34"
     },
     "trustedDependencies": [

@@ -214,4 +214,17 @@ const result = send(user)
   .then((user) => repository.save(user))
 ```
 
-The pipeline is **synchronous**. If you need async pipes, resolve promises inside each pipe before calling `next`.
+The pipeline is **synchronous**. If you need async pipes, resolve promises inside each pipe before calling `next`:
+
+```typescript
+const fetchProfile = async (user, next) => {
+  const profile = await api.getProfile(user.id)
+  return next({ ...user, profile })
+}
+
+// Once any pipe awaits before calling next, the whole chain's result becomes
+// a Promise — await the call site, not the individual pipes.
+const result = await send(user)
+  .through([validate, fetchProfile])
+  .thenReturn()
+```

@@ -11,6 +11,7 @@
   - [Cache](./services/cache.md)
   - [Store](./services/store.md)
   - [Events](./services/events.md)
+  - [Errors](./services/errors.md)
   - [Logging](./services/log.md)
   - [Scheduler](./services/scheduler.md)
 - [Facades](./facades.md)

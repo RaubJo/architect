@@ -75,6 +75,10 @@ const menu = useService(Menu)
 
 Services registered with `bind`/`singleton` are returned as-is; use component state, signals, or another framework mechanism for those.
 
+### Error boundaries
+
+`ApplicationProvider`/`ContextProvider` wrap your tree in an `ErrorBoundary` — pass `errorFallback` to render something in place of a crashed subtree. See [Errors](./services/errors.md) for how caught errors get dispatched onto the **Events** bus.
+
 ### Using an existing container
 
 If you already have a container (e.g. in tests or SSR), pass it directly:

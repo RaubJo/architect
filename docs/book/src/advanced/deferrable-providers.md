@@ -54,7 +54,7 @@ If the service is always resolved (e.g. bound to a component that renders on eve
 
 **`bound()`/`has()` don't know about deferred bindings.** Only `make()`/`get()` trigger the lazy boot. `container.bound("reporting")` returns `false` until something has actually resolved it — checking `bound()` first to decide whether to resolve a deferred binding will defeat the deferral (and get the wrong answer).
 
-**`destroy()` still runs for providers that were never triggered.** Application shutdown calls every provider's `destroy()`, deferred-and-never-resolved ones included. Write `destroy()` defensively (optional chaining on fields `boot()` would have set) — the same convention every other provider already follows.
+**`destroy()` only runs for providers that actually booted.** A deferred provider nothing ever resolved never boots, so its `destroy()` is skipped too — there's nothing to tear down. Shutdown order is reverse of *actual boot* order, not registration order: if a deferred provider gets triggered mid-session, well after every eager provider has already booted, it's still destroyed first — same LIFO discipline as eager providers, just anchored to when each one really started.
 
 **Both string and class identifiers work** in `provides()` — whatever `Identifier` accepts elsewhere in the container works here too:
 

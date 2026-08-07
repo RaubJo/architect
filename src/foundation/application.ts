@@ -26,11 +26,6 @@ export function make<T>(identifier: Identifier<T>): T {
     return container.make<T>(identifier)
 }
 
-type ApplicationRunContext = {
-    container: Contract
-    providers: ServiceProvider[]
-}
-
 export type ApplicationConfigureOptions = {
     basePath?: string
     container?: RuntimeOptions
@@ -127,9 +122,14 @@ export class Application {
      * Wires deferred providers so register()/boot() run lazily, once, the first time any of their
      * declared provides() identifiers is resolved — instead of eagerly during run(). Patches the
      * container's own make() (get() already delegates to it) rather than wrapping the container,
-     * so there's exactly one resolution/tag-transform pass either way.
+     * so there's exactly one resolution/tag-transform pass either way. Booted providers are added
+     * to `booted` (in the order they actually boot) so destroy() only runs for providers that did.
      */
-    protected installDeferredResolution(container: Contract, providers: ServiceProvider[]): void {
+    protected installDeferredResolution(
+        container: Contract,
+        providers: ServiceProvider[],
+        booted: Set<ServiceProvider>,
+    ): void {
         const pending = new Map<Identifier, DeferrableServiceProvider>()
 
         for (const provider of providers) {
@@ -148,14 +148,22 @@ export class Application {
                 for (const id of provider.provides()) pending.delete(id)
                 provider.register(container)
                 provider.boot(container)
+                booted.add(provider)
             }
             return originalMake(identifier)
         }) as Contract["make"]
     }
 
-    protected createStopHandler(container: Contract, providers: ServiceProvider[]): Cleanup {
+    /**
+     * `booted` is a Set in the order providers actually booted — eager providers in registration
+     * order, deferred ones spliced in whenever they were first resolved. Reversing it gives LIFO
+     * teardown: whatever booted last (even a deferred provider triggered mid-session, well after
+     * run() returned) is destroyed first. Providers never booted — a deferred provider nothing ever
+     * resolved — are simply absent, so destroy() never runs for them.
+     */
+    protected createStopHandler(container: Contract, booted: Set<ServiceProvider>): Cleanup {
         const stop: Cleanup = () => {
-            for (const provider of [...providers].reverse()) {
+            for (const provider of [...booted].reverse()) {
                 provider.destroy(container)
             }
 
@@ -176,7 +184,6 @@ export class Application {
         container.instance("app", container)
 
         const providers = [new ConfigProvider(this.getConfigItems()), ...this.providers]
-        const context: ApplicationRunContext = { container, providers }
 
         const deferred = new Set<ServiceProvider>(
             providers.filter(
@@ -185,19 +192,22 @@ export class Application {
             ),
         )
 
-        this.installDeferredResolution(container, providers)
+        const booted = new Set<ServiceProvider>()
+
+        this.installDeferredResolution(container, providers, booted)
 
         for (const provider of providers) {
             if (deferred.has(provider)) continue
-            provider.register(context.container)
+            provider.register(container)
         }
 
         for (const provider of providers) {
             if (deferred.has(provider)) continue
-            provider.boot(context.container)
+            provider.boot(container)
+            booted.add(provider)
         }
 
-        const stop = this.createStopHandler(container, context.providers)
+        const stop = this.createStopHandler(container, booted)
 
         window.addEventListener("beforeunload", stop, { once: true })
 

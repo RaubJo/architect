@@ -22,7 +22,7 @@ A ServiceProvider subclass that declares which bindings it owns via `provides()`
 The rule that `register()` must only bind into the container — never resolve. `boot()` may safely resolve any binding because all providers' `register()` calls have completed first. Violating this in `register()` risks resolving `undefined` for bindings added by later providers.
 
 **destroy()**:
-The third ServiceProvider lifecycle method, called once per provider on `Application.stop()`, in reverse provider order. `register()` and `boot()` are `void` — there's no cleanup-callback return value to track anymore. Whatever `destroy()` needs (a timer handle, an `AbortController`, a subscription) is tracked as an instance field by the provider itself, set during `register()`/`boot()`.
+The third ServiceProvider lifecycle method, called on `Application.stop()` in reverse **boot** order (not registration order) — and only for providers that actually booted; a **DeferrableServiceProvider** nothing ever resolved never boots, so its `destroy()` is skipped too. `register()` and `boot()` are `void` — there's no cleanup-callback return value to track anymore. Whatever `destroy()` needs (a timer handle, an `AbortController`, a subscription) is tracked as an instance field by the provider itself, set during `register()`/`boot()`.
 
 **Provider ownership**:
 The principle that each ServiceProvider is the sole owner of registration, booting, and cleanup for its feature area. No other code binds or unbinds what a provider manages.
@@ -87,6 +87,12 @@ _Avoid_: static accessor, global service
 
 **Macro**:
 A named function added to a Facade at runtime via `facade.macro(name, fn)`. Takes precedence over instance methods of the same name. Scoped per facade accessor; cleared only by an explicit `flushMacros()`/`flushAllMacros()` call — nothing clears macros automatically on application shutdown.
+
+**ArchitectError**:
+An `Error` subclass that normalizes an uncaught error into `{ source: "window" | "promise" | "react", cause, errorInfo? }`. Adopts the original error's `message`/`stack` when it's a real `Error`. Static `label = "error"` so it can be listened for on the **Bus** by class or by the string `"error"`.
+
+**ErrorsProvider**:
+Included in `defaultProviders`. Registers `"events"` (a **Bus**) if nothing else already has, then wires `window.addEventListener("error"/"unhandledrejection", ...)` in `boot()` to dispatch an **ArchitectError** onto it — same-origin-filtered for window errors. A no-op under SSR (`boot()` checks for `window`). React's `ErrorBoundary` (wrapped around the tree by `ApplicationProvider`/`ContextProvider`) dispatches a third source, `"react"`, the same way — but only if `"events"` is bound, independent of whether the fallback UI renders.
 
 ## Relationships
 
