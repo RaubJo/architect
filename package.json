@@ -86,6 +86,7 @@
         "./facade": "./src/support/facades/facade.ts"
     },
     "dependencies": {
+        "reflect-metadata": "^0.2.2",
         "valtio": "^2.1.7"
     },
     "peerDependencies": {
