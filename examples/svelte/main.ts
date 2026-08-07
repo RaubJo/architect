@@ -5,7 +5,6 @@ import CounterProvider from "./counter/provider";
 import HeartbeatProvider from "./heartbeat/provider";
 
 const application = Application.configure({
-  container: { adapter: "builtin" },
   config: {
     app: { name: "Simple Svelte" },
   },

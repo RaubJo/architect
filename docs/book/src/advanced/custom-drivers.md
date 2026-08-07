@@ -42,30 +42,29 @@ class RedisAdapter implements StoreAdapter {
 Register it in a ServiceProvider:
 
 ```typescript
-import { StoreManager, type ServiceProviderContext } from "@raubjo/architect"
+import { ServiceProvider, StoreManager, type ContainerContract as Container } from "@raubjo/architect"
 
 export class RedisStoreProvider extends ServiceProvider {
-  boot({ container }: ServiceProviderContext): void {
-    const store = container.make(StoreManager)
+  boot(container: Container): void {
+    // StoreManager isn't bound by class — only the string identifier "store" is registered.
+    const store = container.make<StoreManager>("store")
 
     store.extend("redis", (config) => {
-      const url = config.get<string>("store.stores.redis.url", "redis://localhost:6379")
+      const url = config.get<string>("store.redis.url", "redis://localhost:6379")
       return new RedisAdapter(new RedisClient(url))
     })
   }
 }
 ```
 
-Then configure it as the active driver:
+Then configure it as the active driver. Unlike **CacheManager**, `StoreManager` has no `stores` map in its config shape — it reads a single flat `store.driver` key, and any config a custom driver's factory needs is just a plain key you choose and read back yourself:
 
 ```typescript
 Application.configure({
   config: {
     store: {
-      default: "redis",
-      stores: {
-        redis: { driver: "redis", url: "redis://localhost:6379" },
-      },
+      driver: "redis",
+      redis: { url: "redis://localhost:6379" },
     },
   },
 }).withProviders([new RedisStoreProvider()])
@@ -76,10 +75,10 @@ Application.configure({
 Cache drivers use the same `StoreAdapter` interface — the **Cache** TTL wrapper is applied automatically by **CacheManager**. You do not need to implement TTL yourself:
 
 ```typescript
-import { CacheManager, type ServiceProviderContext } from "@raubjo/architect"
+import { ServiceProvider, CacheManager, type ContainerContract as Container } from "@raubjo/architect"
 
 export class RedisCacheProvider extends ServiceProvider {
-  boot({ container }: ServiceProviderContext): void {
+  boot(container: Container): void {
     const cache = container.make(CacheManager)
 
     cache.extend("redis", (config) => {
@@ -90,13 +89,15 @@ export class RedisCacheProvider extends ServiceProvider {
 }
 ```
 
+Set `cache.default: "redis"` (or call `Cache.use("redis")` later) to activate it — `cache.stores.redis` here is just where this example chose to stash the driver's own config; `CacheManager` only reads `.driver` out of `cache.stores` entries for its three built-in drivers, so a custom driver's config path is otherwise up to you, same as `StoreManager` above.
+
 ## Driver factory signature
 
 The factory callback receives `ConfigRepository` and must return a raw `StoreAdapter`:
 
 ```typescript
 manager.extend("my-driver", (config: ConfigRepository): StoreAdapter => {
-  return new MyAdapter(config.get("store.stores.my-driver"))
+  return new MyAdapter(config.get("store.my-driver"))
 })
 ```
 

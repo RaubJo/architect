@@ -43,15 +43,13 @@ await local.set("key", value)
 
 ## Configuration
 
+Unlike **CacheManager**, `StoreManager` doesn't support multiple named store configs — it reads a single active driver name from `store.driver`:
+
 ```typescript
 Application.configure({
   config: {
     store: {
-      default: "indexed",
-      stores: {
-        indexed: { driver: "indexed" },
-        local: { driver: "local" },
-      },
+      driver: "indexed",
     },
   },
 })
@@ -60,13 +58,16 @@ Application.configure({
 ## Registering a custom driver
 
 ```typescript
-import StoreManager from "@raubjo/architect"
+import { type StoreManager, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }) {
-  const store = container.make(StoreManager)
+boot(container: Container) {
+  // Unlike CacheManager/LogManager, StoreProvider only binds the string identifier "store" —
+  // it never registers StoreManager as a class binding, so container.make(StoreManager) would
+  // construct an unrelated, disconnected instance instead of resolving the shared one.
+  const store = container.make<StoreManager>("store")
 
   store.extend("native", (config) => {
-    return new TauriStoreAdapter(config.get("store.stores.native"))
+    return new TauriStoreAdapter(config.get("store.native"))
   })
 }
 ```

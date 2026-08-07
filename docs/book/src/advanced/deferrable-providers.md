@@ -1,61 +1,35 @@
 # Deferrable Providers
 
-A **DeferrableServiceProvider** declares which container bindings it provides via `provides()`. The Application skips booting it entirely until one of those bindings is actually resolved from the container — an optimization for services that aren't always needed.
-
-## Basic usage
+`DeferrableServiceProvider` extends `ServiceProvider` with one extra method:
 
 ```typescript
-import { DeferrableServiceProvider, type ServiceProviderContext } from "@raubjo/architect"
-
-export class ReportingProvider extends DeferrableServiceProvider {
+export class DeferrableServiceProvider extends ServiceProvider {
   provides(): string[] {
-    return ["reporting", "reporting.exporter"]
+    return []
   }
+}
+```
 
-  register({ container }: ServiceProviderContext): void {
+**This is currently a stub.** `Application.run()` calls `register()` then `boot()` on every provider unconditionally — deferrable or not — in the order they were added. Nothing in the runtime reads `provides()` yet, so a `DeferrableServiceProvider` boots exactly as eagerly as a regular `ServiceProvider`. There is no deferred-loading behavior to opt into today.
+
+## Using it today
+
+Since it behaves identically to `ServiceProvider`, there's no reason to reach for `DeferrableServiceProvider` right now — use the regular base class:
+
+```typescript
+import { ServiceProvider, type ContainerContract as Container } from "@raubjo/architect"
+
+export class ReportingProvider extends ServiceProvider {
+  register(container: Container): void {
     container.singleton("reporting", ReportingService)
-    container.singleton("reporting.exporter", PdfExporter)
   }
 
-  boot({ container }: ServiceProviderContext): void {
-    // Heavy initialization only runs if "reporting" or "reporting.exporter"
-    // is actually resolved
+  boot(container: Container): void {
     container.make(ReportingService).connect()
   }
 }
 ```
 
-Register it the same way as any other provider:
+## Intended shape
 
-```typescript
-Application.configure()
-  .withProviders([new ReportingProvider()])
-  .run()
-```
-
-## When to use it
-
-Use a `DeferrableServiceProvider` when:
-
-- The service does expensive initialization in `boot()` (network connections, large allocations)
-- The service is only needed on certain routes or user flows
-- You want to avoid paying boot cost for services that may never be used in a given session
-
-## When not to use it
-
-If the service is always resolved (e.g. bound to a component that renders on every page), deferral adds overhead with no benefit. Use a regular `ServiceProvider` instead.
-
-## Caveats
-
-The `provides()` list must be exhaustive. If a binding is registered in `register()` but not listed in `provides()`, it will be treated as undeferred and the provider will be booted eagerly.
-
-Class-based identifiers are not supported in `provides()` — use string keys for deferrable bindings:
-
-```typescript
-// ✅
-provides() { return ["reporting"] }
-register({ container }) { container.singleton("reporting", ReportingService) }
-
-// ❌ class keys cannot be declared in provides()
-provides() { return [ReportingService] }
-```
+The `provides()` list is meant to declare which bindings a provider owns, so the Application can skip `boot()` until one of them is actually resolved — useful for services with expensive `boot()` work (network connections, large allocations) that aren't needed in every session. If and when that lands, this page will show the deferred contract; until then, treat `provides()` as inert.

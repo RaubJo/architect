@@ -6,13 +6,15 @@ A **Facade** is a static proxy that forwards calls to a service resolved from th
 
 | Facade | Proxies | Import |
 |--------|---------|--------|
+| `App` | the active `ContainerContract` itself | `@raubjo/architect/support/facades` |
 | `Config` | `ConfigRepository` | `@raubjo/architect/support/facades` |
 | `Cache` | `CacheManager` | `@raubjo/architect/support/facades` |
 | `Store` | `StoreManager` | `@raubjo/architect/support/facades` |
 | `Event` | `Bus` | `@raubjo/architect/support/facades` |
+| `Log` | `LogManager` | `@raubjo/architect/support/facades` |
 
 ```typescript
-import { Config, Cache, Store, Event } from "@raubjo/architect/support/facades"
+import { App, Config, Cache, Store, Event, Log } from "@raubjo/architect/support/facades"
 ```
 
 ## Creating a custom facade
@@ -27,7 +29,7 @@ export const MyFacade = createFacade<MyService>("my-service")
 The string `"my-service"` is the container binding key. Bind it in a ServiceProvider:
 
 ```typescript
-register({ container }) {
+register(container) {
   container.singleton("my-service", MyService)
 }
 ```
@@ -62,14 +64,8 @@ Config.hasMacro("required")  // true
 Config.flushMacros()         // remove all macros from this facade
 ```
 
-## Instance caching
+## Resolution, not caching
 
-Facades cache the resolved service instance after first use. The cache is cleared automatically on Application shutdown and when the Application is re-started.
+A facade holds no instance of its own — every property or method access resolves the accessor fresh from the current Application's container (`Application.make(accessor)`). There's nothing to clear on shutdown or manually flush for tests.
 
-If you need to force re-resolution (e.g. in tests):
-
-```typescript
-import { clearFacadeCache } from "@raubjo/architect/facade"
-
-clearFacadeCache()
-```
+Whether you get the *same* underlying instance across calls depends entirely on how that binding was registered, same as calling `container.make(...)` directly: a `singleton()` binding returns the same instance every time; a `bind()` (transient) binding returns a new one on each resolution.

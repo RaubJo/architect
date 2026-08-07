@@ -5,6 +5,7 @@
     "": {
       "name": "@raubjo/architect",
       "dependencies": {
+        "reflect-metadata": "^0.2.2",
         "valtio": "^2.1.7",
       },
       "devDependencies": {
@@ -19,7 +20,6 @@
       "peerDependencies": {
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
-        "reflect-metadata": "^0.2.2",
         "solid-js": "^1.9.0",
         "svelte": "",
         "vue": "^3.0.0",

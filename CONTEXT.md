@@ -16,7 +16,7 @@ The unit of wiring — a class that encapsulates registration and boot for one f
 _Avoid_: plugin, module, service class
 
 **DeferrableServiceProvider**:
-A ServiceProvider that declares which bindings it provides via `provides()`. The Application skips booting it until one of those bindings is actually resolved from the container — an optimization for services not always needed.
+A ServiceProvider subclass that adds a `provides()` method for declaring which bindings it owns. Currently a stub: nothing in the Application reads `provides()`, so `register()`/`boot()` still run unconditionally and eagerly, same as any other provider — there is no deferred-loading behavior yet, despite the name.
 
 **Register/boot contract**:
 The rule that `register()` must only bind into the container — never resolve. `boot()` may safely resolve any binding because all providers' `register()` calls have completed first. Violating this in `register()` risks resolving `undefined` for bindings added by later providers.
@@ -47,8 +47,9 @@ The only shipped container implementation. Resolves constructor dependencies via
 A typed key-value store with dot-notation path access (e.g. `config.get<string>("app.name")`). Backed by a plain object; no reactivity.
 _Avoid_: config store, config object, Repository (ambiguous)
 
-**StorageManager**:
-An abstraction over persistent storage backends — localStorage, IndexedDB, and extensible to native file systems (Tauri, React Native) via `extend()` (not yet implemented). The active driver is swapped at runtime with `.use()`.
+**StoreManager**:
+An abstraction over persistent storage backends — localStorage, IndexedDB, and extensible to native file systems (Tauri, React Native) via `extend()`. The active driver is swapped at runtime with `.use()`. Unlike **CacheManager**, it reads a single flat `store.driver` config key — no per-store config map.
+_Avoid_: StorageManager (the exported class is `StoreManager`)
 
 **Cache**:
 The TTL-aware wrapper around a raw storage **Adapter**. Wraps every stored value in a `{v, e}` envelope where `e` is the absolute expiry timestamp in milliseconds (or `null` for no expiry). Expiry is checked lazily on `get` and `keys`. Per-call TTL is passed in seconds to `set(key, value, ttl?)`; `null` or omitted means no expiry; `0` expires immediately. **CacheManager** creates one **Cache** per configured driver.
@@ -59,7 +60,7 @@ An abstraction for TTL-based caching. Manages a set of named **Cache** drivers �
 _Avoid_: cache store (use "CacheManager" or "cache driver")
 
 **Driver**:
-A named backend implementation registered with StorageManager or CacheManager. Built-in drivers: `memory`, `local`, `indexed`. Custom drivers are registered from a ServiceProvider's `boot()` hook via `manager.extend(name, factory)`, where the factory receives the ConfigRepository and returns an Adapter. Drivers are resolved lazily on first access and then cached.
+A named backend implementation registered with StoreManager or CacheManager. Built-in drivers: `memory`, `local`, `indexed`. Custom drivers are registered from a ServiceProvider's `boot()` hook via `manager.extend(name, factory)`, where the factory receives the ConfigRepository and returns an Adapter. Drivers are resolved lazily on first access and then cached.
 
 **Fallback chain**:
 The ordered list of drivers a Manager tries when the preferred driver is unavailable. Enables graceful degradation (e.g. IndexedDB → localStorage → memory) without consumer awareness.
@@ -81,21 +82,21 @@ A built-in log driver that fans out each log call to an ordered list of other dr
 A built-in log driver that discards all messages. Useful in tests to silence output without changing application wiring.
 
 **Facade**:
-A static proxy that forwards calls to a service resolved from the container. Usable from `boot()` hooks onward — not in `register()` (register/boot contract). Calling a facade before `.run()` throws. Built-in facades: `Config`, `Cache`, `Store`, `Log`.
+A static proxy that forwards calls to a service resolved from the container — no instance caching of its own, every call re-resolves via `Application.make()`. Usable from `boot()` hooks onward — not in `register()` (register/boot contract). Calling a facade before `.run()` throws. Built-in facades: `App`, `Config`, `Cache`, `Store`, `Event`, `Log`.
 _Avoid_: static accessor, global service
 
 **Macro**:
-A named function added to a Facade at runtime via `facade.macro(name, fn)`. Takes precedence over instance methods of the same name. Survives facade instance cache resets; cleared only by `flushMacros()` or application shutdown.
+A named function added to a Facade at runtime via `facade.macro(name, fn)`. Takes precedence over instance methods of the same name. Scoped per facade accessor; cleared only by an explicit `flushMacros()`/`flushAllMacros()` call — nothing clears macros automatically on application shutdown.
 
 ## Relationships
 
 - An **Application** runs one or more **ServiceProviders** in registration order
-- A **DeferrableServiceProvider** extends **ServiceProvider** with lazy boot behaviour
+- A **DeferrableServiceProvider** extends **ServiceProvider** with an inert `provides()` method — boot is still eager today
 - Each **ServiceProvider** binds into and resolves from one **ContainerContract**
 - A **BuiltinContainer** implements **ContainerContract**
 - A **Facade** resolves its backing service from the current **Application**'s **ContainerContract**
 - A **Macro** extends a **Facade** without modifying the underlying service
-- A **StorageManager**, **CacheManager**, and **LogManager** each manage a set of named **Drivers** with a **Fallback chain**
+- A **StoreManager**, **CacheManager**, and **LogManager** each manage a set of named **Drivers** with a **Fallback chain**
 - A **StackLogger** fans out log calls to multiple named **Drivers** — errors are swallowed per driver
 - An **Application** holds exactly one **Renderer**, which mounts one root component
 
@@ -111,10 +112,10 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 >
 > **Dev:** "And if this service is only needed on certain routes, can I avoid booting it eagerly?"
 >
-> **Domain expert:** "Make it a **DeferrableServiceProvider** and declare the binding in `provides()`. The **Application** won't boot it until something actually resolves that binding from the container."
+> **Domain expert:** "Not yet — **DeferrableServiceProvider**'s `provides()` is currently inert, so every provider boots eagerly regardless. If that changes, this is where it'll be documented."
 
 ## Flagged ambiguities
 
 - "Repository" was used as a synonym for **ConfigRepository** — resolved: always say **ConfigRepository**; "Repository" is too generic.
 - "intake" appeared as a module name in `src/config/` — resolved: renamed to `discovery.ts`; "intake" was AI-generated with no domain meaning.
-- **StorageManager** and **CacheManager** were described as structurally identical — resolved: they share the same adapter shape today, but **CacheManager** is intentionally separate because it will add TTL and eviction (see `.scratch/cache-ttl-eviction/`).
+- **StoreManager** and **CacheManager** were described as structurally identical — resolved: they share the same adapter shape today, but **CacheManager** is intentionally separate because it will add TTL and eviction (see `.scratch/cache-ttl-eviction/`).

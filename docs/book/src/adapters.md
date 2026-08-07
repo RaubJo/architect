@@ -91,6 +91,7 @@ If you already have a container (e.g. in tests or SSR), pass it directly:
 |------|-------------|
 | `useService(Token)` | Resolve a binding from the Service Container |
 | `useContainer()` | Access the raw `ContainerContract` |
+| `useSignal(signal)` | Read a [`Signal`](./utilities.md)'s current value and subscribe to changes |
 
 ## Vue
 
@@ -98,9 +99,11 @@ If you already have a container (e.g. in tests or SSR), pass it directly:
 npm install @raubjo/architect vue
 ```
 
+`ContextProvider` renders its default slot, so it needs an explicit render function to receive children — mounting it directly as `createApp(ContextProvider, props)` leaves the slot empty and renders nothing:
+
 ```typescript
 import "reflect-metadata"
-import { createApp, createElement } from "vue"
+import { createApp, h } from "vue"
 import { Application } from "@raubjo/architect"
 import { ContextProvider } from "@raubjo/architect/vue"
 import App from "./App.vue"
@@ -108,12 +111,21 @@ import App from "./App.vue"
 const application = Application.configure()
   .withProviders([new AppProvider()])
 
-createApp(ContextProvider, { application })
-  .component("App", App)
-  .mount("#root")
+createApp({
+  render: () => h(ContextProvider, { application }, () => h(App)),
+}).mount("#root")
 ```
 
-### Injecting services in components
+### Resolving services in components
+
+```typescript
+import { useService } from "@raubjo/architect/vue"
+import { UserService } from "./services/user"
+
+const userService = useService(UserService)
+```
+
+Or inject the container directly:
 
 ```typescript
 import { inject } from "vue"
@@ -151,17 +163,36 @@ render(
 npm install @raubjo/architect svelte
 ```
 
+Svelte has no `ContextProvider` component. Call `application.run()` yourself, pass the resulting `container` into your root component as a prop, and call `provideContainer(...)` inside it before any `useService(...)` calls:
+
+```typescript
+// main.ts
+import "reflect-metadata"
+import { Application } from "@raubjo/architect"
+import App from "./App.svelte"
+
+const application = Application.configure()
+  .withProviders([new AppProvider()])
+
+const running = application.run()
+
+new App({
+  target: document.getElementById("root")!,
+  props: { container: running.container },
+})
+
+window.addEventListener("beforeunload", running.stop, { once: true })
+```
+
 ```svelte
+<!-- App.svelte -->
 <script lang="ts">
-  import { Application } from "@raubjo/architect"
-  import { ContextProvider } from "@raubjo/architect/svelte"
-  import App from "./App.svelte"
+  import { provideContainer, useService } from "@raubjo/architect/svelte"
+  import { UserService } from "./services/user"
 
-  const application = Application.configure()
-    .withProviders([new AppProvider()])
+  export let container: unknown
+
+  provideContainer(container as never)
+  const userService = useService(UserService)
 </script>
-
-<ContextProvider {application}>
-  <App />
-</ContextProvider>
 ```

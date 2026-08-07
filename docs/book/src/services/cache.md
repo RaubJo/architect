@@ -93,9 +93,9 @@ Application.configure({
 Register custom drivers from a ServiceProvider's `boot()` hook. The factory receives `ConfigRepository` and must return a raw storage **Adapter**:
 
 ```typescript
-import { CacheManager, type ServiceProviderContext } from "@raubjo/architect"
+import { CacheManager, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }: ServiceProviderContext) {
+boot(container: Container) {
   const manager = container.make(CacheManager)
 
   manager.extend("redis", (config) => {
@@ -107,9 +107,9 @@ boot({ container }: ServiceProviderContext) {
 ## Using CacheManager directly
 
 ```typescript
-import CacheManager from "@raubjo/architect"
+import { CacheManager, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }) {
+boot(container: Container) {
   const cache = container.make(CacheManager)
   await cache.set("session", token, 3600)
 }

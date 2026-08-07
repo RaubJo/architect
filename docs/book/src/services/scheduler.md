@@ -17,9 +17,9 @@ Application.configure()
 Register tasks from a `ServiceProvider`'s `boot()` hook:
 
 ```typescript
-import { Scheduler } from "@raubjo/architect"
+import { Scheduler, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }) {
+boot(container: Container) {
   const scheduler = container.make(Scheduler)
 
   // Run once after 1 minute
@@ -136,9 +136,9 @@ If a task handler throws, the error is caught and logged to `console.warn`. The 
 ## Using Scheduler directly
 
 ```typescript
-import { Scheduler } from "@raubjo/architect"
+import { Scheduler, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }) {
+boot(container: Container) {
   const scheduler = container.make(Scheduler)
   scheduler.task("daily-word", () => showDailyWord())
     .when(() => !alreadySeenToday())

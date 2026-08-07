@@ -22,9 +22,9 @@ const application = Application.configure({
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `config` | `Record<string, unknown>` | Inline config merged with file-based config |
+| `config` | `Record<string, unknown>` | Inline config. If provided (even partially), file-based config discovery is skipped entirely — the two sources don't merge. See [Config](../services/config.md#file-based-config). |
 | `basePath` | `string` | Root path for config file discovery (default `"./"`) |
-| `container` | `object` | Container adapter options |
+| `container` | `{ factory?: (() => ContainerContract) \| null }` | Supply a factory to use a custom container implementation instead of the built-in one |
 
 ## Running
 

@@ -163,6 +163,26 @@ obj.set("user.age", 31)           // returns this (chainable)
 obj.toArray()                     // { user: { name: "Alice", age: 31 }, ... }
 ```
 
+## Signal
+
+A minimal observable value box — get/set/subscribe, no dependency tracking or batching:
+
+```typescript
+import { Signal } from "@raubjo/architect"
+
+const count = new Signal(0)
+
+const unsubscribe = count.subscribe((value) => console.log("count is now", value))
+
+count.set(1)              // logs "count is now 1"
+count.update((n) => n + 1) // logs "count is now 2"
+count.get()                // 2
+
+unsubscribe()
+```
+
+`set()` is a no-op if the new value is `Object.is`-equal to the current one — listeners aren't notified. In React, [`useSignal(signal)`](./adapters.md#hooks) subscribes a component to a `Signal` and re-renders on change.
+
 ## Pipeline
 
 Send a value through a series of transform functions, matching Laravel's `Pipeline`:

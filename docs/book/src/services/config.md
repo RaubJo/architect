@@ -71,7 +71,7 @@ export default {
 }
 ```
 
-The Application loads these automatically via `import.meta.glob`. The filename becomes the top-level key — `config/app.ts` is available under `"app.*"`.
+The Application loads these automatically via `import.meta.glob`, **but only when `Application.configure()` is called with no inline `config` at all**. Passing any inline config — even a single unrelated key — skips file discovery entirely instead of merging with it; the two sources don't combine. The filename becomes the top-level key — `config/app.ts` is available under `"app.*"`.
 
 ## Environment variables
 
@@ -90,9 +90,9 @@ const url = env("VITE_API_URL", "http://localhost:3000")
 In a ServiceProvider, the ConfigRepository is bound as `"config"` and by class:
 
 ```typescript
-import ConfigRepository from "@raubjo/architect"
+import { ConfigRepository, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }) {
+boot(container: Container) {
   const config = container.make(ConfigRepository)
   const timeout = config.get<number>("api.timeout", 5000)
 }

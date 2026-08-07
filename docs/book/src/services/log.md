@@ -83,9 +83,9 @@ Application.configure({
 Register custom drivers from a `ServiceProvider`'s `boot()` hook. The factory receives `ConfigRepository` and must return an object implementing the log `Contract`:
 
 ```typescript
-import { LogManager, type ServiceProviderContext } from "@raubjo/architect"
+import { LogManager, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }: ServiceProviderContext) {
+boot(container: Container) {
   const manager = container.make(LogManager)
 
   manager.extend("sentry", (config) => {
@@ -117,9 +117,9 @@ Log.use("stack")  // restore fan-out
 ## Using LogManager directly
 
 ```typescript
-import { LogManager } from "@raubjo/architect"
+import { LogManager, type ContainerContract as Container } from "@raubjo/architect"
 
-boot({ container }: ServiceProviderContext) {
+boot(container: Container) {
   const log = container.make(LogManager)
   log.info("Provider booted")
 }
