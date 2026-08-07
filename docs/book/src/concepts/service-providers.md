@@ -5,18 +5,22 @@ A **ServiceProvider** is the unit of wiring — a class that encapsulates regist
 ## Basic structure
 
 ```typescript
-import { ServiceProvider, type ServiceProviderContext } from "@raubjo/architect"
+import { ServiceProvider, type ContainerContract as Container } from "@raubjo/architect"
 
 export class AnalyticsProvider extends ServiceProvider {
-  register({ container }: ServiceProviderContext): void {
+  protected analytics?: AnalyticsService
+
+  register(container: Container): void {
     container.singleton(AnalyticsService, AnalyticsService)
   }
 
-  boot({ container }: ServiceProviderContext): void | (() => void) {
-    const analytics = container.make(AnalyticsService)
-    analytics.start()
+  boot(container: Container): void {
+    this.analytics = container.make(AnalyticsService)
+    this.analytics.start()
+  }
 
-    return () => analytics.stop()
+  destroy(): void {
+    this.analytics?.stop()
   }
 }
 ```
@@ -27,31 +31,37 @@ export class AnalyticsProvider extends ServiceProvider {
 
 ```typescript
 // ✅ correct
-register({ container }) {
+register(container: Container) {
   container.singleton(MyService, MyService)
 }
 
 // ❌ wrong — resolving in register() risks getting undefined
 //    if another provider hasn't registered yet
-register({ container }) {
+register(container: Container) {
   const config = container.make(ConfigRepository) // don't do this
 }
 ```
 
-## Returning a cleanup function
+## Tearing down with destroy()
 
-Both `register()` and `boot()` can return a cleanup function. The Application collects these and calls them in reverse order on shutdown.
+`register()` and `boot()` are `void` — there's no return value to track. Tear-down work goes in `destroy()` instead: a separate method the Application calls once per provider, in reverse provider order, on shutdown. Whatever `destroy()` needs (a timer handle, an `AbortController`, a subscription) is tracked as an instance field, since it's no longer passed back through a return value:
 
 ```typescript
-boot({ container }) {
-  const poller = container.make(PollingService)
-  const interval = setInterval(() => poller.tick(), 5000)
+export class PollingProvider extends ServiceProvider {
+  protected interval?: ReturnType<typeof setInterval>
 
-  return () => clearInterval(interval)
+  boot(container: Container): void {
+    const poller = container.make(PollingService)
+    this.interval = setInterval(() => poller.tick(), 5000)
+  }
+
+  destroy(): void {
+    clearInterval(this.interval)
+  }
 }
 ```
 
-This matches the same convention as React's `useEffect`, Svelte's `onDestroy`, and Vue's `onUnmounted` — providers that don't need cleanup simply return nothing.
+This matches the same convention as React's `useEffect`, Svelte's `onDestroy`, and Vue's `onUnmounted` — providers that don't need cleanup simply don't override `destroy()`.
 
 ## Provider ownership
 

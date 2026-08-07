@@ -1,6 +1,5 @@
 import {
   ServiceProvider,
-  type Cleanup,
   ContainerContract as Container
 } from "@raubjo/architect";
 import Service from "./service";
@@ -10,7 +9,11 @@ export default class Heartbeat extends ServiceProvider {
     container.singleton(Service, Service)
   }
 
-  boot(container: Container): Cleanup {
-    return container.get(Service).start();
+  boot(container: Container): void {
+    container.get(Service).start();
+  }
+
+  destroy(container: Container): void {
+    container.get(Service).stop();
   }
 }

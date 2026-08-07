@@ -139,37 +139,45 @@ describe("Application", () => {
             },
         }
 
-        class DemoProvider extends ServiceProvider {
+        class DemoProviderA extends ServiceProvider {
             register(container: { bind: (id: string) => { toConstantValue: (v: unknown) => void } }) {
-                calls.push("provider.register")
+                calls.push("a.register")
                 container.bind("demo").toConstantValue("value")
-                return () => calls.push("provider.register.cleanup")
             }
 
             boot() {
-                calls.push("provider.boot")
-                return () => calls.push("provider.boot.cleanup")
+                calls.push("a.boot")
+            }
+
+            destroy() {
+                calls.push("a.destroy")
+            }
+        }
+
+        class DemoProviderB extends ServiceProvider {
+            boot() {
+                calls.push("b.boot")
+            }
+
+            destroy() {
+                calls.push("b.destroy")
             }
         }
 
         const _app = Application.configure("./")
-            .withProviders([...defaultProviders, new DemoProvider()])
+            .withProviders([...defaultProviders, new DemoProviderA(), new DemoProviderB()])
             .run()
 
         expect(Application.make<string>("demo")).toBe("value")
         expect(Application.make("store")).toBeTruthy()
         expect(Application.make("cache")).toBeTruthy()
-        expect(calls).toEqual(["provider.register", "provider.boot"])
+        expect(calls).toEqual(["a.register", "a.boot", "b.boot"])
 
         expect(typeof beforeUnload).toBe("function")
         beforeUnload?.()
 
-        expect(calls).toEqual([
-            "provider.register",
-            "provider.boot",
-            "provider.boot.cleanup",
-            "provider.register.cleanup",
-        ])
+        // destroy() runs in reverse provider order — B (registered last) tears down before A.
+        expect(calls).toEqual(["a.register", "a.boot", "b.boot", "b.destroy", "a.destroy"])
 
         expect(() => Application.make("demo")).toThrow("Application container is not available. Call run() first.")
     })

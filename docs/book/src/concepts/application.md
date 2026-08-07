@@ -40,7 +40,7 @@ The fixed sequence is:
 
 1. **Register** — every provider's `register()` runs in the order they were added
 2. **Boot** — every provider's `boot()` runs after all `register()` calls complete
-3. **Shutdown** — cleanup functions collected from `register()` and `boot()` run in reverse order
+3. **Shutdown** — every provider's `destroy()` runs, in reverse provider order
 
 No phase can be skipped or reordered. This guarantee is why `boot()` can safely resolve any binding — all providers have already registered by the time any `boot()` runs.
 

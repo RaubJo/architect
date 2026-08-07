@@ -16,10 +16,11 @@ class ApiServiceProvider extends ServiceProvider {
   }
 
   boot(container) {
-    const client = container.make(ApiClient)
-    client.connect()
+    container.make(ApiClient).connect()
+  }
 
-    return () => { client.disconnect() } 
+  destroy(container) {
+    container.make(ApiClient).disconnect()
   }
 }
 
@@ -41,6 +42,6 @@ The **Lifecycle** runs in this order every time:
 1. `register()` on every **ServiceProvider** — bindings only, no resolving
 2. `boot()` on every **ServiceProvider** — safe to resolve any binding
 3. Framework renders the root component
-4. On `beforeunload`, cleanup functions run in reverse order
+4. On `beforeunload`, `destroy()` runs on every **ServiceProvider**, in reverse provider order
 
 That's all there is to it. The rest of this guide covers each piece in depth.

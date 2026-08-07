@@ -42,7 +42,7 @@ describe("ErrorsProvider", () => {
         const container = new BuiltinContainer()
         const provider = new ErrorsProvider()
         provider.register(container)
-        const cleanup = provider.boot(container)
+        provider.boot(container)
 
         const seen: ArchitectError[] = []
         // Subscribing by class resolves to the same "error" channel via the static label
@@ -65,7 +65,7 @@ describe("ErrorsProvider", () => {
         expect(seen[1].message).toBe("nope")
         expect(seen[1].source).toBe("promise")
 
-        cleanup?.()
+        provider.destroy()
         expect(listeners.size).toBe(0)
     })
 
@@ -89,10 +89,11 @@ describe("ErrorsProvider", () => {
         expect(seen).toEqual([])
     })
 
-    test("boot is a no-op without a window", () => {
+    test("boot and destroy are no-ops without a window", () => {
         const container = new BuiltinContainer()
         const provider = new ErrorsProvider()
         provider.register(container)
-        expect(provider.boot(container)).toBeUndefined()
+        provider.boot(container)
+        expect(() => provider.destroy()).not.toThrow()
     })
 })

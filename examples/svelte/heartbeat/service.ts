@@ -1,5 +1,3 @@
-import type { Cleanup } from "@raubjo/architect";
-
 type Status = "running" | "stopped";
 
 export default class HeartbeatService {
@@ -15,17 +13,15 @@ export default class HeartbeatService {
     return this.currentStatus;
   }
 
-  start(): Cleanup {
+  start(): void {
     if (this.intervalId !== null) {
-      return () => this.stop();
+      return;
     }
 
     this.currentStatus = "running";
     this.intervalId = window.setInterval(() => {
       this.tickCount += 1;
     }, 1000);
-
-    return () => this.stop();
   }
 
   stop(): void {

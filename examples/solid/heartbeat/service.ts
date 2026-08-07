@@ -1,4 +1,3 @@
-import { type Cleanup } from "@raubjo/architect";
 import { createStore, type StoreApi } from "zustand/vanilla";
 
 type State = {
@@ -31,18 +30,16 @@ export default class Heartbeat {
     return this.store.getState().status;
   }
 
-  public start(): Cleanup 
+  public start(): void
   {
     if (this.intervalId) {
-      return () => this.stop();
+      return;
     }
 
     this.store.setState({ status: "running" });
     this.intervalId = window.setInterval(() => {
       this.store.setState((state) => ({ ticks: state.ticks + 1 }));
     }, 1000);
-
-    return () => this.stop();
   }
 
   public stop()

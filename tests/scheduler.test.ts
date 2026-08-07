@@ -246,12 +246,21 @@ describe("SchedulerProvider", () => {
         expect(s1).toBe(s2)
     })
 
-    test("boot starts interval and returns a cleanup function", () => {
-        const container = new BuiltinContainer()
-        const provider = new SchedulerProvider()
-        provider.register(container)
-        const cleanup = provider.boot(container)
-        expect(typeof cleanup).toBe("function")
-        cleanup?.()
+    test("boot starts an interval and destroy clears it", () => {
+        const originalClearInterval = globalThis.clearInterval
+        const clearIntervalSpy = mock(originalClearInterval)
+        globalThis.clearInterval = clearIntervalSpy
+
+        try {
+            const container = new BuiltinContainer()
+            const provider = new SchedulerProvider()
+            provider.register(container)
+            provider.boot(container)
+            provider.destroy()
+
+            expect(clearIntervalSpy).toHaveBeenCalledTimes(1)
+        } finally {
+            globalThis.clearInterval = originalClearInterval
+        }
     })
 })

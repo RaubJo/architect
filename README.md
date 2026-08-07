@@ -156,7 +156,7 @@ root.render(createElement(ContextProvider, { application }, createElement(App)))
 }
 ```
 
-The returned `container` is the active runtime container. `stop()` runs cleanup callbacks in reverse order, clears facade caches, and flushes the container.
+The returned `container` is the active runtime container. `stop()` calls each provider's `destroy()` in reverse order, clears facade caches, and flushes the container.
 
 ## Core mental model
 
@@ -200,12 +200,7 @@ The examples in this repository show both simple imperative services and `contai
 3. provider `boot()`
 4. `.withStartup(...)` callbacks
 
-Cleanup runs in reverse order when `stop()` is called:
-
-1. startup cleanup
-2. provider `boot()` cleanup
-3. service registrar cleanup
-4. provider `register()` cleanup
+On `stop()`, each provider's `destroy()` runs once, in reverse provider order.
 
 The application also registers a `beforeunload` listener and calls `stop()` once when the page unloads.
 
@@ -354,14 +349,13 @@ The base class is:
 
 ```ts
 class ServiceProvider {
-  register(context): void | Cleanup {}
-  boot(context): void | Cleanup {}
+  register(container: Container): void {}
+  boot(container: Container): void {}
+  destroy(container: Container): void {}
 }
 ```
 
-Use `register()` for bindings and `boot()` for work that should happen after all providers and manual service registrations are complete.
-
-Both methods may optionally return a cleanup callback.
+Use `register()` for bindings, `boot()` for work that should happen after all providers and manual service registrations are complete, and `destroy()` to tear down what `boot()` started. `destroy()` is called once per provider, in reverse provider order, when the application stops — track whatever it needs (a timer handle, an `AbortController`, a subscription) as an instance field rather than returning it.
 
 `DeferrableServiceProvider` is also exported, but in the current implementation it is only a base class with a `provides()` method. The application runtime does not yet perform automatic deferred loading based on that contract.
 
@@ -370,8 +364,7 @@ Example:
 ```ts
 import {
   ServiceProvider,
-  type Cleanup,
-  type ServiceProviderContext,
+  ContainerContract as Container,
 } from "@raubjo/architect";
 
 class HeartbeatService {
@@ -382,16 +375,14 @@ class HeartbeatService {
     return this.ticksValue;
   }
 
-  start(): Cleanup {
+  start(): void {
     if (this.intervalId !== null) {
-      return () => this.stop();
+      return;
     }
 
     this.intervalId = window.setInterval(() => {
       this.ticksValue += 1;
     }, 1000);
-
-    return () => this.stop();
   }
 
   stop() {
@@ -405,12 +396,16 @@ class HeartbeatService {
 }
 
 class HeartbeatProvider extends ServiceProvider {
-  register({ container }: ServiceProviderContext): void {
+  register(container: Container): void {
     container.singleton(HeartbeatService, HeartbeatService);
   }
 
-  boot({ container }: ServiceProviderContext): Cleanup {
-    return container.get(HeartbeatService).start();
+  boot(container: Container): void {
+    container.get(HeartbeatService).start();
+  }
+
+  destroy(container: Container): void {
+    container.get(HeartbeatService).stop();
   }
 }
 ```

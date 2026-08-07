@@ -21,6 +21,9 @@ A ServiceProvider that declares which bindings it provides via `provides()`. The
 **Register/boot contract**:
 The rule that `register()` must only bind into the container — never resolve. `boot()` may safely resolve any binding because all providers' `register()` calls have completed first. Violating this in `register()` risks resolving `undefined` for bindings added by later providers.
 
+**destroy()**:
+The third ServiceProvider lifecycle method, called once per provider on `Application.stop()`, in reverse provider order. `register()` and `boot()` are `void` — there's no cleanup-callback return value to track anymore. Whatever `destroy()` needs (a timer handle, an `AbortController`, a subscription) is tracked as an instance field by the provider itself, set during `register()`/`boot()`.
+
 **Provider ownership**:
 The principle that each ServiceProvider is the sole owner of registration, booting, and cleanup for its feature area. No other code binds or unbinds what a provider manages.
 
@@ -100,7 +103,7 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 
 > **Dev:** "I need to add a real-time data service that polls an external API every 30 seconds."
 >
-> **Domain expert:** "Write a **ServiceProvider**. In `register()`, bind your polling service class into the container. In `boot()`, start the interval — `boot()` is where you call things that depend on other bindings being present. Return a cleanup function from `boot()` that clears the interval; the **Application** will call it on shutdown."
+> **Domain expert:** "Write a **ServiceProvider**. In `register()`, bind your polling service class into the container. In `boot()`, start the interval — `boot()` is where you call things that depend on other bindings being present, and it's `void`, so track the interval handle on the provider instance. Clear it in `destroy()`; the **Application** calls that on shutdown, once per provider, in reverse provider order."
 >
 > **Dev:** "Can I access the `Config` **Facade** to read the poll interval from config?"
 >

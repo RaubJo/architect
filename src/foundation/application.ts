@@ -28,7 +28,7 @@ export function make<T>(identifier: Identifier<T>): T {
 
 type ApplicationRunContext = {
     container: Contract
-    cleanupTasks: Cleanup[]
+    providers: ServiceProvider[]
 }
 
 export type ApplicationConfigureOptions = {
@@ -123,16 +123,10 @@ export class Application {
         return createRuntimeContainer(this.options.container)
     }
 
-    protected rememberCleanup(cleanupTasks: Cleanup[], cleanup: void | Cleanup): void {
-        if (typeof cleanup === "function") {
-            cleanupTasks.push(cleanup)
-        }
-    }
-
-    protected createStopHandler(container: Contract, cleanupTasks: Cleanup[]): Cleanup {
+    protected createStopHandler(container: Contract, providers: ServiceProvider[]): Cleanup {
         const stop: Cleanup = () => {
-            for (const cleanup of cleanupTasks.reverse()) {
-                cleanup()
+            for (const provider of [...providers].reverse()) {
+                provider.destroy(container)
             }
 
             container.flush()
@@ -152,17 +146,17 @@ export class Application {
         container.instance("app", container)
 
         const providers = [new ConfigProvider(this.getConfigItems()), ...this.providers]
-        const context: ApplicationRunContext = { container, cleanupTasks: [] }
+        const context: ApplicationRunContext = { container, providers }
 
         for (const provider of providers) {
-            this.rememberCleanup(context.cleanupTasks, provider.register(context.container))
+            provider.register(context.container)
         }
 
         for (const provider of providers) {
-            this.rememberCleanup(context.cleanupTasks, provider.boot(context.container))
+            provider.boot(context.container)
         }
 
-        const stop = this.createStopHandler(container, context.cleanupTasks)
+        const stop = this.createStopHandler(container, context.providers)
 
         window.addEventListener("beforeunload", stop, { once: true })
 

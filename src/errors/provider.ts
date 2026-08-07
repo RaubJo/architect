@@ -1,23 +1,25 @@
 import type { Container } from "../container/contract"
 import { Bus } from "../events/bus"
-import ServiceProvider, { type Cleanup } from "../support/service-provider"
+import ServiceProvider from "../support/service-provider"
 import ArchitectError from "./error"
 
 export class ErrorsProvider extends ServiceProvider {
+    protected controller?: AbortController
+
     register(container: Container) {
         if (!container.bound("events")) {
             container.singleton("events", () => new Bus())
         }
     }
 
-    boot(container: Container): Cleanup | void {
+    boot(container: Container): void {
         if (typeof window === "undefined") {
             return
         }
 
         const bus = container.make<Bus>("events")
-        const controller = new AbortController()
-        const { signal } = controller
+        this.controller = new AbortController()
+        const { signal } = this.controller
 
         window.addEventListener(
             "error",
@@ -41,7 +43,9 @@ export class ErrorsProvider extends ServiceProvider {
             },
             { signal },
         )
+    }
 
-        return () => controller.abort()
+    destroy(): void {
+        this.controller?.abort()
     }
 }
