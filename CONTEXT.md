@@ -16,7 +16,7 @@ The unit of wiring — a class that encapsulates registration and boot for one f
 _Avoid_: plugin, module, service class
 
 **DeferrableServiceProvider**:
-A ServiceProvider subclass that adds a `provides()` method for declaring which bindings it owns. Currently a stub: nothing in the Application reads `provides()`, so `register()`/`boot()` still run unconditionally and eagerly, same as any other provider — there is no deferred-loading behavior yet, despite the name.
+A ServiceProvider subclass that declares which bindings it owns via `provides()`. The Application skips `register()`/`boot()` until one of those identifiers is resolved from the container (by `make()`, `get()`, or anything that calls through them), at which point both run once and every other declared identifier resolves normally from then on. An empty `provides()` (the default) disables deferral — the provider boots eagerly. `bound()`/`has()` don't know about pending deferred bindings; only resolution triggers the boot.
 
 **Register/boot contract**:
 The rule that `register()` must only bind into the container — never resolve. `boot()` may safely resolve any binding because all providers' `register()` calls have completed first. Violating this in `register()` risks resolving `undefined` for bindings added by later providers.
@@ -91,7 +91,7 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 ## Relationships
 
 - An **Application** runs one or more **ServiceProviders** in registration order
-- A **DeferrableServiceProvider** extends **ServiceProvider** with an inert `provides()` method — boot is still eager today
+- A **DeferrableServiceProvider** extends **ServiceProvider**, deferring `register()`/`boot()` until a declared `provides()` identifier is resolved
 - Each **ServiceProvider** binds into and resolves from one **ContainerContract**
 - A **BuiltinContainer** implements **ContainerContract**
 - A **Facade** resolves its backing service from the current **Application**'s **ContainerContract**
@@ -112,7 +112,7 @@ A named function added to a Facade at runtime via `facade.macro(name, fn)`. Take
 >
 > **Dev:** "And if this service is only needed on certain routes, can I avoid booting it eagerly?"
 >
-> **Domain expert:** "Not yet — **DeferrableServiceProvider**'s `provides()` is currently inert, so every provider boots eagerly regardless. If that changes, this is where it'll be documented."
+> **Domain expert:** "Make it a **DeferrableServiceProvider** and declare the binding in `provides()`. The **Application** won't call `register()`/`boot()` until something actually resolves that binding from the container."
 
 ## Flagged ambiguities
 

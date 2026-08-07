@@ -1,35 +1,64 @@
 # Deferrable Providers
 
-`DeferrableServiceProvider` extends `ServiceProvider` with one extra method:
+A **DeferrableServiceProvider** declares which container bindings it owns via `provides()`. The Application skips `register()` and `boot()` entirely until one of those bindings is actually resolved from the container — an optimization for services that aren't always needed in a given session.
+
+## Basic usage
 
 ```typescript
-export class DeferrableServiceProvider extends ServiceProvider {
+import { DeferrableServiceProvider, type ContainerContract as Container } from "@raubjo/architect"
+
+export class ReportingProvider extends DeferrableServiceProvider {
   provides(): string[] {
-    return []
+    return ["reporting", "reporting.exporter"]
   }
-}
-```
 
-**This is currently a stub.** `Application.run()` calls `register()` then `boot()` on every provider unconditionally — deferrable or not — in the order they were added. Nothing in the runtime reads `provides()` yet, so a `DeferrableServiceProvider` boots exactly as eagerly as a regular `ServiceProvider`. There is no deferred-loading behavior to opt into today.
-
-## Using it today
-
-Since it behaves identically to `ServiceProvider`, there's no reason to reach for `DeferrableServiceProvider` right now — use the regular base class:
-
-```typescript
-import { ServiceProvider, type ContainerContract as Container } from "@raubjo/architect"
-
-export class ReportingProvider extends ServiceProvider {
   register(container: Container): void {
     container.singleton("reporting", ReportingService)
+    container.singleton("reporting.exporter", PdfExporter)
   }
 
   boot(container: Container): void {
+    // Only runs the first time "reporting" or "reporting.exporter" is resolved
     container.make(ReportingService).connect()
   }
 }
 ```
 
-## Intended shape
+Register it the same way as any other provider:
 
-The `provides()` list is meant to declare which bindings a provider owns, so the Application can skip `boot()` until one of them is actually resolved — useful for services with expensive `boot()` work (network connections, large allocations) that aren't needed in every session. If and when that lands, this page will show the deferred contract; until then, treat `provides()` as inert.
+```typescript
+Application.configure()
+  .withProviders([new ReportingProvider()])
+  .run()
+```
+
+Nothing else changes at the call site — `container.make("reporting")` (directly, via `container.get(...)`, or indirectly through anything that resolves it) transparently triggers `register()` then `boot()` the first time, then resolves normally. Every later resolution of any of the provider's declared identifiers — including the other ones it didn't originally trigger on — hits the real binding directly; `register()`/`boot()` never run twice.
+
+## When to use it
+
+Use a `DeferrableServiceProvider` when:
+
+- The service does expensive initialization in `boot()` (network connections, large allocations)
+- The service is only needed on certain routes or user flows
+- You want to avoid paying boot cost for services that may never be used in a given session
+
+## When not to use it
+
+If the service is always resolved (e.g. bound to a component that renders on every page), deferral adds overhead with no benefit. Use a regular `ServiceProvider` instead.
+
+## Caveats
+
+**`provides()` must be exhaustive.** Only the identifiers it lists get the lazy hook. If `register()` binds something not listed in `provides()`, that binding simply won't exist until *some* declared identifier is resolved and drags the rest along with it — there's no validation catching an incomplete list.
+
+**An empty `provides()` disables deferral, not the provider.** `DeferrableServiceProvider`'s default `provides()` returns `[]`. With nothing to hook, the Application falls back to booting it eagerly — same as a regular `ServiceProvider` — rather than never booting it at all.
+
+**`bound()`/`has()` don't know about deferred bindings.** Only `make()`/`get()` trigger the lazy boot. `container.bound("reporting")` returns `false` until something has actually resolved it — checking `bound()` first to decide whether to resolve a deferred binding will defeat the deferral (and get the wrong answer).
+
+**`destroy()` still runs for providers that were never triggered.** Application shutdown calls every provider's `destroy()`, deferred-and-never-resolved ones included. Write `destroy()` defensively (optional chaining on fields `boot()` would have set) — the same convention every other provider already follows.
+
+**Both string and class identifiers work** in `provides()` — whatever `Identifier` accepts elsewhere in the container works here too:
+
+```typescript
+provides() { return [ReportingService] }
+register(container: Container) { container.singleton(ReportingService, ReportingService) }
+```

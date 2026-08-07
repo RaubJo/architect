@@ -5,7 +5,7 @@ import type ConfigRepository from "../config/repository"
 import type { ConfigItems } from "../config/repository"
 import type { Container as Contract, Identifier } from "../container/contract"
 import { createRuntimeContainer, mergeRuntimeOptions, type RuntimeOptions } from "../container/runtime"
-import ServiceProvider, { type Cleanup } from "../support/service-provider"
+import ServiceProvider, { type Cleanup, DeferrableServiceProvider } from "../support/service-provider"
 
 let current: Contract | null = null
 
@@ -123,6 +123,36 @@ export class Application {
         return createRuntimeContainer(this.options.container)
     }
 
+    /**
+     * Wires deferred providers so register()/boot() run lazily, once, the first time any of their
+     * declared provides() identifiers is resolved — instead of eagerly during run(). Patches the
+     * container's own make() (get() already delegates to it) rather than wrapping the container,
+     * so there's exactly one resolution/tag-transform pass either way.
+     */
+    protected installDeferredResolution(container: Contract, providers: ServiceProvider[]): void {
+        const pending = new Map<Identifier, DeferrableServiceProvider>()
+
+        for (const provider of providers) {
+            if (!(provider instanceof DeferrableServiceProvider)) continue
+            for (const identifier of provider.provides()) {
+                pending.set(identifier, provider)
+            }
+        }
+
+        if (pending.size === 0) return
+
+        const originalMake = container.make.bind(container)
+        container.make = (<T>(identifier: Identifier<T>): T => {
+            const provider = pending.get(identifier)
+            if (provider) {
+                for (const id of provider.provides()) pending.delete(id)
+                provider.register(container)
+                provider.boot(container)
+            }
+            return originalMake(identifier)
+        }) as Contract["make"]
+    }
+
     protected createStopHandler(container: Contract, providers: ServiceProvider[]): Cleanup {
         const stop: Cleanup = () => {
             for (const provider of [...providers].reverse()) {
@@ -148,11 +178,22 @@ export class Application {
         const providers = [new ConfigProvider(this.getConfigItems()), ...this.providers]
         const context: ApplicationRunContext = { container, providers }
 
+        const deferred = new Set<ServiceProvider>(
+            providers.filter(
+                (provider): provider is DeferrableServiceProvider =>
+                    provider instanceof DeferrableServiceProvider && provider.provides().length > 0,
+            ),
+        )
+
+        this.installDeferredResolution(container, providers)
+
         for (const provider of providers) {
+            if (deferred.has(provider)) continue
             provider.register(context.container)
         }
 
         for (const provider of providers) {
+            if (deferred.has(provider)) continue
             provider.boot(context.container)
         }
 

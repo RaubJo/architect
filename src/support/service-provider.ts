@@ -1,4 +1,4 @@
-import type { Container } from "../container/contract"
+import type { Container, Identifier } from "../container/contract"
 
 export type Cleanup = () => void
 
@@ -12,7 +12,13 @@ export default class ServiceProvider {
 }
 
 export class DeferrableServiceProvider extends ServiceProvider {
-    provides(): Array<string> {
+    /**
+     * Identifiers this provider owns. Must be exhaustive — the Application defers register()/boot()
+     * until one of these is resolved from the container, at which point both run once and the
+     * provider is considered booted. An empty list (the default) disables deferral entirely and
+     * the provider boots eagerly, same as a regular ServiceProvider — there's nothing to hook.
+     */
+    provides(): Identifier[] {
         return []
     }
 }
