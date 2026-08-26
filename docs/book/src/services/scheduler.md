@@ -23,7 +23,7 @@ boot(container: Container) {
   const scheduler = container.make(Scheduler)
 
   // Run once after 1 minute
-  scheduler.do(() => showDonateModal()).in(1, "minutes")
+  scheduler.do(() => showModal()).in(1, "minutes")
 
   // Run every hour, starting after a 5-minute delay
   scheduler.do(() => syncData()).in(5, "minutes").every(1, "hours")
@@ -87,10 +87,10 @@ Conditions do not affect the schedule. If a condition fails at a scheduled tick,
 Register a task by name to cancel it later without holding a reference. If a name is already in use, the existing task is removed and a warning is logged before the new one is registered.
 
 ```typescript
-scheduler.task("donate-prompt", () => showDonateModal()).in(1, "minutes")
+scheduler.task("review-prompt", () => showModal()).in(1, "minutes")
 
 // Later:
-scheduler.cancel("donate-prompt")
+scheduler.cancel("review-prompt")
 ```
 
 ## Tags
@@ -98,7 +98,7 @@ scheduler.cancel("donate-prompt")
 Tag tasks to cancel them as a group:
 
 ```typescript
-scheduler.do(() => showDonateModal()).tag("popups").in(1, "minutes")
+scheduler.do(() => showModal()).tag("popups").in(1, "minutes")
 scheduler.do(() => showBanner()).tag("popups").every(1, "hours")
 
 // Drop all popup tasks at once:
@@ -115,7 +115,7 @@ const task = scheduler.do(fn).every(5, "minutes")
 scheduler.cancel(task)
 
 // By name
-scheduler.cancel("donate-prompt")
+scheduler.cancel("review-prompt")
 
 // By tag
 scheduler.cancelTag("popups")
@@ -140,7 +140,7 @@ import { Scheduler, type ContainerContract as Container } from "@raubjo/architec
 
 boot(container: Container) {
   const scheduler = container.make(Scheduler)
-  scheduler.task("daily-word", () => showDailyWord())
+  scheduler.task("alert", () => showAlert())
     .when(() => !alreadySeenToday())
     .in(0, "seconds")
 }
