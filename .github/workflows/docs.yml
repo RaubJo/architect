@@ -4,8 +4,11 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "v*"
     paths:
       - docs/book/**
+      - .github/workflows/docs.yml
   workflow_dispatch:
 
 env:
@@ -25,19 +28,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Install mdBook
         run: |
           tag=$(curl -sSL https://api.github.com/repos/rust-lang/mdBook/releases/latest | grep '"tag_name"' | cut -d '"' -f4)
           curl -sSL "https://github.com/rust-lang/mdBook/releases/download/${tag}/mdbook-${tag}-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /usr/local/bin
 
-      - name: Build book
-        run: mdbook build docs/book
+      - name: Build current and versioned books
+        run: |
+          mkdir site
 
-      - name: Upload pages artifact
+          main_source=$(mktemp -d)
+          git worktree add --detach "$main_source" origin/main
+          mdbook build "$main_source/docs/book" --dest-dir "$GITHUB_WORKSPACE/site"
+          git worktree remove --force "$main_source"
+
+          git tag --list "v*" --sort=version:refname | while IFS= read -r version; do
+            version_source=$(mktemp -d)
+            git worktree add --detach "$version_source" "$version"
+            mdbook build "$version_source/docs/book" --dest-dir "$GITHUB_WORKSPACE/site/$version"
+            git worktree remove --force "$version_source"
+          done
+
+          touch site/.nojekyll
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/book/book
+          path: site
 
   deploy:
     needs: build

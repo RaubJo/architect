@@ -4,5 +4,7 @@ authors = ["Joseph Raub"]
 language = "en"
 
 [output.html]
-default-theme = "coal"
-preferred-dark-theme = "coal"
+default-theme = "light"
+preferred-dark-theme = "light"
+additional-css = ["theme/custom.css"]
+additional-js = ["theme/artisan-sidebar-logo.js", "theme/artisan-copy-icon.js", "theme/artisan-version-footer.js"]

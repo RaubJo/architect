@@ -31,10 +31,8 @@ const application = Application.configure({
 ```
 
 ```typescript
-
 const root = createRoot(document.getElementById("root")!)
 root.render(createElement(ContextProvider, { application }, createElement(App)))
-
 ```
 
 The **Lifecycle** runs in this order every time:

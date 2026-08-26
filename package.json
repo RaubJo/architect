@@ -1,10 +1,10 @@
 {
-    "name": "@raubjo/architect",
+    "name": "@artisansdk/architect",
     "version": "0.6.4",
-    "homepage": "https://raubjo.github.io/architect/",
+    "homepage": "https://https://artisanmade.io",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/RaubJo/architect.git"
+        "url": "git+https://github.com/artisansdk/architect.git"
     },
     "private": false,
     "license": "MIT",

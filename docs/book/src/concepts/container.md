@@ -1,6 +1,6 @@
 # Service Container
 
-The **Service Container** is a powerful tool for managing class dependencies and performing dependency injection — matching the role of Laravel's service container. The built-in implementation (**BuiltinContainer**) resolves constructor dependencies automatically using TypeScript's `design:paramtypes` reflection metadata. Enable it in `tsconfig.json`:
+The **Service Container** is a powerful tool for managing class dependencies and performing dependency injection. The container resolves constructor dependencies automatically using TypeScript's `design:paramtypes` reflection metadata. Enable it in `tsconfig.json`:
 
 ```json
 {
@@ -25,6 +25,12 @@ Resolved once; the same instance is returned on every subsequent `make()`.
 
 ```typescript
 container.singleton(UserRepository, UserRepository)
+```
+
+Additionally a factory can be passed to construct the instance when it is first resolved, then the result will be cached for future resolution.
+
+```typescript
+container.singleton(UserRepository, () => new UserRepository({ /* config */ }))
 ```
 
 ### Transient
@@ -53,8 +59,7 @@ container.reactive("cart", { items: [] })
 ```
 
 - **Always a singleton.** There is no transient `reactive()` — a fresh proxy per resolution would defeat sharing reactive state across everything that resolves it.
-- The container detects Valtio proxies on the way in and wraps whatever isn't one already — pass a plain class, object, or factory, or an already-proxied value.
-- `valtio` is a regular dependency of the package, not an optional peer.
+- The container detects Valtio proxies on the way in and wraps whatever isn't one already you may pass a plain class, object, or factory, or an already-proxied value and the container will handle it.
 
 ### Fluent binding
 

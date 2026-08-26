@@ -4,14 +4,14 @@ A **Facade** is a static proxy that forwards calls to a service resolved from th
 
 ## Built-in facades
 
-| Facade | Proxies | Import |
-|--------|---------|--------|
-| `App` | the active `ContainerContract` itself | `@raubjo/architect/support/facades` |
-| `Config` | `ConfigRepository` | `@raubjo/architect/support/facades` |
-| `Cache` | `CacheManager` | `@raubjo/architect/support/facades` |
-| `Store` | `StoreManager` | `@raubjo/architect/support/facades` |
-| `Event` | `Bus` | `@raubjo/architect/support/facades` |
-| `Log` | `LogManager` | `@raubjo/architect/support/facades` |
+| Facade | Proxies |
+|--------|---------|
+| `App` | The active `ContainerContract` itself |
+| `Config` | `ConfigRepository` | 
+| `Cache` | `CacheManager` | 
+| `Store` | `StoreManager` | 
+| `Event` | `Bus` | 
+| `Log` | `LogManager` |
 
 ```typescript
 import { App, Config, Cache, Store, Event, Log } from "@raubjo/architect/support/facades"

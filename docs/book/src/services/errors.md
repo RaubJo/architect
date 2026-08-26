@@ -65,7 +65,7 @@ import { ContextProvider } from "@raubjo/architect/react"
 
 ## Bringing your own events wiring
 
-If you're not using `defaultProviders`, `ErrorsProvider` still only needs `"events"` to exist — it registers a `Bus` itself, guarded so it won't clobber one you've already bound:
+If you're not using `defaultProviders`, `ErrorsProvider` still only needs `"events"` to exist — it registers a `Bus` itself, guarded so it won't replace one you've already bound:
 
 ```typescript
 import { Application, ErrorsProvider } from "@raubjo/architect"
