@@ -1,4 +1,4 @@
-import { ServiceProvider, ContainerContract as Container } from "@raubjo/architect";
+import { ServiceProvider, ContainerContract as Container } from "@artisansdk/architect";
 import Service from "./service";
 
 export default class Menus extends ServiceProvider {

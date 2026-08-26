@@ -4,7 +4,7 @@ import { join } from "node:path"
 
 const BOOK_DIR = join(import.meta.dir, "../docs/book/src")
 // ponytail: must live inside the repo, not os.tmpdir() — otherwise the bare
-// "@raubjo/architect" import can't climb to the local node_modules/self-reference
+// "@artisansdk/architect" import can't climb to the local node_modules/self-reference
 // and Bun silently falls back to a stale globally-cached published version.
 const DOCTEST_TMP_DIR = join(import.meta.dir, "../.doctest-tmp")
 

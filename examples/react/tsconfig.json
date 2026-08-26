@@ -7,8 +7,8 @@
     "strict": true,
     "paths": {
       "@/*": ["../../src/*"],
-      "@raubjo/architect": ["../../src/index.ts"],
-      "@raubjo/architect/*": ["../../src/*"]
+      "@artisansdk/architect": ["../../src/index.ts"],
+      "@artisansdk/architect/*": ["../../src/*"]
     },
     "types": ["vite/client"],
     "skipLibCheck": true,

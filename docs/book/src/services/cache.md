@@ -5,7 +5,7 @@
 Register it by including `CacheProvider` in your providers (or use the built-in `defaultProviders`):
 
 ```typescript
-import { Application, defaultProviders } from "@raubjo/architect"
+import { Application, defaultProviders } from "@artisansdk/architect"
 
 Application.configure().withProviders(defaultProviders).run()
 ```
@@ -13,7 +13,7 @@ Application.configure().withProviders(defaultProviders).run()
 ## Basic usage
 
 ```typescript
-import { Cache } from "@raubjo/architect/support/facades"
+import { Cache } from "@artisansdk/architect/support/facades"
 
 // Set with no expiry
 await Cache.set("user:42", userData)
@@ -93,7 +93,7 @@ Application.configure({
 Register custom drivers from a ServiceProvider's `boot()` hook. The factory receives `ConfigRepository` and must return a raw storage **Adapter**:
 
 ```typescript
-import { CacheManager, type ContainerContract as Container } from "@raubjo/architect"
+import { CacheManager, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   const manager = container.make(CacheManager)
@@ -107,7 +107,7 @@ boot(container: Container) {
 ## Using CacheManager directly
 
 ```typescript
-import { CacheManager, type ContainerContract as Container } from "@raubjo/architect"
+import { CacheManager, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   const cache = container.make(CacheManager)

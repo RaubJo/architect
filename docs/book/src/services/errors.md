@@ -5,7 +5,7 @@
 It's included in `defaultProviders`:
 
 ```typescript
-import { Application, defaultProviders } from "@raubjo/architect"
+import { Application, defaultProviders } from "@artisansdk/architect"
 
 Application.configure().withProviders(defaultProviders).run()
 ```
@@ -16,7 +16,7 @@ Application.configure().withProviders(defaultProviders).run()
 |--------|---------|-------|
 | `"window"` | `window.addEventListener("error", ...)` | Filtered to same-origin script files — drops extension/third-party-script noise and censored cross-origin `"Script error."` events |
 | `"promise"` | `window.addEventListener("unhandledrejection", ...)` | |
-| `"react"` | `ErrorBoundary`'s `componentDidCatch` | Only if you're using `@raubjo/architect/react`'s `ErrorBoundary` (wrapped around your app by `ApplicationProvider`/`ContextProvider`) |
+| `"react"` | `ErrorBoundary`'s `componentDidCatch` | Only if you're using `@artisansdk/architect/react`'s `ErrorBoundary` (wrapped around your app by `ApplicationProvider`/`ContextProvider`) |
 
 `ErrorsProvider.boot()` is a no-op when `window` is undefined, so it's safe under SSR — it just won't catch anything until it runs in a browser.
 
@@ -25,8 +25,8 @@ Application.configure().withProviders(defaultProviders).run()
 `ArchitectError` sets a static `label = "error"`, so you can listen by the class or the string:
 
 ```typescript
-import { Event } from "@raubjo/architect/support/facades"
-import { ArchitectError } from "@raubjo/architect"
+import { Event } from "@artisansdk/architect/support/facades"
+import { ArchitectError } from "@artisansdk/architect"
 
 Event.listen(ArchitectError, (error) => {
   console.error(`[${error.source}]`, error.message, error.cause)
@@ -51,10 +51,10 @@ class ArchitectError extends Error {
 
 ## React error boundaries
 
-`ApplicationProvider`/`ContextProvider` from `@raubjo/architect/react` wrap your app in an `ErrorBoundary` automatically:
+`ApplicationProvider`/`ContextProvider` from `@artisansdk/architect/react` wrap your app in an `ErrorBoundary` automatically:
 
 ```tsx
-import { ContextProvider } from "@raubjo/architect/react"
+import { ContextProvider } from "@artisansdk/architect/react"
 
 <ContextProvider application={application} errorFallback={(error) => <p>Something broke.</p>}>
   <App />
@@ -68,7 +68,7 @@ import { ContextProvider } from "@raubjo/architect/react"
 If you're not using `defaultProviders`, `ErrorsProvider` still only needs `"events"` to exist — it registers a `Bus` itself, guarded so it won't replace one you've already bound:
 
 ```typescript
-import { Application, ErrorsProvider } from "@raubjo/architect"
+import { Application, ErrorsProvider } from "@artisansdk/architect"
 
 Application.configure()
   .withProviders([new ErrorsProvider()])

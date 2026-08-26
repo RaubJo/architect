@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react";
 
-import { Config  } from "@raubjo/architect/support/facades";
-import { useService } from "@raubjo/architect/react";
+import { Config  } from "@artisansdk/architect/support/facades";
+import { useService } from "@artisansdk/architect/react";
 
 import CounterService from "./counter/service";
 import Heartbeat from "./heartbeat/service";

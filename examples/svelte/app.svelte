@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onDestroy } from "svelte";
-    import { Config } from "@raubjo/architect/support/facades";
-    import { provideContainer, useService } from "@raubjo/architect/svelte";
+    import { Config } from "@artisansdk/architect/support/facades";
+    import { provideContainer, useService } from "@artisansdk/architect/svelte";
     import CounterService from "./counter/service";
     import HeartbeatService from "./heartbeat/service";
 

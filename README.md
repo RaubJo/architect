@@ -1,6 +1,6 @@
-# @raubjo/architect
+# @artisansdk/architect
 
-[![npm version](https://img.shields.io/npm/v/%40raubjo%2Farchitect.svg)](https://www.npmjs.com/package/@raubjo/architect)
+[![npm version](https://img.shields.io/npm/v/%40raubjo%2Farchitect.svg)](https://www.npmjs.com/package/@artisansdk/architect)
 [![CI](https://github.com/RaubJo/architect/actions/workflows/publish.yml/badge.svg)](https://github.com/RaubJo/architect/actions/workflows/publish.yml)
 [![License: MIT](https://img.shields.io/github/license/RaubJo/architect.svg)](LICENSE)
 [![Docs](https://img.shields.io/badge/docs-book-blue)](https://raubjo.github.io/architect/)
@@ -10,13 +10,13 @@ A Laravel-inspired application container for frontend apps: a shared dependency-
 It doesn't replace your framework's state tools — it gives you one structured place to register services and application infrastructure, then resolve them from components and startup code instead of ad hoc singleton modules.
 
 ```sh
-bun add @raubjo/architect
+bun add @artisansdk/architect
 ```
 
 ```tsx
 import "reflect-metadata";
-import { Application, ServiceProvider, ContainerContract as Container } from "@raubjo/architect";
-import { ContextProvider, useService } from "@raubjo/architect/react";
+import { Application, ServiceProvider, ContainerContract as Container } from "@artisansdk/architect";
+import { ContextProvider, useService } from "@artisansdk/architect/react";
 import ReactDOM from "react-dom/client";
 
 class Counter {

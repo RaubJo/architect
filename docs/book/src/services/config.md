@@ -5,7 +5,7 @@
 ## Reading values
 
 ```typescript
-import { Config } from "@raubjo/architect/support/facades"
+import { Config } from "@artisansdk/architect/support/facades"
 
 Config.get("app.name")               // string | null
 Config.get<string>("app.name")       // string | null
@@ -78,7 +78,7 @@ The Application loads these automatically via `import.meta.glob`, **but only whe
 Use the `env()` helper to read environment variables with an optional default:
 
 ```typescript
-import { env } from "@raubjo/architect"
+import { env } from "@artisansdk/architect"
 
 const url = env("VITE_API_URL", "http://localhost:3000")
 ```
@@ -90,7 +90,7 @@ const url = env("VITE_API_URL", "http://localhost:3000")
 In a ServiceProvider, the ConfigRepository is bound as `"config"` and by class:
 
 ```typescript
-import { ConfigRepository, type ContainerContract as Container } from "@raubjo/architect"
+import { ConfigRepository, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   const config = container.make(ConfigRepository)

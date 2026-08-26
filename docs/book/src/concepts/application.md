@@ -5,7 +5,7 @@
 ## Configuration
 
 ```typescript
-import { Application } from "@raubjo/architect"
+import { Application } from "@artisansdk/architect"
 
 const application = Application.configure({
   config: {

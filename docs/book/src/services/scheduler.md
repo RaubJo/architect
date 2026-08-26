@@ -5,7 +5,7 @@ The **Scheduler** runs registered tasks on a fixed 1-second tick. Each task is c
 `SchedulerProvider` is **opt-in** — it is not included in `defaultProviders`. Add it explicitly:
 
 ```typescript
-import { Application, defaultProviders, SchedulerProvider } from "@raubjo/architect"
+import { Application, defaultProviders, SchedulerProvider } from "@artisansdk/architect"
 
 Application.configure()
   .withProviders([...defaultProviders, new SchedulerProvider()])
@@ -17,7 +17,7 @@ Application.configure()
 Register tasks from a `ServiceProvider`'s `boot()` hook:
 
 ```typescript
-import { Scheduler, type ContainerContract as Container } from "@raubjo/architect"
+import { Scheduler, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   const scheduler = container.make(Scheduler)
@@ -136,7 +136,7 @@ If a task handler throws, the error is caught and logged to `console.warn`. The 
 ## Using Scheduler directly
 
 ```typescript
-import { Scheduler, type ContainerContract as Container } from "@raubjo/architect"
+import { Scheduler, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   const scheduler = container.make(Scheduler)

@@ -1,7 +1,7 @@
 import {
   ServiceProvider,
   ContainerContract as Container,
-} from "@raubjo/architect";
+} from "@artisansdk/architect";
 import HeartbeatService from "./service";
 
 export default class HeartbeatProvider extends ServiceProvider {

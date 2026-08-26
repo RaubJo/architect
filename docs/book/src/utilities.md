@@ -7,7 +7,7 @@ Architect ships several Laravel-inspired utility classes. Each is a separate sub
 String manipulation utilities, matching Laravel's `Str` helper. All methods are static functions on the `Str` object.
 
 ```typescript doctest
-import { Str } from "@raubjo/architect"
+import { Str } from "@artisansdk/architect"
 
 Str.slug("Hello World")              // "hello-world"
 Str.camel("user_created")            // "userCreated"
@@ -40,7 +40,7 @@ Str.fromBase64("aGVsbG8=")           // "hello"
 `registerGlobalHelpers()` makes any utility available on `globalThis` so it's accessible anywhere without importing. Pass only what you need — anything you don't import is treeshaken out of the bundle:
 
 ```typescript
-import { registerGlobalHelpers, Str, Num, Arr } from "@raubjo/architect"
+import { registerGlobalHelpers, Str, Num, Arr } from "@artisansdk/architect"
 
 registerGlobalHelpers({ Str, Num, Arr })
 
@@ -60,7 +60,7 @@ registerGlobalHelpers({ S: Str }) // → globalThis.S
 Array utilities, matching Laravel's `Arr` helper:
 
 ```typescript doctest
-import { Arr } from "@raubjo/architect"
+import { Arr } from "@artisansdk/architect"
 
 Arr.wrap("hello")          // ["hello"]
 Arr.wrap(["hello"])        // ["hello"]
@@ -84,7 +84,7 @@ Arr.keyBy(users, "id")     // { 1: { id: 1, name: "Alice" }, 2: { ... } }
 Number formatting utilities, matching Laravel's `Number` helper:
 
 ```typescript doctest
-import { Num } from "@raubjo/architect"
+import { Num } from "@artisansdk/architect"
 
 Num.format(1234567.89)          // "1,234,567.89"
 Num.format(1234.5, 2)           // "1,234.50"
@@ -107,7 +107,7 @@ Num.between(15, 1, 10)          // false
 An immutable, chainable wrapper around arrays, matching Laravel's `Collection`:
 
 ```typescript doctest
-import { Collection } from "@raubjo/architect"
+import { Collection } from "@artisansdk/architect"
 
 const users = new Collection([
   { id: 1, name: "Alice", age: 30 },
@@ -134,7 +134,7 @@ users.toArray()            // original array
 Like `Collection` but lazily evaluated — values are not computed until you iterate or call `toArray()`. Useful for large datasets where you want to avoid building intermediate arrays:
 
 ```typescript
-import { LazyCollection } from "@raubjo/architect"
+import { LazyCollection } from "@artisansdk/architect"
 
 const result = new LazyCollection(largeArray)
   .filter((x) => x.active)
@@ -148,7 +148,7 @@ const result = new LazyCollection(largeArray)
 A generic dot-notation key-value wrapper. Useful for wrapping configuration objects or arbitrary records with a clean read/write API:
 
 ```typescript doctest
-import { Fluent } from "@raubjo/architect"
+import { Fluent } from "@artisansdk/architect"
 
 const obj = new Fluent({
   user: { name: "Alice", age: 30 },
@@ -168,7 +168,7 @@ obj.toArray()                     // { user: { name: "Alice", age: 31 }, ... }
 A minimal observable value box — get/set/subscribe, no dependency tracking or batching:
 
 ```typescript
-import { Signal } from "@raubjo/architect"
+import { Signal } from "@artisansdk/architect"
 
 const count = new Signal(0)
 
@@ -188,7 +188,7 @@ unsubscribe()
 Send a value through a series of transform functions, matching Laravel's `Pipeline`:
 
 ```typescript
-import { send } from "@raubjo/architect"
+import { send } from "@artisansdk/architect"
 
 // Each pipe is a function: (passable, next) => result
 // Call next(passable) to pass to the next stage.

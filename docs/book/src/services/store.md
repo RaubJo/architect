@@ -5,7 +5,7 @@
 Register it by including `StoreProvider` in your providers (or use the built-in `defaultProviders`):
 
 ```typescript
-import { Application, defaultProviders } from "@raubjo/architect"
+import { Application, defaultProviders } from "@artisansdk/architect"
 
 Application.configure().withProviders(defaultProviders).run()
 ```
@@ -13,7 +13,7 @@ Application.configure().withProviders(defaultProviders).run()
 ## Basic usage
 
 ```typescript
-import { Store } from "@raubjo/architect/support/facades"
+import { Store } from "@artisansdk/architect/support/facades"
 
 await Store.set("theme", "dark")
 const theme = await Store.get<string>("theme")   // "dark" | null
@@ -58,7 +58,7 @@ Application.configure({
 ## Registering a custom driver
 
 ```typescript
-import { type StoreManager, type ContainerContract as Container } from "@raubjo/architect"
+import { type StoreManager, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   // Unlike CacheManager/LogManager, StoreProvider only binds the string identifier "store" —
@@ -81,7 +81,7 @@ import {
   MemoryStoreAdapter,
   LocalStorageAdapter,
   IndexedDbAdapter,
-} from "@raubjo/architect"
+} from "@artisansdk/architect"
 
 const memory = new MemoryStoreAdapter()
 const local = new LocalStorageAdapter(window.localStorage)

@@ -1,6 +1,6 @@
 import "reflect-metadata";
-import { Application } from "@raubjo/architect";
-import { ContextProvider } from "@raubjo/architect/vue";
+import { Application } from "@artisansdk/architect";
+import { ContextProvider } from "@artisansdk/architect/vue";
 import { createApp, h } from "vue";
 import App from "./app.vue";
 

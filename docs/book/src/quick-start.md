@@ -4,8 +4,8 @@ This example wires up two services and mounts a React app. The same pattern appl
 
 ```typescript doctest
 import "reflect-metadata"
-import { Application, ServiceProvider } from "@raubjo/architect"
-import { ContextProvider } from "@raubjo/architect/react"
+import { Application, ServiceProvider } from "@artisansdk/architect"
+import { ContextProvider } from "@artisansdk/architect/react"
 import { createRoot } from "react-dom/client"
 import { createElement } from "react"
 import App from "./App"

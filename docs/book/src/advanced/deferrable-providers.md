@@ -5,7 +5,7 @@ A **DeferrableServiceProvider** declares which container bindings it owns via `p
 ## Basic usage
 
 ```typescript
-import { DeferrableServiceProvider, type ContainerContract as Container } from "@raubjo/architect"
+import { DeferrableServiceProvider, type ContainerContract as Container } from "@artisansdk/architect"
 
 export class ReportingProvider extends DeferrableServiceProvider {
   provides(): string[] {

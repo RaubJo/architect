@@ -8,7 +8,7 @@ export default defineConfig({
     dedupe: ["solid-js"],
     alias: {
       "@": fileURLToPath(new URL("../../src", import.meta.url)),
-      "@raubjo/architect": fileURLToPath(new URL("../../src", import.meta.url)),
+      "@artisansdk/architect": fileURLToPath(new URL("../../src", import.meta.url)),
       "solid-js": fileURLToPath(new URL("./node_modules/solid-js", import.meta.url)),
     },
   },

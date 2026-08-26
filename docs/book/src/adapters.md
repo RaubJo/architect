@@ -5,7 +5,7 @@ Architect provides adapters for React, Vue, Solid, and Svelte. Each adapter inte
 ## React
 
 ```bash
-npm install @raubjo/architect react
+npm install @artisansdk/architect react
 ```
 
 With JSX (`main.tsx`):
@@ -14,8 +14,8 @@ With JSX (`main.tsx`):
 import "reflect-metadata"
 import React from "react"
 import ReactDOM from "react-dom/client"
-import { Application } from "@raubjo/architect"
-import { ContextProvider } from "@raubjo/architect/react"
+import { Application } from "@artisansdk/architect"
+import { ContextProvider } from "@artisansdk/architect/react"
 import App from "./App"
 
 const app = Application.configure()
@@ -36,8 +36,8 @@ Without JSX (`main.ts`):
 import "reflect-metadata"
 import { createElement } from "react"
 import { createRoot } from "react-dom/client"
-import { Application } from "@raubjo/architect"
-import { ContextProvider } from "@raubjo/architect/react"
+import { Application } from "@artisansdk/architect"
+import { ContextProvider } from "@artisansdk/architect/react"
 import App from "./App"
 
 const app = Application.configure()
@@ -52,7 +52,7 @@ root.render(
 ### Resolving services in components
 
 ```tsx
-import { useService } from "@raubjo/architect/react"
+import { useService } from "@artisansdk/architect/react"
 import { UserService } from "./services/user"
 
 function Profile() {
@@ -100,7 +100,7 @@ If you already have a container (e.g. in tests or SSR), pass it directly:
 ## Vue
 
 ```bash
-npm install @raubjo/architect vue
+npm install @artisansdk/architect vue
 ```
 
 `ContextProvider` renders its default slot, so it needs an explicit render function to receive children — mounting it directly as `createApp(ContextProvider, props)` leaves the slot empty and renders nothing:
@@ -108,8 +108,8 @@ npm install @raubjo/architect vue
 ```typescript
 import "reflect-metadata"
 import { createApp, h } from "vue"
-import { Application } from "@raubjo/architect"
-import { ContextProvider } from "@raubjo/architect/vue"
+import { Application } from "@artisansdk/architect"
+import { ContextProvider } from "@artisansdk/architect/vue"
 import App from "./App.vue"
 
 const application = Application.configure()
@@ -123,7 +123,7 @@ createApp({
 ### Resolving services in components
 
 ```typescript
-import { useService } from "@raubjo/architect/vue"
+import { useService } from "@artisansdk/architect/vue"
 import { UserService } from "./services/user"
 
 const userService = useService(UserService)
@@ -133,7 +133,7 @@ Or inject the container directly:
 
 ```typescript
 import { inject } from "vue"
-import { containerKey } from "@raubjo/architect/vue"
+import { containerKey } from "@artisansdk/architect/vue"
 import { UserService } from "./services/user"
 
 const container = inject(containerKey)!
@@ -143,14 +143,14 @@ const userService = container.make(UserService)
 ## Solid
 
 ```bash
-npm install @raubjo/architect solid-js
+npm install @artisansdk/architect solid-js
 ```
 
 ```typescript
 import "reflect-metadata"
 import { render } from "solid-js/web"
-import { Application } from "@raubjo/architect"
-import { ContextProvider } from "@raubjo/architect/solid"
+import { Application } from "@artisansdk/architect"
+import { ContextProvider } from "@artisansdk/architect/solid"
 
 const application = Application.configure()
   .withProviders([new AppProvider()])
@@ -164,7 +164,7 @@ render(
 ## Svelte
 
 ```bash
-npm install @raubjo/architect svelte
+npm install @artisansdk/architect svelte
 ```
 
 Svelte has no `ContextProvider` component. Call `application.run()` yourself, pass the resulting `container` into your root component as a prop, and call `provideContainer(...)` inside it before any `useService(...)` calls:
@@ -172,7 +172,7 @@ Svelte has no `ContextProvider` component. Call `application.run()` yourself, pa
 ```typescript
 // main.ts
 import "reflect-metadata"
-import { Application } from "@raubjo/architect"
+import { Application } from "@artisansdk/architect"
 import App from "./App.svelte"
 
 const application = Application.configure()
@@ -191,7 +191,7 @@ window.addEventListener("beforeunload", running.stop, { once: true })
 ```svelte
 <!-- App.svelte -->
 <script lang="ts">
-  import { provideContainer, useService } from "@raubjo/architect/svelte"
+  import { provideContainer, useService } from "@artisansdk/architect/svelte"
   import { UserService } from "./services/user"
 
   export let container: unknown

@@ -2,8 +2,8 @@
 
 Add the architect package with your project's package manager.
 
-`npm install @raubjo/architect`
+`npm install @artisansdk/architect`
 
-`pnpm add @raubjo/architect`
+`pnpm add @artisansdk/architect`
 
-`bun add @raubjo/architect`
+`bun add @artisansdk/architect`

@@ -5,7 +5,7 @@ The **Bus** is a pub/sub event bus with support for string events, class-based e
 Register it by including `EventsProvider` in your providers:
 
 ```typescript
-import { Application, EventsProvider } from "@raubjo/architect"
+import { Application, EventsProvider } from "@artisansdk/architect"
 
 Application.configure()
   .withProviders([new EventsProvider()])
@@ -17,7 +17,7 @@ If you're already using `defaultProviders` (see [Cache](./cache.md)), `"events"`
 ## Listening
 
 ```typescript
-import { Event } from "@raubjo/architect/support/facades"
+import { Event } from "@artisansdk/architect/support/facades"
 
 const off = Event.listen("user.created", (payload) => {
   console.log(payload)
@@ -82,7 +82,7 @@ class UserCreated {
 Make a class dispatch itself:
 
 ```typescript
-import { Dispatchable } from "@raubjo/architect"
+import { Dispatchable } from "@artisansdk/architect"
 
 class UserCreated extends Dispatchable {
   constructor(public readonly id: number) {}
@@ -97,7 +97,7 @@ await UserCreated.dispatch(42)
 Group related listeners into a subscriber class:
 
 ```typescript
-import { type EventSubscriber, type Bus } from "@raubjo/architect"
+import { type EventSubscriber, type Bus } from "@artisansdk/architect"
 
 class UserSubscriber implements EventSubscriber {
   subscribe(bus: Bus) {
@@ -138,7 +138,7 @@ await Event.flush("analytics.track")
 ## Using Bus directly
 
 ```typescript
-import { Bus, type ContainerContract as Container } from "@raubjo/architect"
+import { Bus, type ContainerContract as Container } from "@artisansdk/architect"
 
 boot(container: Container) {
   // "events" is the only registered identifier — Bus is never bound by class,

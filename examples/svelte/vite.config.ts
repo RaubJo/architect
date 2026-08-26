@@ -7,7 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("../../src", import.meta.url)),
-      "@raubjo/architect": fileURLToPath(new URL("../../src", import.meta.url)),
+      "@artisansdk/architect": fileURLToPath(new URL("../../src", import.meta.url)),
     },
   },
 });

@@ -14,13 +14,13 @@ A **Facade** is a static proxy that forwards calls to a service resolved from th
 | `Log` | `LogManager` |
 
 ```typescript
-import { App, Config, Cache, Store, Event, Log } from "@raubjo/architect/support/facades"
+import { App, Config, Cache, Store, Event, Log } from "@artisansdk/architect/support/facades"
 ```
 
 ## Creating a custom facade
 
 ```typescript
-import { createFacade } from "@raubjo/architect/facade"
+import { createFacade } from "@artisansdk/architect/facade"
 import type MyService from "./my-service"
 
 export const MyFacade = createFacade<MyService>("my-service")
@@ -39,7 +39,7 @@ register(container) {
 A **Macro** is a named function added to a Facade at runtime. It takes precedence over instance methods of the same name.
 
 ```typescript
-import { Config } from "@raubjo/architect/facades"
+import { Config } from "@artisansdk/architect/facades"
 
 Config.macro("required", (instance, key: string) => {
   const value = instance.get(key)

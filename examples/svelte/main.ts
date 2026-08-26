@@ -1,5 +1,5 @@
 import "reflect-metadata";
-import { Application } from "@raubjo/architect";
+import { Application } from "@artisansdk/architect";
 import App from "./app.svelte";
 import CounterProvider from "./counter/provider";
 import HeartbeatProvider from "./heartbeat/provider";
